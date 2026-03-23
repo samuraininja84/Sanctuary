@@ -1,0 +1,16 @@
+{
+    "name": "Sanctuary.Samples",
+    "rootNamespace": "Sanctuary.Samples",
+    "references": [
+        "GUID:05d07bea75f65914687cbc684dd0dd88"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

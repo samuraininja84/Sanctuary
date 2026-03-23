@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54cfb406f23af9e47a990c4daa30a5d2, type: 3}
+  m_Name: Sanctuary
+  m_EditorClassIdentifier: 
+  displayName: Sanctuary
+  packageName: Sanctuary
+  displayPriority: 0
+  exportOptions: 3
+  exportFolder: C:/Users/aaron/Documents/GitHub/UnityPackages/Custom
+  packageContent:
+  - fileMode: 0
+    fileObject: {fileID: 102900000, guid: 5203b7c3a668d5f4abbb94873bb64ddb, type: 3}
+    folderPath: C:/Users/aaron/Documents/GitHub/Dwalm/Assets/Plugins/Artisan/Sanctuary/Runtime
+  - fileMode: 0
+    fileObject: {fileID: 102900000, guid: acdf681ff25487742ba4ae6edd608a35, type: 3}
+    folderPath: C:/Users/aaron/Documents/GitHub/Dwalm/Assets/Plugins/Artisan/Sanctuary/Editor
+  - fileMode: 0
+    fileObject: {fileID: 102900000, guid: 9df8d5071aedf764f8ea6a18ab41f73d, type: 3}
+    folderPath: C:/Users/aaron/Documents/GitHub/Dwalm/Assets/Plugins/Artisan/Sanctuary/Samples
