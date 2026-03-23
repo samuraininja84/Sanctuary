@@ -82,8 +82,6 @@ namespace Sanctuary
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is true.</param>
         internal void ConfigureAsAbsolute(ProfileData profile, bool dontDestroyOnLoad = true)
         {
-            Debug.Log($"Configuring SaveProvider: '{gameObject.name}' as Absolute with profile: {profile} and dontDestroyOnLoad: {dontDestroyOnLoad}", this);
-
             // Check if already configured as absolute
             if (absolute == this)
             {
@@ -496,9 +494,6 @@ namespace Sanctuary
                 // Remove this container from the scene containers dictionary
                 sceneContainers.Remove(GetComponent<SceneSaveProvider>().TrackedScene.name);
             }
-
-            // Dispose of the controller if it exists
-            Controller?.Dispose();
         }
 
 #if UNITY_EDITOR

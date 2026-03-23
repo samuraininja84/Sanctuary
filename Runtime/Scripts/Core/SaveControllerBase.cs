@@ -49,6 +49,9 @@ namespace Sanctuary
 
         #region Public Accessors
 
+        /// <summary>
+        /// Combined boolean indicating whether the save is initialized and exists.
+        /// </summary>
         public bool IsInitialized => _isInitialized && Exists;
 
         /// <summary>
@@ -199,29 +202,6 @@ namespace Sanctuary
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
-        }
-
-        /// <summary>
-        /// Releases all resources used by the current instance, including locks and semaphores.
-        /// </summary>
-        public void Dispose()
-        {
-            #if UNITY_EDITOR
-
-            // Remove this instance from the list of existing saves and clean up dead references
-            ExistingSaves.RemoveAll(wr =>
-            {
-                // Check if the target is this instance
-                if (wr.TryGetTarget(out var target)) return target == this;
-
-                // If the target is dead, return false to keep cleaning up dead references
-                return false;
-            });
-
-#endif
-
-            // Set the initialized flag to false
-            _isInitialized = false;
         }
 
         #endregion
