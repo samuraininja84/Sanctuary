@@ -80,7 +80,7 @@ namespace Sanctuary
         /// Sets up this SaveProvider as the absolute instance by marking as absolute and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is true.</param>
-        internal void ConfigureAsAbsolute(ProfileData profile, bool dontDestroyOnLoad = true)
+        internal async void ConfigureAsAbsolute(ProfileData profile, bool dontDestroyOnLoad = true)
         {
             // Check if already configured as absolute
             if (absolute == this)
@@ -109,6 +109,16 @@ namespace Sanctuary
 
                 // Set the isBootstrapped flag to true to indicate that this SaveProvider has been configured
                 isBootstrapped = true;
+
+                // If an absolute save doesn't already exist, create one
+                if (!controller.Exists)
+                {
+                    // Create the absolute save file if it doesn't already exist
+                    await controller.Create();
+
+                    // Save immediately to ensure the save file is created on disk
+                    await controller.Save(SaveMode.Full);
+                }
             }
         }
 
