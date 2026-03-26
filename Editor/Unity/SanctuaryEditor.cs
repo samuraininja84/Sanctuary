@@ -92,7 +92,7 @@ namespace Sanctuary.Editor
             SanctuaryEditor window = GetWindow<SanctuaryEditor>("Sanctuary");
 
             // Find the icon texture
-            Texture icon = EditorGUIUtility.FindTexture("Assets/Plugins/Artisan/Sanctuary/Editor/EditorResources/SanctuaryWindow.png");
+            Texture icon = EditorGUIUtility.FindTexture("Assets/Plugins/Sanctuary/Editor/EditorResources/SanctuaryWindow.png");
 
             // Set the window icon
             window.titleContent = new GUIContent("Sanctuary", icon);
