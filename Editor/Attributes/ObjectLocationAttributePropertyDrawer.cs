@@ -56,6 +56,51 @@ namespace Sanctuary.Editor
             Rect chunkRect = new Rect(position.x, position.y, position.width, height);
             Rect objectRect = new Rect(position.x, position.y + height + EditorGUIUtility.standardVerticalSpacing, position.width, height);
 
+            // Add a right-click context menu to the chunk ID field to allow copying the value
+            if (EventType.MouseDown.MouseRight() && chunkRect.Contains(Event.current.mousePosition))
+            {
+                // Create a new context menu
+                GenericMenu menu = new GenericMenu();
+
+                // Add an option to copy the chunk ID to the clipboard
+                menu.AddItem(new GUIContent("Copy Chunk ID"), false, () => EditorGUIUtility.systemCopyBuffer = chunkId.stringValue);
+
+                // Show the context menu and consume the event
+                menu.ShowAsContext();
+
+                // Consume the event to prevent it from propagating further
+                Event.current.Use();
+            }
+
+            // Add a right-click context menu to the object ID field to allow copying the value and resetting the initialization flag
+            if (EventType.MouseDown.MouseRight() && objectRect.Contains(Event.current.mousePosition))
+            {
+                // Create a new context menu
+                GenericMenu menu = new GenericMenu();
+
+                // Add an option to copy the object ID as well for convenience
+                menu.AddItem(new GUIContent("Copy Object ID"), false, () => EditorGUIUtility.systemCopyBuffer = objectId.stringValue);
+
+                // Add an option to reset the initialization flag to allow reapplying the location logic
+                menu.AddItem(new GUIContent("Reset Initialization"), false, () =>
+                {
+                    // Get the initialized property
+                    var initialized = property.FindPropertyRelative(nameof(SaveLocation.initialized));
+
+                    // Reset the initialized flag to allow reapplying the location logic
+                    initialized.boolValue = false;
+
+                    // Save the changes to the property
+                    property.serializedObject.ApplyModifiedProperties();
+                });
+
+                // Show the context menu and consume the event
+                menu.ShowAsContext();
+
+                // Consume the event to prevent it from propagating further
+                Event.current.Use();
+            }
+
             // Draw the chunk ID and object ID fields
             EditorGUI.PropertyField(chunkRect, chunkId, chunkID);
             EditorGUI.PropertyField(objectRect, objectId, objectID);
@@ -101,11 +146,13 @@ namespace Sanctuary.Editor
                 chunkId.stringValue = globalId.assetGUID.ToString();
 
                 // Use both the object and prefab IDs to uniquely identify objects in scenes
-                objectId.stringValue = $"{globalId.targetObjectId}-{globalId.targetPrefabId}";
+                objectId.stringValue = GetObjectId(globalId);
             }
 
             // Mark the property as initialized
             initialized.boolValue = true;
         }
+
+        private static string GetObjectId(GlobalObjectId globalId) => $"{globalId.targetObjectId}-{globalId.targetPrefabId}";
     }
 }

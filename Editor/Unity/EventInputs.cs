@@ -32,11 +32,11 @@ namespace Sanctuary.Editor
             return false;
         }
 
-        public static bool MouseLeft(EventType eventType, bool use = false) => MousePress(eventType, 0, use);
-        public static bool MouseRight(EventType eventType, bool use = false) => MousePress(eventType, 1, use);
-        public static bool MouseMiddle(EventType eventType, bool use = false) => MousePress(eventType, 2, use);
+        public static bool MouseLeft(this EventType eventType, bool use = false) => eventType.MousePress(0, use);
+        public static bool MouseRight(this EventType eventType, bool use = false) => eventType.MousePress(1, use);
+        public static bool MouseMiddle(this EventType eventType, bool use = false) => eventType.MousePress(2, use);
 
-        private static bool MousePress(EventType type, int button, bool use = false)
+        private static bool MousePress(this EventType type, int button, bool use = false)
         {
             // Get the current event
             Event key = Event.current;
