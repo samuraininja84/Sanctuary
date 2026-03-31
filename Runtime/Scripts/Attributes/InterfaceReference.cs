@@ -53,40 +53,7 @@ namespace Sanctuary
         /// <summary>
         /// Gets a value indicating whether the underlying value is non-null and implements the specified interface.
         /// </summary>
-        public bool HasValue => underlyingValue != null && (underlyingValue as TInterface) != null;
-
-        /// <summary>
-        /// Sets the underlying value to the specified target object.
-        /// </summary>
-        /// <param name="target">The object to set as the underlying value. Cannot be <see langword="null"/>.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="target"/> is <see langword="null"/>.</exception>
-        public void Set(TObject target)
-        {
-            if (target == null) throw new ArgumentNullException(nameof(target), "Target cannot be null.");
-            underlyingValue = target;
-        }
-
-        /// <summary>
-        /// Sets the underlying value to the specified interface implementation.
-        /// </summary>
-        /// <param name="interface">The interface implementation to set. Must not be <see langword="null"/> and must be of type <typeparamref
-        /// name="TObject"/>.</param>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="interface"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="interface"/> is not of type <typeparamref name="TObject"/>.</exception>
-        public void Set(TInterface @interface)
-        {
-            if (@interface == null) throw new ArgumentNullException(nameof(@interface), "Interface cannot be null.");
-            underlyingValue = @interface as TObject;
-            if (underlyingValue == null)
-            {
-                throw new ArgumentException($"{@interface} needs to be of type {typeof(TObject)}.", nameof(@interface));
-            }
-        }
-
-        /// <summary>
-        /// Clears the reference by setting the underlying value to null.
-        /// </summary>
-        public void Clear() => underlyingValue = null;
+        public virtual bool HasValue => underlyingValue != null && (underlyingValue as TInterface) != null;
 
         /// <summary>
         /// Constructs an empty InterfaceReference.
@@ -104,94 +71,6 @@ namespace Sanctuary
         /// </summary>
         /// <param name="interface"></param>
         public InterfaceReference(TInterface @interface) => underlyingValue = @interface as TObject;
-
-        /// <summary>
-        /// Determines whether two <see cref="InterfaceReference{TInterface, TObject}"/> instances are equal.
-        /// </summary>
-        /// <param name="obj1">The first <see cref="InterfaceReference{TInterface, TObject}"/> instance to compare. Can be <see langword="null"/>.</param>
-        /// <param name="obj2">The second <see cref="InterfaceReference{TInterface, TObject}"/> instance to compare. Can be <see langword="null"/>.</param>
-        /// <returns>
-        /// <see langword="true"/> if both instances are <see langword="null"/> or their <c>UnderlyingValue</c> properties are equal; otherwise, <see langword="false"/>.
-        /// </returns>
-        public static bool Equals(InterfaceReference<TInterface, TObject> obj1, InterfaceReference<TInterface, TObject> obj2)
-        {
-            if (obj1 == null && obj2 == null) return true;
-            if (obj1 == null || obj2 == null) return false;
-            return obj1.UnderlyingValue == obj2.UnderlyingValue;
-        }
-
-        /// <summary>
-        /// Determines whether two instances of the specified interface type are equal.
-        /// </summary>
-        /// <remarks>
-        /// This method performs equality comparison by casting the provided interface instances to the underlying object type. 
-        /// If either instance is <see langword="null"/>, the method returns <see  langword="false"/> unless both are <see langword="null"/>.
-        /// </remarks>
-        /// <param name="int1">The first instance to compare. Can be <see langword="null"/>.</param>
-        /// <param name="int2">The second instance to compare. Can be <see langword="null"/>.</param>
-        /// <returns>
-        /// <see langword="true"/> if both instances are <see langword="null"/> or if they are equal when cast to the underlying object type; otherwise, <see langword="false"/>.
-        /// </returns>
-        public static bool Equals(TInterface int1, TInterface int2)
-        {
-            if (int1 == null && int2 == null) return true;
-            if (int1 == null || int2 == null) return false;
-            return int1 as TObject == int2 as TObject;
-        }
-
-        /// <summary>
-        /// Determines whether two objects of type <typeparamref name="TObject"/> are equal.
-        /// </summary>
-        /// <remarks>
-        /// This method performs equality comparison by casting the objects to <typeparamref name="TInterface"/>. 
-        /// If either object cannot be cast to <typeparamref name="TInterface"/>, the comparison will return <see langword="false"/>.
-        /// </remarks>
-        /// <param name="obj1">The first object to compare. Can be <see langword="null"/>.</param>
-        /// <param name="obj2">The second object to compare. Can be <see langword="null"/>.</param>
-        /// <returns>
-        /// <see langword="true"/> if both objects are <see langword="null"/> or if their casted representations as <typeparamref name="TInterface"/> are equal; otherwise, <see langword="false"/>.
-        /// </returns>
-        public static bool Equals(TObject obj1, TObject obj2)
-        {
-            if (obj1 == null && obj2 == null) return true;
-            if (obj1 == null || obj2 == null) return false;
-            return obj1 as TInterface == obj2 as TInterface;
-        }
-
-        /// <summary>
-        /// Determines whether the specified object is equal to the current instance.
-        /// </summary>
-        /// <param name="obj">The object to compare with the current instance.</param>
-        /// <returns>
-        /// <see langword="true"/> if the specified object is an <see cref="InterfaceReference{TInterface, TObject}"/> and is equal to the current instance; otherwise, <see langword="false"/>. 
-        /// </returns>
-        public override bool Equals(object obj)
-        {
-            if (obj is InterfaceReference<TInterface, TObject> other)
-            {
-                return Equals(this, other);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Returns a hash code for the current instance.
-        /// </summary>
-        /// <remarks>
-        /// The hash code is derived from the underlying value of the instance. If the underlying value is <see langword="null"/>, the method returns 0.
-        /// </remarks>
-        /// <returns>
-        /// An integer representing the hash code of the underlying value, or 0 if the underlying value is <see langword="null"/>.
-        /// </returns>
-        public override int GetHashCode() => underlyingValue != null ? underlyingValue.GetHashCode() : 0;
-
-        /// <summary>
-        /// Retrieves the value of the current instance cast to the specified interface type.
-        /// </summary>
-        /// <typeparam name="T">The interface type to which the value should be cast. Must implement <typeparamref name="TInterface"/>.</typeparam>
-        /// <returns>The value of the current instance cast to <typeparamref name="T"/>, or the default value of <typeparamref
-        /// name="T"/> if the current instance has no value.</returns>
-        public T GetAs<T>() where T : TInterface => HasValue ? (T)Value : (T)default;
 
         /// <summary>
         /// Gets a default instance of <see cref="InterfaceReference{TInterface, TObject}"/> representing no reference.
@@ -231,6 +110,147 @@ namespace Sanctuary
         public static implicit operator TObject(InterfaceReference<TInterface, TObject> obj) => obj.UnderlyingValue;
         public static implicit operator InterfaceReference<TInterface, TObject>(TInterface @interface) => new InterfaceReference<TInterface, TObject>(@interface);
         public static implicit operator InterfaceReference<TInterface, TObject>(TObject target) => new InterfaceReference<TInterface, TObject>(target);
+
+        /// <summary>
+        /// Sets the underlying value to the specified target object.
+        /// </summary>
+        /// <param name="target">The object to set as the underlying value. Cannot be <see langword="null"/>.</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="target"/> is <see langword="null"/>.</exception>
+        public void Set(TObject target)
+        {
+            // Check if the provided target object is null, if it is, we throw an ArgumentNullException.
+            if (target == null) throw new ArgumentNullException(nameof(target), "Target cannot be null.");
+
+            // Set the underlying value to the provided target object.
+            underlyingValue = target;
+        }
+
+        /// <summary>
+        /// Sets the underlying value to the specified interface implementation.
+        /// </summary>
+        /// <param name="interface">The interface implementation to set. Must not be <see langword="null"/> and must be of type <typeparamref
+        /// name="TObject"/>.</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="interface"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Thrown if <paramref name="interface"/> is not of type <typeparamref name="TObject"/>.</exception>
+        public void Set(TInterface @interface)
+        {
+            // First, we check if the provided interface is null. If it is, we throw an ArgumentNullException to indicate that a null value is not acceptable for this parameter.
+            if (@interface == null) throw new ArgumentNullException(nameof(@interface), "Interface cannot be null.");
+
+            // Attempt to cast the provided interface to the underlying object type. If the cast fails, it will result in null.
+            underlyingValue = @interface as TObject;
+
+            // After attempting to cast the interface to the underlying object type, we check if the result is null.
+            if (underlyingValue == null) throw new ArgumentException($"{@interface} needs to be of type {typeof(TObject)}.", nameof(@interface));
+        }
+
+        /// <summary>
+        /// Clears the reference by setting the underlying value to null.
+        /// </summary>
+        public void Clear() => underlyingValue = null;
+
+        /// <summary>
+        /// Retrieves the value of the current instance cast to the specified interface type.
+        /// </summary>
+        /// <typeparam name="T">The interface type to which the value should be cast. Must implement <typeparamref name="TInterface"/>.</typeparam>
+        /// <returns>The value of the current instance cast to <typeparamref name="T"/>, or the default value of <typeparamref
+        /// name="T"/> if the current instance has no value.</returns>
+        public T GetAs<T>() where T : TInterface => HasValue ? (T)Value : (T)default;
+
+        /// <summary>
+        /// Determines whether the current instance represents a null value.
+        /// </summary>
+        /// <returns>true if the current instance is null; otherwise, false.</returns>
+        public virtual bool IsNull() => underlyingValue == null;
+
+        /// <summary>
+        /// Determines whether two <see cref="InterfaceReference{TInterface, TObject}"/> instances are equal.
+        /// </summary>
+        /// <param name="obj1">The first <see cref="InterfaceReference{TInterface, TObject}"/> instance to compare. Can be <see langword="null"/>.</param>
+        /// <param name="obj2">The second <see cref="InterfaceReference{TInterface, TObject}"/> instance to compare. Can be <see langword="null"/>.</param>
+        /// <returns>
+        /// <see langword="true"/> if both instances are <see langword="null"/> or their <c>UnderlyingValue</c> properties are equal; otherwise, <see langword="false"/>.
+        /// </returns>
+        public static bool Equals(InterfaceReference<TInterface, TObject> obj1, InterfaceReference<TInterface, TObject> obj2)
+        {
+            // Handle null cases first to avoid unnecessary property access. If both instances are null, they are considered equal. If only one is null, they are not equal.
+            if (obj1 == null && obj2 == null) return true;
+            if (obj1 == null || obj2 == null) return false;
+
+            // Compare the underlying values of both instances. If either underlying value is null, the comparison will return false unless both are null (handled above).
+            return obj1.UnderlyingValue == obj2.UnderlyingValue;
+        }
+
+        /// <summary>
+        /// Determines whether two instances of the specified interface type are equal.
+        /// </summary>
+        /// <remarks>
+        /// This method performs equality comparison by casting the provided interface instances to the underlying object type. 
+        /// If either instance is <see langword="null"/>, the method returns <see  langword="false"/> unless both are <see langword="null"/>.
+        /// </remarks>
+        /// <param name="int1">The first instance to compare. Can be <see langword="null"/>.</param>
+        /// <param name="int2">The second instance to compare. Can be <see langword="null"/>.</param>
+        /// <returns>
+        /// <see langword="true"/> if both instances are <see langword="null"/> or if they are equal when cast to the underlying object type; otherwise, <see langword="false"/>.
+        /// </returns>
+        public static bool Equals(TInterface int1, TInterface int2)
+        {
+            // Handle null cases first to avoid unnecessary casting. If both instances are null, they are considered equal. If only one is null, they are not equal.
+            if (int1 == null && int2 == null) return true;
+            if (int1 == null || int2 == null) return false;
+
+            // Attempt to cast both interface instances to the underlying object type. If either cast fails, the comparison will return false.
+            return int1 as TObject == int2 as TObject;
+        }
+
+        /// <summary>
+        /// Determines whether two objects of type <typeparamref name="TObject"/> are equal.
+        /// </summary>
+        /// <remarks>
+        /// This method performs equality comparison by casting the objects to <typeparamref name="TInterface"/>. 
+        /// If either object cannot be cast to <typeparamref name="TInterface"/>, the comparison will return <see langword="false"/>.
+        /// </remarks>
+        /// <param name="obj1">The first object to compare. Can be <see langword="null"/>.</param>
+        /// <param name="obj2">The second object to compare. Can be <see langword="null"/>.</param>
+        /// <returns>
+        /// <see langword="true"/> if both objects are <see langword="null"/> or if their casted representations as <typeparamref name="TInterface"/> are equal; otherwise, <see langword="false"/>.
+        /// </returns>
+        public static bool Equals(TObject obj1, TObject obj2)
+        {
+            // Handle null cases first to avoid unnecessary casting. If both objects are null, they are considered equal. If only one is null, they are not equal.
+            if (obj1 == null && obj2 == null) return true;
+            if (obj1 == null || obj2 == null) return false;
+
+            // Attempt to cast both objects to the interface type. If either cast fails, the comparison will return false.
+            return obj1 as TInterface == obj2 as TInterface;
+        }
+
+        /// <summary>
+        /// Determines whether the specified object is equal to the current instance.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current instance.</param>
+        /// <returns>
+        /// <see langword="true"/> if the specified object is an <see cref="InterfaceReference{TInterface, TObject}"/> and is equal to the current instance; otherwise, <see langword="false"/>. 
+        /// </returns>
+        public override bool Equals(object obj)
+        {
+            // If the object is an InterfaceReference, we can compare it using the static Equals method defined for InterfaceReference.
+            if (obj is InterfaceReference<TInterface, TObject> other) return Equals(this, other);
+
+            // If the object is not an InterfaceReference, we can attempt to compare it directly to the underlying value.
+            return false;
+        }
+
+        /// <summary>
+        /// Returns a hash code for the current instance.
+        /// </summary>
+        /// <remarks>
+        /// The hash code is derived from the underlying value of the instance. If the underlying value is <see langword="null"/>, the method returns 0.
+        /// </remarks>
+        /// <returns>
+        /// An integer representing the hash code of the underlying value, or 0 if the underlying value is <see langword="null"/>.
+        /// </returns>
+        public override int GetHashCode() => underlyingValue != null ? underlyingValue.GetHashCode() : 0;
     }
 
     /// <summary>
@@ -241,5 +261,13 @@ namespace Sanctuary
     public class InterfaceReference<TInterface> : InterfaceReference<TInterface, Object> where TInterface : class
     {
         public InterfaceReference(TInterface @interface) : base(@interface) { }
+
+        public override bool HasValue => base.HasValue && !IsNull();
+
+        public override bool IsNull() => base.IsNull() || this is Object obj && obj == null;
+
+        // Implicit conversion operators for convenience
+        public static implicit operator Object(InterfaceReference<TInterface> obj) => obj.UnderlyingValue;
+        public static implicit operator InterfaceReference<TInterface>(Object target) => new InterfaceReference<TInterface>(target as TInterface);
     }
 }
