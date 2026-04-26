@@ -225,6 +225,9 @@ namespace Sanctuary
                 // Create a new save data to avoid null reference exceptions
                 Data = await _loader.Create();
 
+                // Notify all registered stores to create their data
+                SaveStoreRegistry.CreateWith(this);
+
                 // Invoke the OnLoad method for custom load logic
                 OnLoad();
             }
@@ -239,16 +242,6 @@ namespace Sanctuary
         /// <remarks>Saves based on the <see cref="SaveMode"/> provided.</remarks>
         public async Task Save(SaveMode mode = SaveMode.MemoryOnly)
         {
-            // Return if we aren't initialized yet to avoid saving with an uninitialized loader
-            if (!IsInitialized)
-            {
-                // Log a warning if trying to save before initialization
-                Debug.LogWarning("[Safekeeper]: Tried to save before the controller was initialized. Make sure to call `save.Initialize()` before saving. Aborting save operation.");
-
-                // Aborting the save operation to avoid potential issues with an uninitialized loader
-                return;
-            }
-
             // Lock the semaphore to prevent other operations
             await Lock();
 

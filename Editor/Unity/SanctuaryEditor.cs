@@ -84,6 +84,10 @@ namespace Sanctuary.Editor
         private bool ShowLocation => SanctuaryEditorProcessor.showLocationWhenNamed;
         private bool FilterFiles => SanctuaryEditorProcessor.filterFiles;
         private string ExistingSavesPath => Path.Combine(Application.persistentDataPath, FileSaveLoader.DefaultFolderName);
+        public static bool SaveToGlobal => SanctuaryEditorProcessor.saveToGlobal;
+        public static bool SaveToScene => SanctuaryEditorProcessor.saveToScene;
+        public static bool SaveToTemporary => SanctuaryEditorProcessor.saveToTemporary;
+        public static bool SaveToAll => SanctuaryEditorProcessor.saveToAll;
 
         [MenuItem("Window/Sanctuary/Editor")]
         private static void Open()
@@ -1462,29 +1466,31 @@ namespace Sanctuary.Editor
         public void CreateIndexed()
         {
             // Create all of the indexed saves (Global and Scene)
-            SaveStoreRegistry.CreateByScope(SaveScope.Global);
-            SaveStoreRegistry.CreateByScope(SaveScope.Scene);
+            if (SaveToGlobal) SaveStoreRegistry.CreateByScope(SaveScope.Global);
+            if (SaveToScene) SaveStoreRegistry.CreateByScope(SaveScope.Scene);
 
             // Include Temporary saves as well, for simplicity
-            SaveStoreRegistry.CreateByScope(SaveScope.Temporary);
+            if (SaveToTemporary) SaveStoreRegistry.CreateByScope(SaveScope.Temporary);
         }
 
         public void SaveIndexed()
         {
             // Save all of the indexed saves (Global and Scene)
-            SaveStoreRegistry.SaveIndexed(saveMode);
+            if (SaveToGlobal) SaveStoreRegistry.SaveByScope(SaveScope.Global, saveMode);
+            if (SaveToScene) SaveStoreRegistry.SaveByScope(SaveScope.Scene, saveMode);
 
             // Include Temporary saves as well, for simplicity
-            SaveStoreRegistry.SaveByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
+            if (SaveToTemporary) SaveStoreRegistry.SaveByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
         }
 
         public void LoadIndexed()
         {
             // Load all of the indexed saves (Global and Scene)
-            SaveStoreRegistry.LoadIndexed(saveMode);
+            if (SaveToGlobal) SaveStoreRegistry.LoadByScope(SaveScope.Global, saveMode);
+            if (SaveToScene) SaveStoreRegistry.LoadByScope(SaveScope.Scene, saveMode);
 
             // Include Temporary saves as well, for simplicity
-            SaveStoreRegistry.LoadByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
+            if (SaveToTemporary) SaveStoreRegistry.LoadByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
         }
 
         public void DeleteIndexed()

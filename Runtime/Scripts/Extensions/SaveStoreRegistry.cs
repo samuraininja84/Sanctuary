@@ -70,6 +70,20 @@ namespace Sanctuary.Stores
         #region Save/Load/Delete For Save Controller
 
         /// <summary>
+        /// Find all stores associated with the given save controller and invoke their create operation.
+        /// </summary>
+        /// <param name="save">The save controller to match.</param>
+        internal static void CreateWith(this SaveControllerBase save)
+        {
+            // Find all stores associated with the given save controller.
+            foreach (var kvp in _storeLookup)
+            {
+                // If the store's associated save controller matches the given one, call OnCreate on it.
+                if (kvp.Value == save) kvp.Key.OnCreate(kvp.Value);
+            }
+        }
+
+        /// <summary>
         /// Find all stores associated with the given save controller and invoke their save operation.
         /// </summary>
         /// <param name="save">The save controller to match.</param>

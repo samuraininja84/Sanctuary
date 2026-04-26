@@ -1,10 +1,10 @@
-﻿using Sanctuary.Attributes;
-using Sanctuary.Stores;
+﻿using System.Linq;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEditor;
+using Sanctuary.Attributes;
+using Sanctuary.Stores;
 
 namespace Sanctuary.Editor
 {
@@ -22,6 +22,21 @@ namespace Sanctuary.Editor
 
         // File filtering
         public static bool filterFiles = false;
+
+        // The scope for saving and loading data in the editor, allowing users to specify whether to save/load globally, per scene, or temporarily.
+        public static bool saveToGlobal = true;
+        public static bool saveToScene = false;
+        public static bool saveToTemporary = false;
+
+        /// <summary>
+        /// Determines if all save types (global, scene, and temporary) are enabled for saving and loading in the editor. 
+        /// </summary>
+        public static bool saveToAll => saveToGlobal && saveToScene && saveToTemporary;
+
+        /// <summary>
+        /// The menu path for accessing Sanctuary's preferences in Unity's Preferences window.
+        /// </summary>
+        public const string preferencesMenuPath = "Preferences/Sanctuary";
 
         /// <summary>
         /// The EditorPrefs key for saving the <see cref="loadOnEnter"/> preference.
@@ -44,9 +59,19 @@ namespace Sanctuary.Editor
         public const string filterFilesKey = "Sanctuary_FilterFiles";
 
         /// <summary>
-        /// The menu path for accessing Sanctuary's preferences in Unity's Preferences window.
+        /// The EditorPrefs key for saving the save to global preference.
         /// </summary>
-        public const string preferencesMenuPath = "Preferences/Sanctuary";
+        public const string saveToGlobalKey = "Sanctuary_SaveToGlobal";
+
+        /// <summary>
+        /// The EditorPrefs key for saving the save to scene preference.
+        /// </summary>
+        public const string saveToSceneKey = "Sanctuary_SaveToScene";
+
+        /// <summary>
+        /// The EditorPrefs key for saving the save to temporary preference.
+        /// </summary>
+        public const string saveToTemporaryKey = "Sanctuary_SaveToTemporary";
 
         static SanctuaryEditorProcessor()
         {
@@ -64,6 +89,36 @@ namespace Sanctuary.Editor
 
             // Load the saveOnExit preference from EditorPrefs
             SaveProvider.saveOnExit = EditorPrefs.GetBool(saveOnExitKey);
+
+            // If there is no key for showLocationWhenNamed, set it to false
+            if (!EditorPrefs.HasKey(showLocationKey)) EditorPrefs.SetBool(showLocationKey, false);
+
+            // Load the showLocationWhenNamed preference from EditorPrefs
+            showLocationWhenNamed = EditorPrefs.GetBool(showLocationKey);
+
+            // If there is no key for filterFiles, set it to false
+            if (!EditorPrefs.HasKey(filterFilesKey)) EditorPrefs.SetBool(filterFilesKey, false);
+
+            // Load the filterFiles preference from EditorPrefs
+            filterFiles = EditorPrefs.GetBool(filterFilesKey);
+
+            // If there is no key for saveToGlobal, set it to true
+            if (!EditorPrefs.HasKey(saveToGlobalKey)) EditorPrefs.SetBool(saveToGlobalKey, true);
+
+            // Load the saveToGlobal preference from EditorPrefs
+            saveToGlobal = EditorPrefs.GetBool(saveToGlobalKey);
+
+            // If there is no key for saveToScene, set it to false
+            if (!EditorPrefs.HasKey(saveToSceneKey)) EditorPrefs.SetBool(saveToSceneKey, false);
+
+            // Load the saveToScene preference from EditorPrefs
+            saveToScene = EditorPrefs.GetBool(saveToSceneKey);
+
+            // If there is no key for saveToTemporary, set it to false
+            if (!EditorPrefs.HasKey(saveToTemporaryKey)) EditorPrefs.SetBool(saveToTemporaryKey, false);
+
+            // Load the saveToTemporary preference from EditorPrefs
+            saveToTemporary = EditorPrefs.GetBool(saveToTemporaryKey);  
         }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -200,6 +255,41 @@ namespace Sanctuary.Editor
                 SettingsService.OpenUserPreferences(preferencesMenuPath);
             }
         }
+
+        [SanctuaryToolbarButton]
+        private static void SetSaveType()
+        {
+            // Create Open Saves Path Content
+            GUIContent openPathContent = EditorGUIUtility.IconContent("CustomTool");
+            openPathContent.tooltip = "Set Save Type for Editor Saving and Loading";
+
+            // Draw a button to create a context menu for selecting save types
+            if (GUILayout.Button(openPathContent, EditorStyles.toolbarButton))
+            {
+                // Create a new GenericMenu
+                GenericMenu menu = new GenericMenu();
+
+                // Add menu items for each save type option
+                menu.AddItem(new GUIContent("Save to Global"), saveToGlobal, () => { saveToGlobal = !saveToGlobal; });
+                menu.AddItem(new GUIContent("Save to Scene"), saveToScene, () => { saveToScene = !saveToScene; });
+                menu.AddItem(new GUIContent("Save to Temporary"), saveToTemporary, () => { saveToTemporary = !saveToTemporary; });
+
+                // Add a separator before the "Save to All" option
+                menu.AddSeparator("");
+
+                // Add a menu item for saving to all, which toggles all save types at once
+                menu.AddItem(new GUIContent("Save to All"), saveToAll, () =>
+                {
+                    bool newValue = !saveToAll;
+                    saveToGlobal = newValue;
+                    saveToScene = newValue;
+                    saveToTemporary = newValue;
+                });
+
+                // Show the context menu
+                menu.ShowAsContext();
+            }
+        }
     }
 
     /// <summary>
@@ -285,6 +375,45 @@ namespace Sanctuary.Editor
 
                 // Save the new value to EditorPrefs
                 EditorPrefs.SetBool(SanctuaryEditorProcessor.filterFilesKey, newFilterFiles);
+            }
+
+            // Save to Global toggle
+            bool newSaveToGlobal = EditorGUILayout.Toggle("Save to Global", SanctuaryEditorProcessor.saveToGlobal, GUILayout.ExpandWidth(true));
+
+            // Check if the value has changed
+            if (newSaveToGlobal != SanctuaryEditorProcessor.saveToGlobal) 
+            {
+                // Update the static field in SanctuaryEditorProcessor
+                SanctuaryEditorProcessor.saveToGlobal = newSaveToGlobal;
+
+                // Save the new value to EditorPrefs
+                EditorPrefs.SetBool(SanctuaryEditorProcessor.saveToGlobalKey, newSaveToGlobal);
+            }
+
+            // Save to Scene toggle
+            bool newSaveToScene = EditorGUILayout.Toggle("Save to Scene", SanctuaryEditorProcessor.saveToScene, GUILayout.ExpandWidth(true));
+
+            // Check if the value has changed
+            if (newSaveToScene != SanctuaryEditorProcessor.saveToScene)
+            {
+                // Update the static field in SanctuaryEditorProcessor
+                SanctuaryEditorProcessor.saveToScene = newSaveToScene;
+
+                // Save the new value to EditorPrefs
+                EditorPrefs.SetBool(SanctuaryEditorProcessor.saveToSceneKey, newSaveToScene);
+            }
+
+            // Save to Temporary toggle
+            bool newSaveToTemporary = EditorGUILayout.Toggle("Save to Temporary", SanctuaryEditorProcessor.saveToTemporary, GUILayout.ExpandWidth(true));
+
+            // Check if the value has changed
+            if (newSaveToTemporary != SanctuaryEditorProcessor.saveToTemporary)
+            {
+                // Update the static field in SanctuaryEditorProcessor
+                SanctuaryEditorProcessor.saveToTemporary = newSaveToTemporary;
+
+                // Save the new value to EditorPrefs
+                EditorPrefs.SetBool(SanctuaryEditorProcessor.saveToTemporaryKey, newSaveToTemporary);
             }
 
             // Create a foldout for the evaluated assemblies list
