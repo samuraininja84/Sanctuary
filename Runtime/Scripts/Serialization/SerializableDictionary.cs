@@ -113,5 +113,58 @@ namespace Sanctuary
             // Remove the key-value pair from the dictionary.
             Remove(key);
         }
+
+        /// <summary>
+        /// Gets the key at the specified index in the serialized lists.
+        /// </summary>
+        /// <param name="index">The index of the key to retrieve. Must be within the bounds of the serialized keys list.</param>
+        /// <returns>A key of type <typeparamref name="TKey"/> at the specified index.</returns>
+        public TKey GetKey(int index) => keys[index]; 
+        
+        /// <summary>
+        /// Gets the value at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the value to get.</param>
+        /// <returns>The value at the specified index.</returns>
+        public TValue GetValue(int index) => values[index];
+
+        /// <summary>
+        /// Gets the value associated with the specified key.
+        /// </summary>
+        /// <param name="key">The key of the value to get.</param>
+        /// <returns>The value associated with the specified key.</returns>
+        public TValue GetValue(TKey key) => this[key];
+
+        /// <summary>
+        /// Gets the key-value pair associated with the specified key.
+        /// </summary>
+        /// <param name="key">The key to locate.</param>
+        /// <param name="pair">When this method returns, contains the key-value pair associated with the specified key, if the key is found; otherwise, the default value. This parameter is passed uninitialized.</param>
+        /// <returns><see langword="true"/> if the key was found; otherwise, <see langword="false"/>.</returns>
+        public bool TryGetPair(TKey key, out KeyValuePair<TKey, TValue> pair)
+        {
+            // Attempt to retrieve the value associated with the specified key.
+            if (TryGetValue(key, out TValue value))
+            {
+                // If the key exists, create a KeyValuePair with the key and value.
+                pair = new KeyValuePair<TKey, TValue>(key, value);
+
+                // Return true to indicate that the key was found in the dictionary.
+                return true;
+            }
+
+            // If the key does not exist, set the output pair to default.
+            pair = default;
+
+            // Return false to indicate that the key was not found in the dictionary.
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the key-value pair at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the key-value pair to get.</param>
+        /// <returns>The key-value pair at the specified index.</returns>
+        public KeyValuePair<TKey, TValue> GetPair(int index) => new KeyValuePair<TKey, TValue>(keys[index], values[index]);
     }
 }

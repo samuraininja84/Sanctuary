@@ -184,7 +184,7 @@ namespace Sanctuary.Editor
     /// <remarks>This struct is used to define a relationship between a specific object type and an interface
     /// type. The <see cref="ObjectType"/> must be a type that derives from <see cref="Object"/>, and the  <see
     /// cref="InterfaceType"/> must be an interface.</remarks>
-    public struct InterfaceArgs
+    public readonly struct InterfaceArgs
     {
         /// <summary>
         /// Gets the <see cref="Type"/> of the object represented by this instance.
