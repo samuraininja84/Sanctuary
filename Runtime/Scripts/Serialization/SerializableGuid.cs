@@ -7,9 +7,8 @@ namespace Sanctuary
     /// Represents a serializable version of a globally unique identifier (GUID).
     /// </summary>
     /// <remarks>
-    /// This structure provides functionality for working with GUIDs in a format that can be serialized,
-    /// making it suitable for use in scenarios such as Unity or other environments where standard GUIDs are
-    /// not directly serializable. 
+    /// This structure provides functionality for working with GUIDs in a format that can be serialized, 
+    /// making it suitable for use in scenarios such as Unity or other environments where standard GUIDs are not directly serializable. 
     /// It supports conversion to and from <see cref="Guid"/>, as well as hexadecimal string representations.
     /// </remarks>
     [Serializable]
@@ -25,19 +24,21 @@ namespace Sanctuary
         /// </summary>
         public static SerializableGuid Empty => new(0, 0, 0, 0);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SerializableGuid"/> class with the specified components.
-        /// </summary>
-        /// <param name="val1">The first 32-bit unsigned integer component of the GUID.</param>
-        /// <param name="val2">The second 32-bit unsigned integer component of the GUID.</param>
-        /// <param name="val3">The third 32-bit unsigned integer component of the GUID.</param>
-        /// <param name="val4">The fourth 32-bit unsigned integer component of the GUID.</param>
-        public SerializableGuid(uint val1, uint val2, uint val3, uint val4)
+        // Implicit equality operators allow for direct comparison between SerializableGuid instances.
+        public static bool operator ==(SerializableGuid left, SerializableGuid right) => left.Equals(right);
+        public static bool operator !=(SerializableGuid left, SerializableGuid right) => !(left == right);
+        public static bool operator ==(SerializableGuid left, Guid right) => left.Equals(new SerializableGuid(right));
+        public static bool operator !=(SerializableGuid left, Guid right) => !left.Equals(new SerializableGuid(right));
+
+        // Implicit conversion operators allow for easy conversion between SerializableGuid and Guid types.
+        public static implicit operator Guid(SerializableGuid serializableGuid) => serializableGuid.ToGuid();
+        public static implicit operator SerializableGuid(Guid guid) => new SerializableGuid(guid);
+
+        // Implicit conversion from string to SerializableGuid
+        public static implicit operator SerializableGuid(string hexString)
         {
-            Part1 = val1;
-            Part2 = val2;
-            Part3 = val3;
-            Part4 = val4;
+            if (string.IsNullOrEmpty(hexString) || hexString.Length != 32) return Empty;
+            return FromHexString(hexString);
         }
 
         /// <summary>
@@ -55,12 +56,19 @@ namespace Sanctuary
         }
 
         /// <summary>
-        /// Replaces the current instance with the specified <see cref="SerializableGuid"/>.
+        /// Initializes a new instance of the <see cref="SerializableGuid"/> class with the specified components.
         /// </summary>
-        /// <remarks>This method creates a new <see cref="SerializableGuid"/> using the components of the
-        /// specified <paramref name="other"/>.</remarks>
-        /// <param name="other">The <see cref="SerializableGuid"/> instance to replace the current instance with.</param>
-        public void Replace(SerializableGuid other) => new SerializableGuid(other.Part1, other.Part2, other.Part3, other.Part4);
+        /// <param name="val1">The first 32-bit unsigned integer component of the GUID.</param>
+        /// <param name="val2">The second 32-bit unsigned integer component of the GUID.</param>
+        /// <param name="val3">The third 32-bit unsigned integer component of the GUID.</param>
+        /// <param name="val4">The fourth 32-bit unsigned integer component of the GUID.</param>
+        public SerializableGuid(uint val1, uint val2, uint val3, uint val4)
+        {
+            Part1 = val1;
+            Part2 = val2;
+            Part3 = val3;
+            Part4 = val4;
+        }
 
         /// <summary>
         /// Creates a new instance of <see cref="SerializableGuid"/> with a unique value.
@@ -79,7 +87,7 @@ namespace Sanctuary
         /// not exactly 32 characters long, returns <see cref="SerializableGuid.Empty"/>.</returns>
         public static SerializableGuid FromHexString(string hexString)
         {
-            // Check if the hex string is exactly 32 characters long, which is required for a valid GUID representation, if it is not, return Empty
+            // Check if the hex string is exactly 32 characters long, which is required for a valid GUID representation, if it is not, return Void
             if (hexString.Length != 32) return Empty;
 
             // Convert each 8-character segment of the hex string into a uint
@@ -93,15 +101,19 @@ namespace Sanctuary
         }
 
         /// <summary>
-        /// Converts the current object to its hexadecimal string representation.
+        /// Converts a <see cref="Guid"/> into a new instance of the <see cref="SerializableGuid"/> class.
         /// </summary>
-        /// <remarks>
-        /// The resulting string concatenates the hexadecimal representations of Part1, Part2, Part3, and Part4 in sequence, without separators.</remarks>
-        /// <returns>
-        /// A string containing the hexadecimal representation of the object's parts. 
-        /// Each part is formatted as an 8-character uppercase hexadecimal value.
-        /// </returns>
-        public string ToHexString() => $"{Part1:X8}{Part2:X8}{Part3:X8}{Part4:X8}";
+        /// <remarks>The provided <paramref name="guid"/> is split into four 32-bit unsigned integer parts to facilitate serialization and deserialization.</remarks>
+        /// <param name="guid">The <see cref="Guid"/> to be converted into a serializable format.</param>
+        public static SerializableGuid FromGuid(Guid guid) => new SerializableGuid(guid);
+
+        /// <summary>
+        /// Replaces the current instance with the specified <see cref="SerializableGuid"/>.
+        /// </summary>
+        /// <remarks>This method creates a new <see cref="SerializableGuid"/> using the components of the
+        /// specified <paramref name="other"/>.</remarks>
+        /// <param name="other">The <see cref="SerializableGuid"/> instance to replace the current instance with.</param>
+        public readonly void Replace(SerializableGuid other) => new SerializableGuid(other.Part1, other.Part2, other.Part3, other.Part4);
 
         /// <summary>
         /// Converts the current instance into a <see cref="Guid"/> representation.
@@ -110,15 +122,13 @@ namespace Sanctuary
         /// uses it to create a <see cref="Guid"/>. Ensure that the instance's components are properly initialized
         /// before calling this method.</remarks>
         /// <returns>A <see cref="Guid"/> constructed from the values of the instance.</returns>
-        public Guid ToGuid()
-        {
-            var bytes = new byte[16];
-            BitConverter.GetBytes(Part1).CopyTo(bytes, 0);
-            BitConverter.GetBytes(Part2).CopyTo(bytes, 4);
-            BitConverter.GetBytes(Part3).CopyTo(bytes, 8);
-            BitConverter.GetBytes(Part4).CopyTo(bytes, 12);
-            return new Guid(bytes);
-        }
+        public readonly Guid ToGuid() => this.ToSystemGuid();
+
+        /// <summary>
+        /// Determines whether the current instance represents a valid GUID (i.e., not all components are zero).
+        /// </summary>
+        /// <returns>A <see langword="true"/> if at least one of the components (Part1, Part2, Part3, Part4) is non-zero; otherwise, <see langword="false"/>.</returns>
+        public readonly bool IsValid() => Part1 != 0 || Part2 != 0 || Part3 != 0 || Part4 != 0;
 
         /// <summary>
         /// Determines whether the specified object is equal to the current instance.
@@ -126,7 +136,7 @@ namespace Sanctuary
         /// <param name="obj">The object to compare with the current instance.</param>
         /// <returns><see langword="true"/> if the specified object is a <see cref="SerializableGuid"/> and is equal to the
         /// current instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj) => obj is SerializableGuid guid && this.Equals(guid);
+        public override readonly bool Equals(object obj) => obj is SerializableGuid guid && this.Equals(guid);
 
         /// <summary>
         /// Determines whether the current instance is equal to the specified <see cref="SerializableGuid"/>.
@@ -134,7 +144,7 @@ namespace Sanctuary
         /// <param name="other">The <see cref="SerializableGuid"/> to compare with the current instance.</param>
         /// <returns><see langword="true"/> if the current instance is equal to the specified <see cref="SerializableGuid"/>; 
         /// otherwise, <see langword="false"/>.</returns>
-        public bool Equals(SerializableGuid other) => Part1 == other.Part1 && Part2 == other.Part2 && Part3 == other.Part3 && Part4 == other.Part4;
+        public readonly bool Equals(SerializableGuid other) => Part1 == other.Part1 && Part2 == other.Part2 && Part3 == other.Part3 && Part4 == other.Part4;
 
         /// <summary>
         /// Generates a hash code for the current object based on its constituent parts.
@@ -143,29 +153,17 @@ namespace Sanctuary
         /// cref="Part2"/>, <see cref="Part3"/>, and <see cref="Part4"/>. This method is suitable for use in hashing
         /// algorithms and data structures such as hash tables.</remarks>
         /// <returns>An integer representing the hash code for the current object.</returns>
-        public override int GetHashCode() => HashCode.Combine(Part1, Part2, Part3, Part4);
+        public override readonly int GetHashCode() => HashCode.Combine(Part1, Part2, Part3, Part4);
 
         /// <summary>
-        /// Returns a string representation of the current object in hexadecimal format.
+        /// Converts the current object to its hexadecimal string representation.
         /// </summary>
-        /// <returns>A string containing the hexadecimal representation of the object.</returns>
-        public override string ToString() => ToHexString();
-
-        // Implicit conversion operators allow for easy conversion between SerializableGuid and Guid types.
-        public static implicit operator Guid(SerializableGuid serializableGuid) => serializableGuid.ToGuid();
-        public static implicit operator SerializableGuid(Guid guid) => new SerializableGuid(guid);
-
-        // Implicit conversion from string to SerializableGuid
-        public static implicit operator SerializableGuid(string hexString)
-        {
-            if (string.IsNullOrEmpty(hexString) || hexString.Length != 32) return Empty;
-            return FromHexString(hexString);
-        }
-
-        // Implicit equality operators allow for direct comparison between SerializableGuid instances.
-        public static bool operator ==(SerializableGuid left, SerializableGuid right) => left.Equals(right);
-        public static bool operator !=(SerializableGuid left, SerializableGuid right) => !(left == right);
-        public static bool operator ==(SerializableGuid left, Guid right) => left.Equals(new SerializableGuid(right));
-        public static bool operator !=(SerializableGuid left, Guid right) => !left.Equals(new SerializableGuid(right));
+        /// <remarks>
+        /// The resulting string concatenates the hexadecimal representations of Part1, Part2, Part3, and Part4 in sequence, without separators.</remarks>
+        /// <returns>
+        /// A string containing the hexadecimal representation of the object's parts. 
+        /// Each part is formatted as an 8-character uppercase hexadecimal value.
+        /// </returns>
+        public override readonly string ToString() => $"{Part1:X8}{Part2:X8}{Part3:X8}{Part4:X8}";
     }
 }

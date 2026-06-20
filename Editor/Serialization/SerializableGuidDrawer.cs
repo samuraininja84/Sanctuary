@@ -11,7 +11,7 @@ namespace Sanctuary.Editor
     {
         private static readonly string[] GuidParts = { "Part1", "Part2", "Part3", "Part4" };
 
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) 
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             // Begin the property GUI with the label
             EditorGUI.BeginProperty(position, label, property);
@@ -30,7 +30,7 @@ namespace Sanctuary.Editor
             position.width -= EditorGUIUtility.labelWidth + buttonWidth + gap;
 
             // Ensure the property has the expected structure
-            if (GetGuidParts(property).All(x => x != null)) 
+            if (GetGuidParts(property).All(x => x != null))
             {
                 // Get the GUID parts as a string
                 string guidString = BuildGuidString(GetGuidParts(property));
@@ -44,17 +44,17 @@ namespace Sanctuary.Editor
                 // Enable the GUI again
                 EditorGUI.EndDisabledGroup();
             }
-            else 
+            else
             {
                 // If the GUID is not initialized, display a warning message
                 EditorGUI.SelectableLabel(position, "GUID Not Initialized");
             }
 
             // Check for right-click
-            bool hasClicked = Event.current.type == EventType.MouseUp  && Event.current.button == 1;
+            bool hasClicked = Event.current.type == EventType.MouseUp && Event.current.button == 1;
 
             // Check if the click was on the menu button
-            if (hasClicked && position.Contains(Event.current.mousePosition)) 
+            if (hasClicked && position.Contains(Event.current.mousePosition))
             {
                 // Show the context menu
                 ShowContextMenu(property);
@@ -88,11 +88,12 @@ namespace Sanctuary.Editor
         }
 
         /// <summary>
-        /// Displays a context menu with options for managing the GUID associated with the specified serialized
-        /// property.
+        /// Displays a context menu with options for managing the GUID associated with the specified serialized property.
         /// </summary>
-        /// <remarks>The context menu provides options to copy, reset, or regenerate the GUID associated
-        /// with the given property. Selecting an option will invoke the corresponding action.</remarks>
+        /// <remarks>
+        /// The context menu provides options to copy, reset, or regenerate the GUID associated with the given property. 
+        /// Selecting an option will invoke the corresponding action.
+        /// </remarks>
         /// <param name="property">The serialized property for which the context menu is displayed. This property must represent a valid GUID.</param>
         private void ShowContextMenu(SerializedProperty property)
         {
@@ -108,9 +109,10 @@ namespace Sanctuary.Editor
         /// <summary>
         /// Copies the GUID associated with the specified serialized property to the system clipboard.
         /// </summary>
-        /// <remarks>This method constructs a GUID string from the parts of the specified serialized
-        /// property and copies it to the system clipboard. If any of the GUID parts are null, the method does not
-        /// perform any operation. Additionally, the copied GUID is logged to the console for reference.</remarks>
+        /// <remarks>
+        /// This method constructs a GUID string from the parts of the specified serialized property and copies it to the system clipboard. 
+        /// If any of the GUID parts are null, the method does not perform any operation. Additionally, the copied GUID is logged to the console for reference.
+        /// </remarks>
         /// <param name="property">The serialized property containing the GUID parts to be copied. The property must contain valid GUID parts.</param>
         private void CopyGuid(SerializedProperty property)
         {
@@ -130,12 +132,13 @@ namespace Sanctuary.Editor
         /// <summary>
         /// Pastes a GUID from the clipboard into the specified serialized property.
         /// </summary>
-        /// <remarks>This method retrieves a GUID string from the system clipboard, validates its format,
-        /// and splits it into parts to assign to the serialized property. The GUID must be a 32-character hexadecimal
-        /// string (containing digits and uppercase letters A-F). If the clipboard does not contain a valid GUID, the
-        /// method logs a warning and does not modify the property.  Ensure that the serialized property is properly
-        /// structured to store GUID values before calling this method. The method applies changes to the serialized
-        /// object after successfully pasting the GUID.</remarks>
+        /// <remarks>
+        /// This method retrieves a GUID string from the system clipboard, validates its format, and splits it into parts to assign to the serialized property. 
+        /// The GUID must be a 32-character hexadecimal string (containing digits and uppercase letters A-F). 
+        /// If the clipboard does not contain a valid GUID, the method logs a warning and does not modify the property. 
+        /// Ensure that the serialized property is properly structured to store GUID values before calling this method. 
+        /// The method applies changes to the serialized object after successfully pasting the GUID.
+        /// </remarks>
         /// <param name="property">The serialized property representing the GUID. The property must consist of multiple parts that can store
         /// the GUID values.</param>
         private void PasteGuid(SerializedProperty property)
@@ -176,9 +179,11 @@ namespace Sanctuary.Editor
         /// <summary>
         /// Resets the GUID associated with the specified serialized property.
         /// </summary>
-        /// <remarks>This method displays a confirmation dialog to the user before resetting the GUID. If
-        /// the user confirms, all parts of the GUID are set to zero, and the changes are applied to the serialized
-        /// object. A log message is written to the console upon successful reset.</remarks>
+        /// <remarks>
+        /// This method displays a confirmation dialog to the user before resetting the GUID. 
+        /// If the user confirms, all parts of the GUID are set to zero, and the changes are applied to the serialized object. 
+        /// A log message is written to the console upon successful reset.
+        /// </remarks>
         /// <param name="property">The <see cref="SerializedProperty"/> representing the GUID to reset.  This property must contain valid GUID
         /// parts for the operation to succeed.</param>
         private void ResetGuid(SerializedProperty property)
@@ -202,12 +207,12 @@ namespace Sanctuary.Editor
         /// <summary>
         /// Regenerates the GUID associated with the specified serialized property.
         /// </summary>
-        /// <remarks>This method prompts the user with a confirmation dialog before regenerating the GUID.
-        /// If the user confirms, a new GUID is generated, and its parts are assigned to the corresponding fields of the
-        /// serialized property. Changes are applied to the serialized object, and a log message is written to the
-        /// console indicating the successful regeneration.</remarks>
-        /// <param name="property">The serialized property whose GUID will be regenerated. This property must represent a GUID split into
-        /// parts.</param>
+        /// <remarks>
+        /// This method prompts the user with a confirmation dialog before regenerating the GUID.
+        /// If the user confirms, a new GUID is generated, and its parts are assigned to the corresponding fields of the serialized property. 
+        /// Changes are applied to the serialized object, and a log message is written to the console indicating the successful regeneration.
+        /// </remarks>
+        /// <param name="property">The serialized property whose GUID will be regenerated. This property must represent a GUID split into parts.</param>
         private void RegenerateGuid(SerializedProperty property)
         {
             // Create a confirmation dialog before regenerating the GUID
@@ -276,11 +281,9 @@ namespace Sanctuary.Editor
         }
 
         /// <summary>
-        /// Constructs a GUID string by combining the hexadecimal representations of the provided serialized property
-        /// values.
+        /// Constructs a GUID string by combining the hexadecimal representations of the provided serialized property values.
         /// </summary>
-        /// <param name="guidParts">An array of serialized properties representing the parts of the GUID. The array must contain exactly four
-        /// elements, each corresponding to a 32-bit unsigned integer value.</param>
+        /// <param name="guidParts">An array of serialized properties representing the parts of the GUID. The array must contain exactly four elements, each corresponding to a 32-bit unsigned integer value.</param>
         /// <returns>A string representation of the GUID, formatted as a sequence of four 8-character hexadecimal segments.</returns>
         private static string BuildGuidString(SerializedProperty[] guidParts)
         {
@@ -295,13 +298,12 @@ namespace Sanctuary.Editor
         /// <summary>
         /// Retrieves an array of serialized properties corresponding to the individual parts of a GUID.
         /// </summary>
-        /// <remarks>This method assumes that the provided <paramref name="property"/> contains child
-        /// properties named according to the predefined GUID parts. If any part is missing, the corresponding element
-        /// in the returned array will be null.</remarks>
-        /// <param name="property">The serialized property containing the GUID structure. This property must have child properties matching the
-        /// expected GUID parts.</param>
-        /// <returns>An array of <see cref="SerializedProperty"/> objects representing the individual parts of the GUID. The
-        /// array will contain one element for each part of the GUID.</returns>
+        /// <remarks>
+        /// This method assumes that the provided <paramref name="property"/> contains child properties named according to the predefined GUID parts.
+        /// If any part is missing, the corresponding element in the returned array will be null.
+        /// </remarks>
+        /// <param name="property">The serialized property containing the GUID structure. This property must have child properties matching the expected GUID parts.</param>
+        /// <returns>An array of <see cref="SerializedProperty"/> objects representing the individual parts of the GUID. The array will contain one element for each part of the GUID.</returns>
         private static SerializedProperty[] GetGuidParts(SerializedProperty property)
         {
             // Intialize am array to hold the GUID parts
