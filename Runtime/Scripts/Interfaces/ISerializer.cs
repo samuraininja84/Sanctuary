@@ -1,10 +1,12 @@
+using System.Threading.Tasks;
+
 namespace Sanctuary 
 {
     public interface ISerializer 
     {
-        string Serialize<T>(T obj);
+        Task Serialize(ISaveData data, string folderPath, string filePath);
 
-        T Deserialize<T>(string file);
+        Task<ISaveData> Deserialize(string filePath);
 
         string FileExtension();
     }

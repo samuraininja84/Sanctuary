@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Sanctuary.Utility;
+using Sanctuary.Serializers;
 
 namespace Sanctuary.Loaders
 {
@@ -23,7 +24,7 @@ namespace Sanctuary.Loaders
         private readonly string _directory;
 
         private ProfileData _profile;
-        public readonly ISerializer serializer;
+        public readonly ISerializer _serializer;
 
         private string _filePath = string.Empty;
         private string _folderPath = string.Empty;
@@ -53,6 +54,9 @@ namespace Sanctuary.Loaders
 
             // Set the file path to the specified file name with a .data extension.
             _filePath = Path.Combine(_folderPath, fileName + _fileExtension);
+
+            // Initialize the binary serializer for saving and loading data.
+            _serializer = new BinarySerializer();
 
             // Set the name to a more user-friendly format.
             _name = $"File Save \"{fileName}\"";
@@ -129,50 +133,8 @@ namespace Sanctuary.Loaders
             // Acquire the lock.
             await _lock.WaitAsync();
 
-            // Write the data to the file asynchronously.
-            await Task.Run
-            (
-                () => 
-                {
-                    // Ensure the folder path exists.
-                    if (!Directory.Exists(_folderPath)) Directory.CreateDirectory(_folderPath);
-
-                    // Create a file stream to write to the file.
-                    using var saveStream = new FileStream(_filePath, FileMode.Create);
-
-                    // Create a binary writer to write to the file.
-                    using var writer = new BinaryWriter(saveStream, Encoding.UTF8, false);
-
-                    // Write each chunk of data.
-                    foreach (var chunkId in data.GetChunkIDs()) 
-                    {
-                        // Get the chunk data.
-                        var chunk = data.GetChunk(chunkId);
-
-                        // Write a true boolean to indicate a chunk follows.
-                        writer.Write(true);
-
-                        // Write the chunk ID and the number of key-value pairs in the chunk.
-                        writer.Write(chunkId);
-
-                        // Write the number of key-value pairs in the chunk.
-                        writer.Write(chunk.Count);
-
-                        // Write each key-value pair in the chunk.
-                        foreach (var (key, value) in chunk) 
-                        {
-                            // Write the key.to the file.
-                            writer.Write(key);
-
-                            // Write the value to the file.
-                            writer.Write(value);
-                        }
-                    }
-
-                    // Write a false boolean to indicate the end of chunks.
-                    writer.Write(false);
-                }
-            );
+            // Write the data to the file asynchronously using the serializer.
+            await _serializer.Serialize(data, _folderPath, _filePath);
 
             // Create a backup of the file if the setting is enabled.
             if (_backupAllowed) File.Copy(_filePath, GetBackupFilePath(), true);
@@ -223,30 +185,8 @@ namespace Sanctuary.Loaders
                 }
             }
 
-            // Create a file stream to read from the file.
-            await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-            // Create a binary reader to read from the file.
-            using var reader = new BinaryReader(loadStream, Encoding.UTF8, false);
-
-            // Create a new save data object to hold the loaded data.
-            var save = new SaveData();
-
-            // Read each chunk of data.
-            while (reader.ReadBoolean()) 
-            {
-                // Read the chunk ID.
-                var chunkId = reader.ReadString();
-
-                // Get the chunk data using the chunk ID.
-                var chunk = save.GetChunk(chunkId);
-
-                // Read the number of key-value pairs in the chunk.
-                var count = reader.ReadInt32();
-
-                // Read each key-value pair in the chunk and add it to the chunk.
-                for (var i = 0; i < count; i++) chunk.Add(reader.ReadString(), reader.ReadString());
-            }
+            // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.`
+            var save = await _serializer.Deserialize(filePath);
 
             // Release the lock.
             _lock.Release();
