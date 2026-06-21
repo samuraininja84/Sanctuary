@@ -19,7 +19,7 @@ namespace Sanctuary.Loaders
         /// Sets whether to create a backup file when saving.
         /// </summary>
         /// <param name="createBackup">The flag indicating whether to create a backup file.</param>
-        /// <returns>The current instance of <see cref="FileSaveLoader"/> with the updated backup setting.</returns>
+        /// <returns>The current instance of <see cref="ISaveLoader"/> with the updated backup setting.</returns>
         virtual ISaveLoader WithBackup(bool createBackup) => this;
 
         /// <summary>

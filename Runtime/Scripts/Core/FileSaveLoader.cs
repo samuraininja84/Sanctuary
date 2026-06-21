@@ -8,12 +8,15 @@ using UnityEngine;
 namespace Sanctuary.Loaders
 {
     /// <summary>
-    /// Stores saves in the persistent data path. 
+    /// Default implementation of <see cref="ISaveLoader"/> that saves and loads data to and from files on the local file system.
     /// </summary>
     /// <remarks>
-    /// The saves are stored locally in a `Save Data` directory located in the persistent data path.
+    /// This class provides a thread-safe implementation for saving and loading data using a semaphore to ensure only one operation is performed at a time.
+    /// Used as a default save loader for the <see cref="SaveProvider"/> and can be easily customized by changing the file extension, backup settings, and profile ID through method chaining.
+    /// The file structure is organized based on the profile's scope and ID, allowing for easy management of multiple save files.
+    /// Defaulted to when a <see cref="BaseFileSaveLoader"/> is not specified on the <see cref="SaveProvider"/>. 
     /// </remarks>
-    public class FileSaveLoader : ISaveLoader 
+    public sealed class FileSaveLoader : ISaveLoader 
     {
         private readonly string _name;
         private readonly string _directory;
@@ -36,23 +39,13 @@ namespace Sanctuary.Loaders
         /// </summary>
         private readonly SemaphoreSlim _lock = new(1);
 
-        /// <summary>
-        /// Represents the file extension used for backup files.
-        /// </summary>
-        public const string BackupFileExtension = ".bak";
-
-        /// <summary>
-        /// Represents the default folder name used for saving files.
-        /// </summary>
-        public const string DefaultFolderName = "Save Data";
-
         public FileSaveLoader(ProfileData profile)
         {
             // Store the profile.
             _profile = profile;
 
             // Set the directory to a "Save Data" folder in the persistent data path.
-            _directory = Path.Combine(Application.persistentDataPath, DefaultFolderName);
+            _directory = Path.Combine(Application.persistentDataPath, SaveLoaderDefaults.DefaultFolderName);
 
             // Get the scoped directory based on the profile scope and ID.
             _folderPath = _profile.GetScopedPath(_directory);
@@ -69,7 +62,7 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <param name="extension">The file extension to set.</param>
         /// <returns>An instance of <see cref="ISaveLoader"/> with the specified file extension set.</returns>
-        public ISaveLoader WithExtension(string extension) 
+        public ISaveLoader WithExtension(string extension)
         {
             // Update the file extension.
             _fileExtension = extension;
@@ -149,6 +142,9 @@ namespace Sanctuary.Loaders
                     // Create a binary writer to write to the file.
                     using var writer = new BinaryWriter(saveStream, Encoding.UTF8, false);
 
+                    //// Create a stream writer to write to the file.
+                    //using var writer = new StreamWriter(saveStream, Encoding.UTF8, 1024, false);
+
                     // Write each chunk of data.
                     foreach (var chunkId in data.GetChunkIDs()) 
                     {
@@ -204,7 +200,7 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <param name="filePath">The file path to load the save data from.</param>
         /// <returns>A task that represents the asynchronous load operation. The task result contains the loaded save data.</returns>
-        public virtual async Task<ISaveData> LoadAt(string filePath) 
+        public async Task<ISaveData> LoadAt(string filePath) 
         {
             // Acquire the lock.
             await _lock.WaitAsync();
@@ -376,7 +372,7 @@ namespace Sanctuary.Loaders
         /// Deletes the save file.
         /// </summary>
         /// <returns>A task that represents the asynchronous delete operation.</returns>
-        public async Task Delete() 
+        public async Task Delete()
         {
             // Acquire the lock.
             await _lock.WaitAsync();
@@ -459,7 +455,7 @@ namespace Sanctuary.Loaders
         private Task<int[]> ExistingSaveIDs()
         {
             // Construct the path to the existing saves directory.
-            string existingSavesPath = Path.Combine(Application.persistentDataPath, DefaultFolderName);
+            string existingSavesPath = Path.Combine(Application.persistentDataPath, SaveLoaderDefaults.DefaultFolderName);
 
             // Ensure the directory exists.
             if (!Directory.Exists(existingSavesPath)) return Task.FromResult(Array.Empty<int>());
@@ -489,6 +485,6 @@ namespace Sanctuary.Loaders
         /// Gets the backup file path by appending the backup file extension to the original file path.
         /// </summary>
         /// <returns>The backup file path.</returns>
-        private string GetBackupFilePath() => _filePath + BackupFileExtension;
+        private string GetBackupFilePath() => _filePath + SaveLoaderDefaults.BackupFileExtension;
     }
 }

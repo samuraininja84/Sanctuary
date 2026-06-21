@@ -83,7 +83,7 @@ namespace Sanctuary.Editor
         private bool HasSaves => SaveControllerBase.ExistingSaves.Count > 0;
         private bool ShowLocation => SanctuaryEditorProcessor.showLocationWhenNamed;
         private bool FilterFiles => SanctuaryEditorProcessor.filterFiles;
-        private string ExistingSavesPath => Path.Combine(Application.persistentDataPath, FileSaveLoader.DefaultFolderName);
+        private string ExistingSavesPath => Path.Combine(Application.persistentDataPath, SaveLoaderDefaults.DefaultFolderName);
         public static bool SaveToGlobal => SanctuaryEditorProcessor.saveToGlobal;
         public static bool SaveToScene => SanctuaryEditorProcessor.saveToScene;
         public static bool SaveToTemporary => SanctuaryEditorProcessor.saveToTemporary;
