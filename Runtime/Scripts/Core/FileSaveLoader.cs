@@ -144,9 +144,6 @@ namespace Sanctuary.Loaders
                     // Create a binary writer to write to the file.
                     using var writer = new BinaryWriter(saveStream, Encoding.UTF8, false);
 
-                    //// Create a stream writer to write to the file.
-                    //using var writer = new StreamWriter(saveStream, Encoding.UTF8, 1024, false);
-
                     // Write each chunk of data.
                     foreach (var chunkId in data.GetChunkIDs()) 
                     {
