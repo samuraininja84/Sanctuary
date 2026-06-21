@@ -4,6 +4,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using Sanctuary.Utility;
+using Sanctuary.Extensions;
 
 namespace Sanctuary.Loaders
 {

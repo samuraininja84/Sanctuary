@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Sanctuary
+namespace Sanctuary.Utility
 {
     /// <summary>
     /// Provides utility methods for encoding and decoding <see cref="Texture2D"/> objects to and from base64 strings.
@@ -41,10 +41,9 @@ namespace Sanctuary
 
             // Create a new texture and load the image from the byte array
             Texture2D previewImage = new Texture2D(0, 0);
-            if (ImageConversion.LoadImage(previewImage, previewBytes))
-            {
-                return previewImage;
-            }
+
+            // Load the image data into the texture and return it if successful
+            if (ImageConversion.LoadImage(previewImage, previewBytes)) return previewImage;
 
             // Return null if the image could not be loaded
             return null;

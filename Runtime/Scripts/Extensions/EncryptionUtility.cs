@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace Sanctuary
+namespace Sanctuary.Utility
 {
     /// <summary>
     /// Provides utility methods for encryption and decryption of text, as well as key generation and encryption state detection.
@@ -18,9 +18,11 @@ namespace Sanctuary
         /// <summary>
         /// A marker string used to identify encrypted data processed by the encryption utility.
         /// </summary>
-        /// <remarks>This marker is prefixed to encrypted data to distinguish it from unencrypted content.
-        /// It is intended for internal use within the encryption utility.</remarks>
-        private static string EncryptionMarker = "EncryptionUtility:";
+        /// <remarks>
+        /// This marker is prefixed to encrypted data to distinguish it from unencrypted content.
+        /// It is intended for internal use within the encryption utility.
+        /// </remarks>
+        private const string EncryptionMarker = "EncryptionUtility:";
 
         /// <summary>
         /// Generates a random encryption key using a cryptographic random number generator.
@@ -49,10 +51,11 @@ namespace Sanctuary
         /// <summary>
         /// Encrypts the specified plain text using the provided encryption key.
         /// </summary>
-        /// <remarks>This method uses AES encryption with a key and initialization vector derived from the
-        /// provided encryption key. The encryption process includes converting the plain text to Unicode bytes,
-        /// encrypting the bytes, and encoding the result as a base64 string. The caller is responsible for ensuring the
-        /// encryption key is securely managed.</remarks>
+        /// <remarks>
+        /// This method uses AES encryption with a key and initialization vector derived from the provided encryption key. 
+        /// The encryption process includes converting the plain text to Unicode bytes, encrypting the bytes, and encoding the result as a base64 string. 
+        /// The caller is responsible for ensuring the encryption key is securely managed.
+        /// </remarks>
         /// <param name="plainText">The text to be encrypted. Cannot be null or empty.</param>
         /// <param name="encryptionKey">The encryption key used to derive the cryptographic key and initialization vector. Must be a non-empty
         /// string. The strength of the encryption depends on the quality of this key.</param>
@@ -95,9 +98,10 @@ namespace Sanctuary
         /// <summary>
         /// Decrypts the specified cipher text using the provided encryption key.
         /// </summary>
-        /// <remarks>The method expects the cipher text to be Base64-encoded and may include a specific
-        /// prefix that is removed during decryption. Ensure that the encryption key provided matches the key used
-        /// during encryption; otherwise, decryption will fail.</remarks>
+        /// <remarks>
+        /// The method expects the cipher text to be Base64-encoded and may include a specific prefix that is removed during decryption. 
+        /// Ensure that the encryption key provided matches the key used during encryption; otherwise, decryption will fail.
+        /// </remarks>
         /// <param name="cipherText">The encrypted text to be decrypted. Must be a Base64-encoded string.</param>
         /// <param name="encryptionKey">The key used to decrypt the cipher text. Must match the key used during encryption.</param>
         /// <returns>The decrypted plain text as a string.</returns>

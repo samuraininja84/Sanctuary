@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Sanctuary
+namespace Sanctuary.Serializers
 {
     public class MarkdownSerializer : ISerializer 
     {

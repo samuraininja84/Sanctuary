@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sanctuary.Stores;
 using Sanctuary.Loaders;
+using Sanctuary.Extensions;
 
 namespace Sanctuary
 {

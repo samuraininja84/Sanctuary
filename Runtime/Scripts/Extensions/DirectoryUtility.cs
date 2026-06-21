@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-namespace Sanctuary 
+namespace Sanctuary.Utility
 {
     /// <summary>
     /// Provides utility methods for managing and cleaning up directories, including deleting files with specific names and extensions, and determining the contents of a directory.

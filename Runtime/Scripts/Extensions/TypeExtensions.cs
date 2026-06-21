@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace Sanctuary
+namespace Sanctuary.Extensions
 {
     /// <summary>
     /// Provides extension methods for working with <see cref="Type"/> objects,  including methods to check inheritance or implementation relationships.

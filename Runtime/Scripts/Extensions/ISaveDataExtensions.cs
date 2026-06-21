@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Sanctuary
+namespace Sanctuary.Extensions
 {
     public static class ISaveDataExtensions
     {

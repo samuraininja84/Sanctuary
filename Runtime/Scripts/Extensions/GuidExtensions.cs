@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sanctuary
+namespace Sanctuary.Extensions
 {
     /// <summary>
     /// Provides extension methods for converting between <see cref="Guid"/> and <c>SerializableGuid</c>.
