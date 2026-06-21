@@ -1,9 +1,8 @@
-using Sanctuary.Extensions;
-using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Sanctuary.Extensions;
 
 namespace Sanctuary.Serializers
 {
