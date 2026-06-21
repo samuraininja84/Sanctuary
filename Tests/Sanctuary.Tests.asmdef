@@ -1,0 +1,19 @@
+{
+    "name": "Sanctuary.Tests",
+    "rootNamespace": "Sanctuary.Tests",
+    "references": [
+        "GUID:05d07bea75f65914687cbc684dd0dd88",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
