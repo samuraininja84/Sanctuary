@@ -12,73 +12,87 @@ namespace Sanctuary.Tests
         public const string TestChunkId = "Tests";
         public const string TestObjectId = "5561391260475779002";
 
-        [Test]
-        public async Task TestBinary() => await TestSerializer(BinarySerializer.Default, "Binary", true);
+        #region Binary Serializer Tests
 
         [Test]
-        public async Task TestBinaryCompressed() => await TestSerializer(BinarySerializer.Compressed, "BinaryCompressed", true);
+        public async Task TestBinary() => await TestSerializer(BinarySerializer.Default, "Binary", false, true);
 
         [Test]
-        public async Task TestBinaryBackup() => await TestSerializer(BinarySerializer.Backup, "BinaryBackup", true);
+        public async Task TestBinaryCorruption() => await TestSerializer(BinarySerializer.Backup, "BinaryCorruption", true, true);
 
         [Test]
-        public async Task TestBinaryBackupCompressed() => await TestSerializer(BinarySerializer.BackupCompressed, "BinaryBackupCompressed", true);
+        public async Task TestBinaryCompressed() => await TestSerializer(BinarySerializer.Compressed, "BinaryCompressed", false, true);
 
         [Test]
-        public async Task TestBinaryBackupEncrypted() => await TestSerializer(BinarySerializer.BackupEncrypted, "BinaryBackupEncrypted", true);
+        public async Task TestBinaryBackup() => await TestSerializer(BinarySerializer.Backup, "BinaryBackup", false, true);
 
         [Test]
-        public async Task TestBinaryCompressionEncrypted() => await TestSerializer(BinarySerializer.CompressionEncrypted, "BinaryCompressionEncrypted", true);
+        public async Task TestBinaryBackupCompressed() => await TestSerializer(BinarySerializer.BackupCompressed, "BinaryBackupCompressed", false, true);
 
         [Test]
-        public async Task TestBinaryAll() => await TestSerializer(BinarySerializer.All, "BinaryAll", true);
+        public async Task TestBinaryBackupEncrypted() => await TestSerializer(BinarySerializer.BackupEncrypted, "BinaryBackupEncrypted", false, true);
+
+        [Test]
+        public async Task TestBinaryCompressionEncrypted() => await TestSerializer(BinarySerializer.CompressionEncrypted, "BinaryCompressionEncrypted", false, true);
+
+        [Test]
+        public async Task TestBinaryAll() => await TestSerializer(BinarySerializer.All, "BinaryAll", false, true);
 
         #region Other Binary Serializer Tests
 
         [Test]
-        public async Task TestBinaryData() => await TestSerializer(BinarySerializer.CreateAsData(SerializationOptions.None), "BinaryData", true);
+        public async Task TestBinaryData() => await TestSerializer(BinarySerializer.CreateAsData(SerializationOptions.None), "BinaryData", false, true);
 
         #endregion
+
+        #endregion
+
+        #region Json Serializer Tests
 
 #if UNITY_NEWTONSOFT_JSON
 
         [Test]
-        public async Task TestJson() => await TestSerializer(JsonSerializer.Default, "Json", true);
+        public async Task TestJson() => await TestSerializer(JsonSerializer.Default, "Json", false, true);
 
         [Test]
-        public async Task TestJsonCompressed() => await TestSerializer(JsonSerializer.Compressed, "JsonCompressed", true);
+        public async Task TestJsonCorruption() => await TestSerializer(JsonSerializer.Backup, "JsonCorruption", true, true);
 
         [Test]
-        public async Task TestJsonBackup() => await TestSerializer(JsonSerializer.Backup, "JsonBackup", true);
+        public async Task TestJsonCompressed() => await TestSerializer(JsonSerializer.Compressed, "JsonCompressed", false, true);
 
         [Test]
-        public async Task TestJsonBackupCompressed() => await TestSerializer(JsonSerializer.BackupCompressed, "JsonBackupCompressed", true);
+        public async Task TestJsonBackup() => await TestSerializer(JsonSerializer.Backup, "JsonBackup", false, true);
 
         [Test]
-        public async Task TestJsonBackupEncrypted() => await TestSerializer(JsonSerializer.BackupEncrypted, "JsonBackupEncrypted", true);
+        public async Task TestJsonBackupCompressed() => await TestSerializer(JsonSerializer.BackupCompressed, "JsonBackupCompressed", false, true);
 
         [Test]
-        public async Task TestJsonCompressionEncrypted() => await TestSerializer(JsonSerializer.CompressionEncrypted, "JsonCompressionEncrypted", true);
+        public async Task TestJsonBackupEncrypted() => await TestSerializer(JsonSerializer.BackupEncrypted, "JsonBackupEncrypted", false, true);
 
         [Test]
-        public async Task TestJsonAll() => await TestSerializer(JsonSerializer.All, "JsonAll", true);
+        public async Task TestJsonCompressionEncrypted() => await TestSerializer(JsonSerializer.CompressionEncrypted, "JsonCompressionEncrypted", false, true);
+
+        [Test]
+        public async Task TestJsonAll() => await TestSerializer(JsonSerializer.All, "JsonAll", false, true);
 
         #region Other Json Serializer Tests
 
         [Test]
-        public async Task TestJsonData() => await TestSerializer(JsonSerializer.CreateAsData(SerializationOptions.None), "Data", true);
+        public async Task TestJsonData() => await TestSerializer(JsonSerializer.CreateAsData(SerializationOptions.None), "Data", false, true);
 
         [Test]
-        public async Task TestMarkdown() => await TestSerializer(JsonSerializer.CreateAsMarkDown(SerializationOptions.None), "Markdown", true);
+        public async Task TestMarkdown() => await TestSerializer(JsonSerializer.CreateAsMarkDown(SerializationOptions.None), "Markdown", false, true);
 
         [Test]
-        public async Task TestText() => await TestSerializer(JsonSerializer.CreateAsText(SerializationOptions.None), "Text", true);
+        public async Task TestText() => await TestSerializer(JsonSerializer.CreateAsText(SerializationOptions.None), "Text", false, true);
 
         #endregion
 
 #endif
 
-        public async Task TestSerializer(ISerializer serializer, string fileName, bool deleteAfterTest = false)
+        #endregion
+
+        public async Task TestSerializer(ISerializer serializer, string fileName, bool testBackups = false, bool deleteAfterTest = false)
         {
             // Create a new instance of the save data
             ISaveData saveData = SaveData.Empty;
@@ -106,6 +120,35 @@ namespace Sanctuary.Tests
 
             // Log the file path for debugging purposes
             Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");
+
+            // If testBackups is true, check if a backup file was created and log the result
+            if (testBackups)
+            {
+                // Set the backup file path for the save data
+                string backupFilePath = filePath + SerializationExtensions.BackupFileExtension;
+
+                // Try to check if the backup file exists and log the result
+                try
+                {
+                    // Check if the backup file exists
+                    if (File.Exists(backupFilePath))
+                    {
+                        // Log the backup file path for debugging purposes
+                        Debug.Log($"[Sanctuary]: Backup file created: {backupFilePath}");
+
+                        // Delete the original file to simulate a failure and test the rollback functionality
+                        File.Delete(filePath);
+
+                        // Log the deletion of the original file for debugging purposes
+                        Debug.Log($"[Sanctuary]: Deleted original file to test rollback.");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    // Log the exception message for debugging purposes
+                    Debug.LogError($"[Sanctuary]: Exception occurred while checking for backup file: {ex.Message}");
+                }
+            }
 
             // Try to deserialize the save data using the appropriate serializer
             saveData = await serializer.Deserialize(filePath);
