@@ -48,6 +48,9 @@ namespace Sanctuary.Loaders
             // Store the profile.
             _profile = profile;
 
+            // Initialize the serializer, should be provided by the user, otherwise default to a binary serializer through the builder.
+            _serializer = serializer;
+
             // Set the directory to a "Save Data" folder in the persistent data path.
             _directory = Path.Combine(Application.persistentDataPath, SaveLoaderDefaults.DefaultFolderName);
 
@@ -56,9 +59,6 @@ namespace Sanctuary.Loaders
 
             // Set the file path to the specified file name with the serializer's file extension.
             _filePath = Path.Combine(_folderPath, FileName + _serializer.GetFileExtension());
-
-            // Initialize the serializer, should be provided by the user, otherwise default to a binary serializer through the builder.
-            _serializer = serializer;
 
             // Set the name to a more user-friendly format.
             _name = $"File Save \"{FileName}\"";
