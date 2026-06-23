@@ -9,27 +9,6 @@ namespace Sanctuary.Loaders
     public interface ISaveLoader 
     {
         /// <summary>
-        /// Sets the file extension for this save loader.
-        /// </summary>
-        /// <param name="extension">The file extension to set.</param>
-        /// <returns>An instance of <see cref="ISaveLoader"/> with the specified file extension set.</returns>
-        virtual ISaveLoader WithExtension(string extension) => this;
-
-        /// <summary>
-        /// Sets whether to create a backup file when saving.
-        /// </summary>
-        /// <param name="createBackup">The flag indicating whether to create a backup file.</param>
-        /// <returns>The current instance of <see cref="ISaveLoader"/> with the updated backup setting.</returns>
-        virtual ISaveLoader WithBackup(bool createBackup) => this;
-
-        /// <summary>
-        /// Sets the encryption key for the <see cref="ISaveLoader"/> instance.
-        /// </summary>
-        /// <param name="key">The encryption key to be used. Cannot be null or empty.</param>
-        /// <returns>The current instance of <see cref="ISaveLoader"/> with the specified encryption key set.</returns>
-        virtual ISaveLoader WithKey(string key) => this;
-
-        /// <summary>
         /// Sets the profile ID for this save loader.
         /// </summary>
         /// <param name="id">The profile ID to set.</param>

@@ -23,8 +23,8 @@ namespace Sanctuary.Loaders
         private readonly string _name;
         private readonly string _directory;
 
-        private ProfileData _profile;
-        private ISerializer _serializer;
+        private readonly ProfileData _profile;
+        private readonly ISerializer _serializer;
         private string _filePath = string.Empty;
         private string _folderPath = string.Empty;
         private string _fileExtension = ".data";
@@ -33,13 +33,19 @@ namespace Sanctuary.Loaders
         /// <summary>
         /// The file name derived from the profile data.
         /// </summary>
-        private string fileName => _profile.GetFileName();
+        private string FileName => _profile.GetFileName();
 
         /// <summary>
         /// Semaphore used to ensure thread-safe access to save and load operations as in only one operation is performed at a time.
         /// </summary>
         private readonly SemaphoreSlim _lock = new(1);
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FileSaveLoader"/> class with the specified profile and serializer.
+        /// </summary>
+        /// <remarks>Only intended to be used by the <see cref="Builder"/> class, use the <see cref="Builder.Create(ProfileData, ISerializer)"/> method to create an instance of this class.</remarks>
+        /// <param name="profile">The profile data used to determine the save file's scope and ID.</param>
+        /// <param name="serializer">The serializer used to serialize and deserialize the save data.</param>
         internal FileSaveLoader(ProfileData profile, ISerializer serializer)
         {
             // Store the profile.
@@ -52,13 +58,13 @@ namespace Sanctuary.Loaders
             _folderPath = _profile.GetScopedPath(_directory);
 
             // Set the file path to the specified file name with a .data extension.
-            _filePath = Path.Combine(_folderPath, fileName + _fileExtension);
+            _filePath = Path.Combine(_folderPath, FileName + _fileExtension);
 
             // Initialize the serializer, should be provided by the user, otherwise default to a binary serializer through the builder.
             _serializer = serializer;
 
             // Set the name to a more user-friendly format.
-            _name = $"File Save \"{fileName}\"";
+            _name = $"File Save \"{FileName}\"";
         }
 
         /// <summary>
@@ -69,25 +75,18 @@ namespace Sanctuary.Loaders
             private readonly ProfileData _profile;
             private readonly ISerializer _serializer;
 
-            public Builder(ProfileData profile, ISerializer serializer = null)
+            Builder(ProfileData profile, ISerializer serializer = null)
             {
                 // Store the profile and serializer.
                 _profile = profile;
 
                 // If no serializer is provided, use the default binary serializer as a fallback.
-                _serializer = serializer ?? new BinarySerializer();
+                _serializer = serializer ?? BinarySerializer.Default;
             }
 
+            public static Builder Create(ProfileData profile, ISerializer serializer = null) => new(profile, serializer);
+
             public readonly FileSaveLoader Build() => new(_profile, _serializer);
-        }
-
-        public ISaveLoader WithSerializer(ISerializer serializer)
-        {
-            // Update the serializer.
-            _serializer = serializer;
-
-            // Return the current instance for method chaining.
-            return this;
         }
 
         /// <summary>
@@ -135,7 +134,7 @@ namespace Sanctuary.Loaders
             _folderPath = _profile.GetScopedPath(_directory);
 
             // Update the file path to include the new profile.
-            _filePath = Path.Combine(_folderPath, fileName + _fileExtension);
+            _filePath = Path.Combine(_folderPath, FileName + _fileExtension);
 
             // Return the current instance for method chaining.
             return this;
@@ -256,7 +255,7 @@ namespace Sanctuary.Loaders
                 string folderPath = Path.Combine(_directory, $"{id}");
 
                 // Update the file path to include the new profile.
-                string filePath = Path.Combine(folderPath, fileName + _fileExtension);
+                string filePath = Path.Combine(folderPath, FileName + _fileExtension);
 
                 // Check if the file exists
                 if (!File.Exists(filePath))
