@@ -132,7 +132,7 @@ namespace Sanctuary.Editor
                     if (loadOnEnter)
                     {
                         // Log a message indicating that save data is being loaded
-                        Debug.Log("Loading all existing save data from disk on entering Play Mode...");
+                        Debug.Log("[Sanctuary]: Loading all existing save data from disk on entering Play Mode...");
 
                         // Load all existing save data from disk
                         SaveStoreRegistry.LoadAll();

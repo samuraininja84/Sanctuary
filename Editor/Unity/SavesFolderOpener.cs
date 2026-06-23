@@ -24,7 +24,7 @@ namespace Sanctuary.Editor
             else
             {
                 // Log a warning if the folder doesn't exist
-                Debug.LogWarning($"The saves folder doesn't exist yet. Creating the folder now at: {folderPath} and opening it.");
+                Debug.LogWarning($"[Sanctuary]: The saves folder doesn't exist yet. Creating the folder now at: {folderPath} and opening it.");
 
                 // Create the saves folder
                 Directory.CreateDirectory(folderPath);

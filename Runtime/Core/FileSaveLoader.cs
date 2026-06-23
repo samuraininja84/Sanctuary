@@ -203,9 +203,9 @@ namespace Sanctuary.Loaders
 
                 // Check if the file exists
                 if (!File.Exists(filePath))
-                {
+                {   
                     // Log a warning if the file doesn't exist
-                    Debug.LogWarning($"Save file not found at {filePath}, skipping.");
+                    Debug.LogWarning($"[Sanctuary]: Save file not found at {filePath}, skipping.");
 
                     // Skip this ID if the file doesn't exist.
                     continue;
@@ -257,7 +257,7 @@ namespace Sanctuary.Loaders
             if (!scopedDirectory.HasFiles())
             {
                 // Log the deletion of the empty directory
-                Debug.Log($"{scopedDirectory.FullName} is empty, deleting it.");
+                Debug.Log($"[Sanctuary]: {scopedDirectory.FullName} is empty, deleting it.");
 
                 // Delete the empty directory
                 Directory.Delete(scopedDirectory.FullName, true);
@@ -272,7 +272,7 @@ namespace Sanctuary.Loaders
                     if (!parentDirectory.HasContents())
                     {
                         // Log the deletion of the empty directory
-                        Debug.Log($"{parentDirectory.FullName} is empty, deleting it.");
+                        Debug.Log($"[Sanctuary]: {parentDirectory.FullName} is empty, deleting it.");
 
                         // Delete the empty parent directory
                         Directory.Delete(parentDirectory.FullName, true);

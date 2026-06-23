@@ -105,29 +105,29 @@ namespace Sanctuary.Tests
             await serializer.Serialize(saveData, folderPath, filePath);
 
             // Log the file path for debugging purposes
-            Debug.Log($"Serialized {fileName} save data to: {filePath}");
+            Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");
 
             // Try to deserialize the save data using the appropriate serializer
             saveData = await serializer.Deserialize(filePath);
 
             // Log the file path for debugging purposes
-            Debug.Log($"Deserialized {fileName} save data from: {filePath}");
+            Debug.Log($"[Sanctuary]: Deserialized {fileName} save data from: {filePath}");
 
             // Try to read the test data from the save data
             try
             {
                 if (saveData.TryRead(location, data))
                 {
-                    Debug.Log($"Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
+                    Debug.Log($"[Sanctuary]: Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
                 }
                 else
                 {
-                    Debug.LogError("Failed to read test data from deserialized save data.");
+                    Debug.LogError("[Sanctuary]: Failed to read test data from deserialized save data.");
                 }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"Exception occurred while reading test data: {ex.Message}");
+                Debug.LogError($"[Sanctuary]: Exception occurred while reading test data: {ex.Message}");
             }
 
             // Clean up the test data file after the test is complete
@@ -140,7 +140,7 @@ namespace Sanctuary.Tests
                     File.Delete(filePath);
 
                     // Log the file path for debugging purposes
-                    Debug.Log($"Deleted test data file: {filePath}");
+                    Debug.Log($"[Sanctuary]: Deleted test data file: {filePath}");
                 }
 
                 // Check if there is a backup file for the test data and delete it if it exists
@@ -152,7 +152,7 @@ namespace Sanctuary.Tests
                     File.Delete(backupFilePath);
 
                     // Log the backup file path for debugging purposes
-                    Debug.Log($"Deleted backup file: {backupFilePath}");
+                    Debug.Log($"[Sanctuary]: Deleted backup file: {backupFilePath}");
                 }
 
                 // If there are no more files in the test folder, delete the test folder as well
@@ -162,11 +162,11 @@ namespace Sanctuary.Tests
                     Directory.Delete(folderPath);
 
                     // Log the folder path for debugging purposes
-                    Debug.Log($"Deleted test folder: {folderPath}");
+                    Debug.Log($"[Sanctuary]: Deleted test folder: {folderPath}");
                 }
 
                 // Log a message indicating that the cleanup is complete
-                Debug.Log("Cleanup complete.");
+                Debug.Log("[Sanctuary]: Test file cleanup complete.");
             }
         }
 

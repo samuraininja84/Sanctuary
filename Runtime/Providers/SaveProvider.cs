@@ -86,12 +86,12 @@ namespace Sanctuary
             if (absolute == this)
             {
                 // Already configured as absolute
-                Debug.LogWarning("SaveProvider.ConfigureAsAbsolute: Already configured as absolute", this);
+                Debug.LogWarning("[Sanctuary]: SaveProvider.ConfigureAsAbsolute: Already configured as absolute", this);
             }
             else if (absolute != null)
             {
                 // Another absolute container already exists
-                Debug.LogWarning("SaveProvider.ConfigureAsAbsolute: Another SaveProvider is already configured as absolute", this);
+                Debug.LogWarning("[Sanctuary]: SaveProvider.ConfigureAsAbsolute: Another SaveProvider is already configured as absolute", this);
 
                 // Destroy this GameObject to enforce singleton pattern
                 Destroy(gameObject);
@@ -132,12 +132,12 @@ namespace Sanctuary
             if (global == this)
             {
                 // Already configured as global
-                Debug.LogWarning("SaveProvider.ConfigureAsGlobal: Already configured as global", this);
+                Debug.LogWarning("[Sanctuary]: SaveProvider.ConfigureAsGlobal: Already configured as global", this);
             }
             else if (global != null)
             {
                 // Another global container already exists
-                Debug.LogWarning("SaveProvider.ConfigureAsGlobal: Another SaveProvider is already configured as global", this);
+                Debug.LogWarning("[Sanctuary]: SaveProvider.ConfigureAsGlobal: Another SaveProvider is already configured as global", this);
 
                 // Destroy this GameObject to enforce singleton pattern
                 Destroy(gameObject);
@@ -168,12 +168,12 @@ namespace Sanctuary
             if (temporary == this)
             {
                 // Already configured as temporary
-                Debug.LogWarning("SaveProvider.ConfigureAsTemporary: Already configured as temporary", this);
+                Debug.LogWarning("[Sanctuary]: SaveProvider.ConfigureAsTemporary: Already configured as temporary", this);
             }
             else if (temporary != null)
             {
                 // Another temporary container already exists
-                Debug.LogWarning("SaveProvider.ConfigureAsTemporary: Another SaveProvider is already configured as temporary", this);
+                Debug.LogWarning("[Sanctuary]: SaveProvider.ConfigureAsTemporary: Another SaveProvider is already configured as temporary", this);
 
                 // Destroy this GameObject to enforce singleton pattern
                 Destroy(gameObject);
@@ -207,7 +207,7 @@ namespace Sanctuary
             if (sceneContainers.ContainsKey(scene))
             {
                 // Log error if another container is already registered for this scene
-                Debug.LogWarning("SaveProvider.ConfigureForScene: Another SaveProvider is already configured for this scene, destroying this one", this);
+                Debug.LogWarning("[Sanctuary]: SaveProvider.ConfigureForScene: Another SaveProvider is already configured for this scene, destroying this one", this);
 
                 // Destroy this GameObject to enforce singleton pattern for the scene
                 Destroy(gameObject);
