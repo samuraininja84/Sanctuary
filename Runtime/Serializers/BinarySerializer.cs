@@ -1,6 +1,4 @@
 using System.IO;
-using System.IO.Compression;
-using System.Text;
 using System.Threading.Tasks;
 using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 
@@ -14,7 +12,7 @@ namespace Sanctuary.Serializers
         internal readonly SerializationOptions options;
         internal readonly string fileExtension;
 
-        public static BinarySerializer Default => new();
+        public static BinarySerializer Default => new(SerializationOptions.None);
 
         public static BinarySerializer Compressed => new(SerializationOptions.Compressed);
 

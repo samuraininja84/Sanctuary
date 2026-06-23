@@ -189,6 +189,7 @@ namespace Sanctuary.Tests
                 // Check if there is a backup file for the test data and delete it if it exists
                 string backupFilePath = filePath + SerializationExtensions.BackupFileExtension;
 
+                // Check if the backup file exists before attempting to delete it
                 if (File.Exists(backupFilePath))
                 {
                     // Delete the backup file

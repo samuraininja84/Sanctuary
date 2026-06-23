@@ -1,8 +1,5 @@
 using System.IO;
-using System.Text;
-using System.IO.Compression;
 using System.Threading.Tasks;
-using System;
 using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 
 #if UNITY_NEWTONSOFT_JSON
