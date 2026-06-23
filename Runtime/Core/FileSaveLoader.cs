@@ -21,7 +21,6 @@ namespace Sanctuary.Loaders
     {
         private readonly string _name;
         private readonly string _directory;
-        private readonly string _fileExtension = ".data";
 
         private readonly ProfileData _profile;
         private readonly ISerializer _serializer;
@@ -55,8 +54,8 @@ namespace Sanctuary.Loaders
             // Get the scoped directory based on the profile scope and ID.
             _folderPath = _profile.GetScopedPath(_directory);
 
-            // Set the file path to the specified file name with a .data extension.
-            _filePath = Path.Combine(_folderPath, FileName + _fileExtension);
+            // Set the file path to the specified file name with the serializer's file extension.
+            _filePath = Path.Combine(_folderPath, FileName + _serializer.GetFileExtension());
 
             // Initialize the serializer, should be provided by the user, otherwise default to a binary serializer through the builder.
             _serializer = serializer;
@@ -100,8 +99,8 @@ namespace Sanctuary.Loaders
             // Change the folder path to the new profile.
             _folderPath = _profile.GetScopedPath(_directory);
 
-            // Update the file path to include the new profile.
-            _filePath = Path.Combine(_folderPath, FileName + _fileExtension);
+            // Update the file path to include the new profile and the serializer's file extension.
+            _filePath = Path.Combine(_folderPath, FileName + _serializer.GetFileExtension());
 
             // Return the current instance for method chaining.
             return this;
@@ -198,8 +197,8 @@ namespace Sanctuary.Loaders
                 // Set the file path for the current ID.
                 string folderPath = Path.Combine(_directory, $"{id}");
 
-                // Update the file path to include the new profile.
-                string filePath = Path.Combine(folderPath, FileName + _fileExtension);
+                // Update the file path to include the new profile and the serializer's file extension.
+                string filePath = Path.Combine(folderPath, FileName + _serializer.GetFileExtension());
 
                 // Check if the file exists
                 if (!File.Exists(filePath))
