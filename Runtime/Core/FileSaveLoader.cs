@@ -24,8 +24,7 @@ namespace Sanctuary.Loaders
         private readonly string _directory;
 
         private ProfileData _profile;
-        public readonly ISerializer _serializer;
-
+        private ISerializer _serializer;
         private string _filePath = string.Empty;
         private string _folderPath = string.Empty;
         private string _fileExtension = ".data";
@@ -41,7 +40,7 @@ namespace Sanctuary.Loaders
         /// </summary>
         private readonly SemaphoreSlim _lock = new(1);
 
-        public FileSaveLoader(ProfileData profile)
+        internal FileSaveLoader(ProfileData profile, ISerializer serializer)
         {
             // Store the profile.
             _profile = profile;
@@ -55,11 +54,40 @@ namespace Sanctuary.Loaders
             // Set the file path to the specified file name with a .data extension.
             _filePath = Path.Combine(_folderPath, fileName + _fileExtension);
 
-            // Initialize the binary serializer for saving and loading data.
-            _serializer = new BinarySerializer();
+            // Initialize the serializer, should be provided by the user, otherwise default to a binary serializer through the builder.
+            _serializer = serializer;
 
             // Set the name to a more user-friendly format.
             _name = $"File Save \"{fileName}\"";
+        }
+
+        /// <summary>
+        /// Builder class for constructing instances of <see cref="FileSaveLoader"/> with optional customization.
+        /// </summary>
+        public readonly struct Builder
+        {
+            private readonly ProfileData _profile;
+            private readonly ISerializer _serializer;
+
+            public Builder(ProfileData profile, ISerializer serializer = null)
+            {
+                // Store the profile and serializer.
+                _profile = profile;
+
+                // If no serializer is provided, use the default binary serializer as a fallback.
+                _serializer = serializer ?? new BinarySerializer();
+            }
+
+            public readonly FileSaveLoader Build() => new(_profile, _serializer);
+        }
+
+        public ISaveLoader WithSerializer(ISerializer serializer)
+        {
+            // Update the serializer.
+            _serializer = serializer;
+
+            // Return the current instance for method chaining.
+            return this;
         }
 
         /// <summary>

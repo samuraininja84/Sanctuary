@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Sanctuary.Loaders;
 using Sanctuary.Extensions;
-using Sanctuary.Stores;
+using Sanctuary.Serializers;
 
 namespace Sanctuary
 {
@@ -102,7 +102,7 @@ namespace Sanctuary
                 absolute = this;
 
                 // Initialize absolute save controller if needed
-                if (controller == null) controller = SaveControllerBase.New(new FileSaveLoader(profile), SaveScope.Absolute);
+                controller ??= SaveControllerBase.New(new FileSaveLoader.Builder(profile, BinarySerializer.Default).Build(), SaveScope.Absolute);
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -148,7 +148,7 @@ namespace Sanctuary
                 global = this;
 
                 // Initialize global save controller if needed
-                if (controller == null) controller = SaveControllerBase.New(new FileSaveLoader(profile), SaveScope.Global);
+                controller ??= SaveControllerBase.New(new FileSaveLoader.Builder(profile, BinarySerializer.Default).Build(), SaveScope.Global);
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -184,7 +184,7 @@ namespace Sanctuary
                 temporary = this;
 
                 // Initialize temporary save controller if needed
-                if (controller == null) controller = SaveControllerBase.New(new FileSaveLoader(profile), SaveScope.Temporary);
+                controller ??= SaveControllerBase.New(new FileSaveLoader.Builder(profile, BinarySerializer.Default).Build(), SaveScope.Temporary);
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -223,7 +223,7 @@ namespace Sanctuary
                 profile.SetFileName(scene);
 
                 // Create a default FileSaveLoader for scene saves
-                controller = SaveControllerBase.New(new FileSaveLoader(profile), SaveScope.Scene);
+                controller = SaveControllerBase.New(new FileSaveLoader.Builder(profile, BinarySerializer.Default).Build(), SaveScope.Scene);
             }
 
             // Register this container for the scene

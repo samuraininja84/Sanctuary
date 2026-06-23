@@ -31,7 +31,6 @@ namespace Sanctuary
         /// </summary>
         /// <param name="location">The location to write to.</param>
         /// <param name="value">The value to write.</param>
-        /// <param name="name">The optional name to assign to the chunk.</param>
         /// <returns>The updated save data.</returns>
         ISaveData Write(SaveLocation location, object value);
 

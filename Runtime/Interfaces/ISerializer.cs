@@ -8,6 +8,6 @@ namespace Sanctuary
 
         Task<ISaveData> Deserialize(string filePath);
 
-        string FileExtension();
+        string GetFileExtension();
     }
 }
