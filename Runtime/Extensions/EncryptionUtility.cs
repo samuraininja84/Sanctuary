@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Sanctuary.Utility
 {
@@ -24,6 +24,25 @@ namespace Sanctuary.Utility
         /// </remarks>
         private const string EncryptionMarker = "EncryptionUtility:";
 
+#if UNITY_EDITOR
+        /// <summary>
+        /// A constant encryption key used for demonstration purposes. 
+        /// Encryption keys must be a string of sufficient length and complexity to ensure security. 
+        /// </summary>
+        /// <remarks>This key is intended for use in development and testing scenarios only. Do not use this key in production environments.</remarks>
+        public const string DemonstrationEncryptionKey = "ySEB0oP4MMNkfp0uMzvXNSyv63YzjfAhdPgUJJa1HjQ=";
+
+        /// <summary>
+        /// Copies a randomly generated encryption key to the system clipboard. Editor-only functionality for convenience during development.
+        /// </summary>
+        [UnityEditor.MenuItem("Tools/Sanctuary/Copy Random Encryption Key")]
+        public static void CopyRandomEncryptionKeyToClipboard()
+        {
+            string randomKey = RandomEncryptionKey();
+            UnityEngine.GUIUtility.systemCopyBuffer = randomKey;
+        }
+#endif
+
         /// <summary>
         /// Generates a random encryption key using a cryptographic random number generator.
         /// </summary>
@@ -35,17 +54,16 @@ namespace Sanctuary.Utility
         public static string RandomEncryptionKey()
         {
             // Generate a random encryption key using a cryptographic random number generator
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                // Create a byte array to hold the random key with a length of 32 bytes (256 bits)
-                byte[] keyBytes = new byte[32];
+            using var rng = new RNGCryptoServiceProvider();
 
-                // Fill the byte array with random bytes
-                rng.GetBytes(keyBytes);
+            // Create a byte array to hold the random key with a length of 32 bytes (256 bits)
+            byte[] keyBytes = new byte[32];
 
-                // Convert the byte array to a Base64 string for easy storage and transmission
-                return Convert.ToBase64String(keyBytes);
-            }
+            // Fill the byte array with random bytes
+            rng.GetBytes(keyBytes);
+
+            // Convert the byte array to a Base64 string for easy storage and transmission
+            return Convert.ToBase64String(keyBytes);
         }
 
         /// <summary>
@@ -57,8 +75,7 @@ namespace Sanctuary.Utility
         /// The caller is responsible for ensuring the encryption key is securely managed.
         /// </remarks>
         /// <param name="plainText">The text to be encrypted. Cannot be null or empty.</param>
-        /// <param name="encryptionKey">The encryption key used to derive the cryptographic key and initialization vector. Must be a non-empty
-        /// string. The strength of the encryption depends on the quality of this key.</param>
+        /// <param name="encryptionKey">The encryption key used to derive the cryptographic key and initialization vector. Must be a non-empty string. The strength of the encryption depends on the quality of this key.</param>
         /// <returns>A base64-encoded string representing the encrypted text, prefixed with a marker indicating encryption.</returns>
         public static string Encrypt(string plainText, string encryptionKey)
         {
@@ -69,26 +86,26 @@ namespace Sanctuary.Utility
             using (Aes encryptor = Aes.Create())
             {
                 // Derive the cryptographic key and initialization vector from the provided encryption key.
-                Rfc2898DeriveBytes pdb = new Rfc2898DeriveBytes(encryptionKey, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+                var pdb = new Rfc2898DeriveBytes(encryptionKey, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+
+                // Set the key and IV for the encryptor using the derived bytes.
                 encryptor.Key = pdb.GetBytes(32);
                 encryptor.IV = pdb.GetBytes(16);
 
                 // Create a MemoryStream to hold the encrypted bytes.
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    // Create a CryptoStream to perform the encryption.
-                    using (CryptoStream cs = new CryptoStream(ms, encryptor.CreateEncryptor(), CryptoStreamMode.Write))
-                    {
-                        // Write the clear bytes to the CryptoStream for encryption.
-                        cs.Write(clearBytes, 0, clearBytes.Length);
+                using var ms = new MemoryStream();
 
-                        // Close the CryptoStream to ensure all data is flushed and encrypted properly.
-                        cs.Close();
-                    }
+                // Create a CryptoStream to perform the encryption.
+                using var cs = new CryptoStream(ms, encryptor.CreateEncryptor(), CryptoStreamMode.Write);
 
-                    // Convert the encrypted byte array to a Base64 string
-                    plainText = Convert.ToBase64String(ms.ToArray());
-                }
+                // Write the clear bytes to the CryptoStream for encryption.
+                cs.Write(clearBytes, 0, clearBytes.Length);
+
+                // Close the CryptoStream to ensure all data is flushed and encrypted properly.
+                cs.Close();
+
+                // Convert the encrypted byte array to a Base64 string
+                plainText = Convert.ToBase64String(ms.ToArray());
             }
 
             // Prefix the encrypted text with the EncryptionUtility marker

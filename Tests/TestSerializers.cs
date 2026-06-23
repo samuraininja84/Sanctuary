@@ -13,34 +13,34 @@ namespace Sanctuary.Tests
         public const string TestObjectId = "5561391260475779002";
 
         [Test]
-        public async Task TestBinary() => await TestSerializer(BinarySerializer.Default, "Binary");
+        public async Task TestBinary() => await TestSerializer(BinarySerializer.Default, "Binary", true);
 
         [Test]
-        public async Task TestBinaryCompressed() => await TestSerializer(BinarySerializer.Compressed, "BinaryCompressed");
+        public async Task TestBinaryCompressed() => await TestSerializer(BinarySerializer.Compressed, "BinaryCompressed", true);
 
 #if UNITY_NEWTONSOFT_JSON
 
         [Test]
-        public async Task TestJson() => await TestSerializer(JsonSerializer.Default, "Json");
+        public async Task TestJson() => await TestSerializer(JsonSerializer.Default, "Json", true);
 
         [Test]
-        public async Task TestJsonCompressed() => await TestSerializer(JsonSerializer.Compressed, "JsonCompressed");
+        public async Task TestJsonCompressed() => await TestSerializer(JsonSerializer.Compressed, "JsonCompressed", true);
 
         [Test]
-        public async Task TestMarkdown() => await TestSerializer(MarkdownSerializer.Default, "Markdown");
+        public async Task TestMarkdown() => await TestSerializer(MarkdownSerializer.Default, "Markdown", true);
 
         [Test]
-        public async Task TestMarkdownCompressed() => await TestSerializer(MarkdownSerializer.Compressed, "MarkdownCompressed");
+        public async Task TestMarkdownCompressed() => await TestSerializer(MarkdownSerializer.Compressed, "MarkdownCompressed", true);
 
         [Test]
-        public async Task TestText() => await TestSerializer(TextSerializer.Default, "Text");
+        public async Task TestText() => await TestSerializer(TextSerializer.Default, "Text", true);
 
         [Test]
-        public async Task TestTextCompressed() => await TestSerializer(TextSerializer.Compressed, "TextCompressed");
+        public async Task TestTextCompressed() => await TestSerializer(TextSerializer.Compressed, "TextCompressed", true);
 
 #endif
 
-        public async Task TestSerializer(ISerializer serializer, string fileName)
+        public async Task TestSerializer(ISerializer serializer, string fileName, bool deleteAfterTest = false)
         {
             // Create a new instance of the save data
             ISaveData saveData = new SaveData();
@@ -90,6 +90,33 @@ namespace Sanctuary.Tests
             catch (System.Exception ex)
             {
                 Debug.LogError($"Exception occurred while reading test data: {ex.Message}");
+            }
+
+            // Clean up the test data file after the test is complete
+            if (deleteAfterTest)
+            {
+                // Check if the test data file exists before attempting to delete it
+                if (File.Exists(filePath))
+                {
+                    // Delete the test data file
+                    File.Delete(filePath);
+
+                    // Log the file path for debugging purposes
+                    Debug.Log($"Deleted test data file: {filePath}");
+                }
+
+                // If there are no more files in the test folder, delete the test folder as well
+                if (Directory.Exists(folderPath) && Directory.GetFiles(folderPath).Length == 0)
+                {
+                    // Delete the test folder
+                    Directory.Delete(folderPath);
+
+                    // Log the folder path for debugging purposes
+                    Debug.Log($"Deleted test folder: {folderPath}");
+                }
+
+                // Log a message indicating that the cleanup is complete
+                Debug.Log("Cleanup complete.");
             }
         }
 
