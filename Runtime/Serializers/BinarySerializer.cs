@@ -27,15 +27,15 @@ namespace Sanctuary.Serializers
 
         public static BinarySerializer All => new(SerializationOptions.All);
 
-        private BinarySerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".bin")
+        private BinarySerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".data")
         {
             this.options = options;
             this.fileExtension = fileExtension;
         }
 
-        public static BinarySerializer Create(SerializationOptions options, string fileExtension = ".bin") => new(options, fileExtension);
+        public static BinarySerializer Create(SerializationOptions options, string fileExtension = ".data") => new(options, fileExtension);
 
-        public static BinarySerializer CreateAsData(SerializationOptions options, string fileExtension = ".data") => new(options, fileExtension);
+        public static BinarySerializer CreateAsBinary(SerializationOptions options, string fileExtension = ".bin") => new(options, fileExtension);
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {

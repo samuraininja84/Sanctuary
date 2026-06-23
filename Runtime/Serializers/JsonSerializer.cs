@@ -35,15 +35,15 @@ namespace Sanctuary.Serializers
 
         public static JsonSerializer All => new(SerializationOptions.All);
 
-        private JsonSerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".json")
+        private JsonSerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".data")
         {
             this.options = options;
             this.fileExtension = fileExtension;
         }
 
-        public static JsonSerializer Create(SerializationOptions options, string fileExtension = ".json") => new(options, fileExtension);
+        public static JsonSerializer Create(SerializationOptions options, string fileExtension = ".data") => new(options, fileExtension);
 
-        public static JsonSerializer CreateAsData(SerializationOptions options, string fileExtension = ".data") => new(options, fileExtension);
+        public static JsonSerializer CreateAsJson(SerializationOptions options, string fileExtension = ".json") => new(options, fileExtension);
 
         public static JsonSerializer CreateAsMarkDown(SerializationOptions options, string fileExtension = ".md") => new(options, fileExtension);
 

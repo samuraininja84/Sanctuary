@@ -15,7 +15,7 @@ namespace Sanctuary.Tests
         #region Binary Serializer Tests
 
         [Test]
-        public async Task TestBinary() => await TestSerializer(BinarySerializer.Default, "Binary", false, true);
+        public async Task TestBinaryData() => await TestSerializer(BinarySerializer.Default, "BinaryData", false, true);
 
         [Test]
         public async Task TestBinaryCorruption() => await TestSerializer(BinarySerializer.Backup, "BinaryCorruption", true, true);
@@ -41,7 +41,7 @@ namespace Sanctuary.Tests
         #region Other Binary Serializer Tests
 
         [Test]
-        public async Task TestBinaryData() => await TestSerializer(BinarySerializer.CreateAsData(SerializationOptions.None), "BinaryData", false, true);
+        public async Task TestBinary() => await TestSerializer(BinarySerializer.CreateAsBinary(SerializationOptions.None), "Binary", false, true);
 
         #endregion
 
@@ -52,7 +52,7 @@ namespace Sanctuary.Tests
 #if UNITY_NEWTONSOFT_JSON
 
         [Test]
-        public async Task TestJson() => await TestSerializer(JsonSerializer.Default, "Json", false, true);
+        public async Task TestJsonData() => await TestSerializer(JsonSerializer.Default, "JsonData", false, true);
 
         [Test]
         public async Task TestJsonCorruption() => await TestSerializer(JsonSerializer.Backup, "JsonCorruption", true, true);
@@ -78,7 +78,7 @@ namespace Sanctuary.Tests
         #region Other Json Serializer Tests
 
         [Test]
-        public async Task TestJsonData() => await TestSerializer(JsonSerializer.CreateAsData(SerializationOptions.None), "Data", false, true);
+        public async Task TestJson() => await TestSerializer(JsonSerializer.CreateAsJson(SerializationOptions.None), "Json", false, true);
 
         [Test]
         public async Task TestMarkdown() => await TestSerializer(JsonSerializer.CreateAsMarkDown(SerializationOptions.None), "Markdown", false, true);
