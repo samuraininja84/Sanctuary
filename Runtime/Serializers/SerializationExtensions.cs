@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 using Encoding = System.Text.Encoding;
 using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 using EncryptionUtility = Sanctuary.Utility.EncryptionUtility;
@@ -114,10 +114,10 @@ namespace Sanctuary.Serializers
                 // Functionally equivalent to the "None" option, as it does not apply any compression or encryption.
                 SerializationOptions.Backup => new(saveStream, Encoding.UTF8, false),
 
-                // Handle combined options by applying both decompression and decryption, functionally equivalent to the "All" option.
+                // Handle combined options by applying both decompression and decryption, functionally equivalent to the "All" option. Decompression is applied first, followed by decryption.
                 SerializationOptions.Compressed | SerializationOptions.Encrypted => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
 
-                // Handle the "All" option by applying both decompression and decryption, functionally equivalent to the combined options above.
+                // Handle the "All" option by applying both decompression and decryption, functionally equivalent to the combined options above. Decompression is applied first, followed by decryption.
                 SerializationOptions.All => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
 
                 // Default case to handle any unexpected options, functionally equivalent to the "None" option.
@@ -148,10 +148,10 @@ namespace Sanctuary.Serializers
                 // Functionally equivalent to the "None" option, as it does not apply any compression or encryption.
                 SerializationOptions.Backup => new(saveStream, Encoding.UTF8, 1024, false),
 
-                // Handle combined options by applying both compression and encryption, functionally equivalent to the "All" option.
+                // Handle combined options by applying both compression and encryption, functionally equivalent to the "All" option. Compression is applied first, followed by encryption.
                 SerializationOptions.Compressed | SerializationOptions.Encrypted => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Compress), CryptoStreamMode.Write), Encoding.UTF8, 1024, false),
 
-                // Handle the "All" option by applying both compression and encryption, functionally equivalent to the combined options above.
+                // Handle the "All" option by applying both compression and encryption, functionally equivalent to the combined options above. Compression is applied first, followed by encryption.
                 SerializationOptions.All => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Compress), CryptoStreamMode.Write), Encoding.UTF8, 1024, false),
 
                 // Default case to handle any unexpected options, functionally equivalent to the "None" option.
@@ -182,10 +182,10 @@ namespace Sanctuary.Serializers
                 // Functionally equivalent to the "None" option, as it does not apply any compression or encryption.
                 SerializationOptions.Backup => new(saveStream, Encoding.UTF8, false),
 
-                // Handle combined options by applying both decompression and decryption, functionally equivalent to the "All" option.
+                // Handle combined options by applying both decompression and decryption, functionally equivalent to the "All" option. Decompression is applied first, followed by decryption.
                 SerializationOptions.Compressed | SerializationOptions.Encrypted => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
 
-                // Handle the "All" option by applying both decompression and decryption, functionally equivalent to the combined options above.
+                // Handle the "All" option by applying both decompression and decryption, functionally equivalent to the combined options above. Decompression is applied first, followed by decryption.
                 SerializationOptions.All => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
 
                 // Default case to handle any unexpected options, functionally equivalent to the "None" option.
