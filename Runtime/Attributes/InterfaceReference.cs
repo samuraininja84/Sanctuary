@@ -105,7 +105,7 @@ namespace Sanctuary
         /// </summary>
         /// <param name="target">The object to set as the underlying value. Cannot be <see langword="null"/>.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="target"/> is <see langword="null"/>.</exception>
-        public void Set(Object target)
+        public void SetObject(Object target)
         {
             // Check if the provided target object is null, if it is, we throw an ArgumentNullException.
             if (target == null) throw new ArgumentNullException(nameof(target), "Target cannot be null.");
@@ -117,11 +117,10 @@ namespace Sanctuary
         /// <summary>
         /// Sets the underlying value to the specified interface implementation.
         /// </summary>
-        /// <param name="interface">The interface implementation to set. Must not be <see langword="null"/> and must be of type <typeparamref
-        /// name="TObject"/>.</param>
+        /// <param name="interface">The interface implementation to set. Must not be <see langword="null"/> and must be of type <typeparamref name="TObject"/>.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="interface"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Thrown if <paramref name="interface"/> is not of type <typeparamref name="TObject"/>.</exception>
-        public void Set(TInterface @interface)
+        public void SetValue(TInterface @interface)
         {
             // First, we check if the provided interface is null. If it is, we throw an ArgumentNullException to indicate that a null value is not acceptable for this parameter.
             if (@interface == null) throw new ArgumentNullException(nameof(@interface), "Interface cannot be null.");
