@@ -15,7 +15,7 @@ namespace Sanctaury.Tests
 
         public Task<bool> Exists() => Task.FromResult(_exists);
 
-        public Task<ISaveData> Load() => Task.FromResult<ISaveData>(new SaveData());
+        public Task<ISaveData> Load() => Task.FromResult<ISaveData>(SaveData.Empty);
 
         public Task Save(ISaveData data) => Task.CompletedTask;
 
@@ -25,7 +25,7 @@ namespace Sanctaury.Tests
             _exists = true;
 
             // Create a new, empty save data.
-            return Task.FromResult<ISaveData>(new SaveData());
+            return Task.FromResult<ISaveData>(SaveData.Empty);
         }
 
         public Task Delete()

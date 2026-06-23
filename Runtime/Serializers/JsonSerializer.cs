@@ -93,10 +93,10 @@ namespace Sanctuary.Serializers
                 if (!await SerializationExtensions.AttemptRollback(filePath))
                 {
                     // Log an error if rollback failed or backups are not allowed.
-                    UnityEngine.Debug.LogError("Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted.");
+                    UnityEngine.Debug.LogError("Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted. Returning a new empty save data object.");
 
                     // Return a new empty save data object.
-                    return new SaveData();
+                    return SaveData.Empty;
                 }
             }
 

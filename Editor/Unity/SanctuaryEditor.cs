@@ -343,7 +343,7 @@ namespace Sanctuary.Editor
             }
 
             // Get the composite save data
-            ISaveData composite = ISaveDataExtensions.Combine(new SaveData(), saves.Select(s => s.Data));
+            ISaveData composite = ISaveDataExtensions.Combine(SaveData.Empty, saves.Select(s => s.Data));
 
             // Determine the save data to display based on filtering
             ISaveData data = FilterFiles ? currentSave.Data : composite;

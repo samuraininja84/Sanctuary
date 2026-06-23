@@ -111,7 +111,7 @@ namespace Sanctuary.Loaders
         /// Creates a new empty save data object.
         /// </summary>
         /// <returns>A task that represents the asynchronous create operation. The task result contains the new save data object.</returns>
-        public Task<ISaveData> Create() => Task.FromResult((ISaveData)new SaveData());
+        public Task<ISaveData> Create() => Task.FromResult((ISaveData)SaveData.Empty);
 
         /// <summary>
         /// Saves the given data to the file asynchronously.

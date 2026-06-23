@@ -5,7 +5,7 @@ namespace Sanctuary
     /// <summary>
     /// A Bootstrapper that configures a SaveProvider as a global save container.
     /// </summary>
-    [AddComponentMenu("Safekeeper/Global Save Provider")]
+    [AddComponentMenu("Sanctuary/Global Save Provider")]
     public sealed class GlobalSaveProvider : Bootstrapper
     {
         [Header("Save Provider Settings")]

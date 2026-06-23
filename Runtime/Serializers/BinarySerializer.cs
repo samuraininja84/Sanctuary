@@ -104,10 +104,10 @@ namespace Sanctuary.Serializers
                 if (!await SerializationExtensions.AttemptRollback(filePath))
                 {
                     // Log an error if rollback failed or backups are not allowed.
-                    UnityEngine.Debug.LogError("Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted.");
+                    UnityEngine.Debug.LogError("Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted. Returning a new empty save data object.");
 
                     // Return a new empty save data object.
-                    return new SaveData();
+                    return SaveData.Empty;
                 }
             }
 
@@ -118,7 +118,7 @@ namespace Sanctuary.Serializers
             using var reader = SerializationExtensions.CreateBinaryReader(options, loadStream);
 
             // Create a new save data object to hold the loaded data.
-            var save = new SaveData();
+            var save = SaveData.Empty;
 
             // Read each chunk of data.
             while (reader.ReadBoolean())

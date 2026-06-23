@@ -5,7 +5,7 @@ namespace Sanctuary
     /// <summary>
     /// A Bootstrapper that configures a SaveProvider as a temporary save container.
     /// </summary>
-    [AddComponentMenu("Safekeeper/Temporary Save Provider")]
+    [AddComponentMenu("Sanctuary/Temporary Save Provider")]
     public sealed class TemporarySaveProvider : Bootstrapper
     {
         [Header("Save Provider Settings")]

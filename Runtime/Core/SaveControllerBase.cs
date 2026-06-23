@@ -73,7 +73,7 @@ namespace Sanctuary
         /// <summary>
         /// A protected reference to the save data.
         /// </summary>
-        protected ISaveData _data = new SaveData();
+        protected ISaveData _data = SaveData.Empty;
 
         /// <summary>
         /// The save data.
@@ -90,10 +90,10 @@ namespace Sanctuary
                 if (_data == null)
                 {
                     // Log a warning if the data is accessed before being loaded
-                    Debug.LogWarning("[Safekeeper]: Tried to access the data before the save was loaded.\n Make sure to call `save.Load(SaveMode.Full)` before accessing the data. Returning empty data as a placeholder.");
+                    Debug.LogWarning("[Sanctuary]: Tried to access the data before the save was loaded.\n Make sure to call `save.Load(SaveMode.Full)` before accessing the data. Returning empty data as a placeholder.");
 
                     // Return an empty data to avoid null reference exceptions
-                    _data = new SaveData();
+                    _data = SaveData.Empty;
                 }
 
                 // Return the data

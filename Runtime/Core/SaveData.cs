@@ -30,6 +30,17 @@ namespace Sanctuary
         public Dictionary<string, Dictionary<string, string>> Data { get => _data; }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SaveData"/> class.
+        /// </summary>
+        /// <remarks>Private constructor to prevent direct instantiation. Use the static <see cref="Empty"/> instance for an empty save data.</remarks>
+        private SaveData() { }
+
+        /// <summary>
+        /// A static instance of <see cref="SaveData"/> that represents an empty save data.
+        /// </summary>
+        public static SaveData Empty = new();
+
+        /// <summary>
         /// Adds a new chunk to the save data.
         /// </summary>
         /// <param name="chunkId">The chunk ID.</param>
@@ -81,7 +92,7 @@ namespace Sanctuary
             if (location.ChunkId == "00000000000000000000000000000000" || location.ChunkId == "0")
             {
                 // Log a warning to the console
-                Debug.LogFormat("[Safekeeper]: Unexpected prefab ({0})", location.ObjectId);
+                Debug.LogFormat("[Sanctuary]: Unexpected prefab ({0})", location.ObjectId);
 
                 // Return early to avoid saving
                 return this;

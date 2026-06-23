@@ -2,7 +2,7 @@
 
 namespace Sanctuary
 {
-    [AddComponentMenu("Safekeeper/Absolute Save Provider")]
+    [AddComponentMenu("Sanctuary/Absolute Save Provider")]
     public sealed class AbsoluteSaveProvider : Bootstrapper
     {
         [Header("Save Provider Settings")]

@@ -81,7 +81,7 @@ namespace Sanctuary.Tests
         public async Task TestSerializer(ISerializer serializer, string fileName, bool deleteAfterTest = false)
         {
             // Create a new instance of the save data
-            ISaveData saveData = new SaveData();
+            ISaveData saveData = SaveData.Empty;
 
             // Create a save location for the test data
             SaveLocation location = new(TestChunkId, TestObjectId);

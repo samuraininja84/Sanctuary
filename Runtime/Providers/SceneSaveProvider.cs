@@ -6,7 +6,7 @@ namespace Sanctuary
     /// <summary>
     /// A Bootstrapper that configures a SaveProvider as a scene save container.
     /// </summary>
-    [AddComponentMenu("Safekeeper/Scene Save Provider")]
+    [AddComponentMenu("Sanctuary/Scene Save Provider")]
     public sealed class SceneSaveProvider : Bootstrapper
     {
         [Header("Save Provider Settings")]
