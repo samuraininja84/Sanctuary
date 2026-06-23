@@ -21,12 +21,12 @@ namespace Sanctuary.Loaders
     {
         private readonly string _name;
         private readonly string _directory;
+        private readonly string _fileExtension = ".data";
 
         private readonly ProfileData _profile;
         private readonly ISerializer _serializer;
         private string _filePath = string.Empty;
         private string _folderPath = string.Empty;
-        private string _fileExtension = ".data";
 
         /// <summary>
         /// The file name derived from the profile data.
@@ -44,7 +44,7 @@ namespace Sanctuary.Loaders
         /// <remarks>Only intended to be used by the <see cref="Builder"/> class, use the <see cref="Builder.Create(ProfileData, ISerializer)"/> method to create an instance of this class.</remarks>
         /// <param name="profile">The profile data used to determine the save file's scope and ID.</param>
         /// <param name="serializer">The serializer used to serialize and deserialize the save data.</param>
-        internal FileSaveLoader(ProfileData profile, ISerializer serializer)
+        private FileSaveLoader(ProfileData profile, ISerializer serializer)
         {
             // Store the profile.
             _profile = profile;
@@ -73,7 +73,7 @@ namespace Sanctuary.Loaders
             private readonly ProfileData _profile;
             private readonly ISerializer _serializer;
 
-            Builder(ProfileData profile, ISerializer serializer = null)
+            private Builder(ProfileData profile, ISerializer serializer = null)
             {
                 // Store the profile and serializer.
                 _profile = profile;

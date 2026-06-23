@@ -30,9 +30,15 @@ namespace Sanctuary.Serializers
 
         public static JsonSerializer Backup => new(SerializationOptions.Backup);
 
+        public static JsonSerializer BackupCompressed => new(SerializationOptions.Backup | SerializationOptions.Compressed);
+
+        public static JsonSerializer BackupEncrypted => new(SerializationOptions.Backup | SerializationOptions.Encrypted);
+
+        public static JsonSerializer CompressionEncrypted => new(SerializationOptions.Compressed | SerializationOptions.Encrypted);
+
         public static JsonSerializer All => new(SerializationOptions.All);
 
-        internal JsonSerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".json")
+        private JsonSerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".json")
         {
             this.options = options;
             this.fileExtension = fileExtension;
@@ -40,14 +46,11 @@ namespace Sanctuary.Serializers
 
         public static JsonSerializer Create(SerializationOptions options, string fileExtension = ".json") => new(options, fileExtension);
 
-        public static JsonSerializer Create(bool useCompression, bool useEncryption, bool allowBackup, string fileExtension = ".json")
-        {
-            SerializationOptions options = SerializationOptions.None;
-            if (useCompression) options |= SerializationOptions.Compressed;
-            if (useEncryption) options |= SerializationOptions.Encrypted;
-            if (allowBackup) options |= SerializationOptions.Backup;
-            return new JsonSerializer(options, fileExtension);
-        }
+        public static JsonSerializer CreateAsData(SerializationOptions options, string fileExtension = ".data") => new(options, fileExtension);
+
+        public static JsonSerializer CreateAsMarkDown(SerializationOptions options, string fileExtension = ".md") => new(options, fileExtension);
+
+        public static JsonSerializer CreateAsText(SerializationOptions options, string fileExtension = ".txt") => new(options, fileExtension);
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {

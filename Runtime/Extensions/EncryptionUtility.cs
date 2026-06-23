@@ -38,7 +38,10 @@ namespace Sanctuary.Utility
         [UnityEditor.MenuItem("Tools/Sanctuary/Copy Random Encryption Key")]
         public static void CopyRandomEncryptionKeyToClipboard()
         {
+            // Generate a random encryption key using the RandomEncryptionKey method.
             string randomKey = RandomEncryptionKey();
+
+            // Copy the generated random encryption key to the system clipboard for easy access during development.
             UnityEngine.GUIUtility.systemCopyBuffer = randomKey;
         }
 #endif
@@ -82,31 +85,20 @@ namespace Sanctuary.Utility
             // Convert the plain text to a byte array using Unicode encoding.
             byte[] clearBytes = Encoding.Unicode.GetBytes(plainText);
 
-            // Create an Aes encryptor to perform the encryption.
-            using (Aes encryptor = Aes.Create())
-            {
-                // Derive the cryptographic key and initialization vector from the provided encryption key.
-                var pdb = new Rfc2898DeriveBytes(encryptionKey, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+            // Create a MemoryStream to hold the encrypted bytes.
+            using var ms = new MemoryStream();
 
-                // Set the key and IV for the encryptor using the derived bytes.
-                encryptor.Key = pdb.GetBytes(32);
-                encryptor.IV = pdb.GetBytes(16);
+            // Create a CryptoStream to perform the encryption.
+            using var cs = CreateCryptoStream(ms, encryptionKey, CryptoStreamMode.Write);
 
-                // Create a MemoryStream to hold the encrypted bytes.
-                using var ms = new MemoryStream();
+            // Write the clear bytes to the CryptoStream for encryption.
+            cs.Write(clearBytes, 0, clearBytes.Length);
 
-                // Create a CryptoStream to perform the encryption.
-                using var cs = new CryptoStream(ms, encryptor.CreateEncryptor(), CryptoStreamMode.Write);
+            // Close the CryptoStream to ensure all data is flushed and encrypted properly.
+            cs.Close();
 
-                // Write the clear bytes to the CryptoStream for encryption.
-                cs.Write(clearBytes, 0, clearBytes.Length);
-
-                // Close the CryptoStream to ensure all data is flushed and encrypted properly.
-                cs.Close();
-
-                // Convert the encrypted byte array to a Base64 string
-                plainText = Convert.ToBase64String(ms.ToArray());
-            }
+            // Convert the encrypted byte array to a Base64 string
+            plainText = Convert.ToBase64String(ms.ToArray());
 
             // Prefix the encrypted text with the EncryptionUtility marker
             return EncryptionMarker + plainText;
@@ -133,34 +125,46 @@ namespace Sanctuary.Utility
             // Convert the Base64-encoded cipher text back to a byte array
             byte[] cipherBytes = Convert.FromBase64String(cipherText);
 
-            // Create an Aes encryptor to perform the decryption.
-            using (Aes encryptor = Aes.Create())
-            {
-                // Derive the cryptographic key and initialization vector from the provided encryption key.
-                Rfc2898DeriveBytes pdb = new Rfc2898DeriveBytes(encryptionKey, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
-                encryptor.Key = pdb.GetBytes(32);
-                encryptor.IV = pdb.GetBytes(16);
+            // Create a MemoryStream to hold the decrypted bytes.
+            using var ms = new MemoryStream();
 
-                // Create a MemoryStream to hold the decrypted bytes.
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    // Create a CryptoStream to perform the decryption.
-                    using (CryptoStream cs = new CryptoStream(ms, encryptor.CreateDecryptor(), CryptoStreamMode.Write))
-                    {
-                        // Write the cipher bytes to the CryptoStream for decryption.
-                        cs.Write(cipherBytes, 0, cipherBytes.Length);
+            // Create a CryptoStream to perform the decryption.
+            using var cs = CreateCryptoStream(ms, encryptionKey, CryptoStreamMode.Write);
 
-                        // Close the CryptoStream to ensure all data is flushed and decrypted properly.
-                        cs.Close();
-                    }
+            // Write the cipher bytes to the CryptoStream for decryption.
+            cs.Write(cipherBytes, 0, cipherBytes.Length);
 
-                    // Convert the decrypted byte array back to a string using Unicode encoding.
-                    cipherText = Encoding.Unicode.GetString(ms.ToArray());
-                }
-            }
+            // Close the CryptoStream to ensure all data is flushed and decrypted properly.
+            cs.Close();
+
+            // Convert the decrypted byte array back to a string using Unicode encoding.
+            cipherText = Encoding.Unicode.GetString(ms.ToArray());
 
             // Return the decrypted plain text.
             return cipherText;
+        }
+
+        /// <summary>
+        /// Creates a CryptoStream for encryption or decryption based on the specified mode.
+        /// </summary>
+        /// <param name="stream">The stream to be used for the CryptoStream.</param>
+        /// <param name="encryptionKey">The key used for encryption or decryption.</param>
+        /// <param name="mode">The mode of the CryptoStream, either <see cref="CryptoStreamMode.Write"/> for encryption or <see cref="CryptoStreamMode.Read"/> for decryption.</param>
+        /// <returns>A <see cref="CryptoStream"/> configured for the specified mode.</returns>
+        public static CryptoStream CreateCryptoStream(Stream stream, string encryptionKey, CryptoStreamMode mode)
+        {
+            // Create an Aes encryptor to perform the encryption or decryption.
+            using var encryptor = Aes.Create();
+
+            // Derive the cryptographic key and initialization vector from the provided encryption key.
+            using var pdb = new Rfc2898DeriveBytes(encryptionKey, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+
+            // Set the key and IV for the encryptor using the derived bytes.
+            encryptor.Key = pdb.GetBytes(32);
+            encryptor.IV = pdb.GetBytes(16);
+
+            // Create a CryptoStream to perform the encryption or decryption.
+            return new CryptoStream(stream, mode == CryptoStreamMode.Write ? encryptor.CreateEncryptor() : encryptor.CreateDecryptor(), mode);
         }
 
         /// <summary>

@@ -23,9 +23,15 @@ namespace Sanctuary.Serializers
 
         public static BinarySerializer Backup => new(SerializationOptions.Backup);
 
+        public static BinarySerializer BackupCompressed => new(SerializationOptions.Backup | SerializationOptions.Compressed);
+
+        public static BinarySerializer BackupEncrypted => new(SerializationOptions.Backup | SerializationOptions.Encrypted);
+
+        public static BinarySerializer CompressionEncrypted => new(SerializationOptions.Compressed | SerializationOptions.Encrypted);
+
         public static BinarySerializer All => new(SerializationOptions.All);
 
-        internal BinarySerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".bin")
+        private BinarySerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".bin")
         {
             this.options = options;
             this.fileExtension = fileExtension;
@@ -33,14 +39,7 @@ namespace Sanctuary.Serializers
 
         public static BinarySerializer Create(SerializationOptions options, string fileExtension = ".bin") => new(options, fileExtension);
 
-        public static BinarySerializer Create(bool useCompression, bool useEncryption, bool allowBackup, string fileExtension = ".bin")
-        {
-            SerializationOptions options = SerializationOptions.None;
-            if (useCompression) options |= SerializationOptions.Compressed;
-            if (useEncryption) options |= SerializationOptions.Encrypted;
-            if (allowBackup) options |= SerializationOptions.Backup;
-            return new BinarySerializer(options, fileExtension);
-        }
+        public static BinarySerializer CreateAsData(SerializationOptions options, string fileExtension = ".data") => new(options, fileExtension);
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {

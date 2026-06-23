@@ -21,6 +21,25 @@ namespace Sanctuary.Tests
         [Test]
         public async Task TestBinaryBackup() => await TestSerializer(BinarySerializer.Backup, "BinaryBackup", true);
 
+        [Test]
+        public async Task TestBinaryBackupCompressed() => await TestSerializer(BinarySerializer.BackupCompressed, "BinaryBackupCompressed", true);
+
+        [Test]
+        public async Task TestBinaryBackupEncrypted() => await TestSerializer(BinarySerializer.BackupEncrypted, "BinaryBackupEncrypted", true);
+
+        [Test]
+        public async Task TestBinaryCompressionEncrypted() => await TestSerializer(BinarySerializer.CompressionEncrypted, "BinaryCompressionEncrypted", true);
+
+        [Test]
+        public async Task TestBinaryAll() => await TestSerializer(BinarySerializer.All, "BinaryAll", true);
+
+        #region Other Binary Serializer Tests
+
+        [Test]
+        public async Task TestBinaryData() => await TestSerializer(BinarySerializer.CreateAsData(SerializationOptions.None), "BinaryData", true);
+
+        #endregion
+
 #if UNITY_NEWTONSOFT_JSON
 
         [Test]
@@ -28,6 +47,34 @@ namespace Sanctuary.Tests
 
         [Test]
         public async Task TestJsonCompressed() => await TestSerializer(JsonSerializer.Compressed, "JsonCompressed", true);
+
+        [Test]
+        public async Task TestJsonBackup() => await TestSerializer(JsonSerializer.Backup, "JsonBackup", true);
+
+        [Test]
+        public async Task TestJsonBackupCompressed() => await TestSerializer(JsonSerializer.BackupCompressed, "JsonBackupCompressed", true);
+
+        [Test]
+        public async Task TestJsonBackupEncrypted() => await TestSerializer(JsonSerializer.BackupEncrypted, "JsonBackupEncrypted", true);
+
+        [Test]
+        public async Task TestJsonCompressionEncrypted() => await TestSerializer(JsonSerializer.CompressionEncrypted, "JsonCompressionEncrypted", true);
+
+        [Test]
+        public async Task TestJsonAll() => await TestSerializer(JsonSerializer.All, "JsonAll", true);
+
+        #region Other Json Serializer Tests
+
+        [Test]
+        public async Task TestJsonData() => await TestSerializer(JsonSerializer.CreateAsData(SerializationOptions.None), "Data", true);
+
+        [Test]
+        public async Task TestMarkdown() => await TestSerializer(JsonSerializer.CreateAsMarkDown(SerializationOptions.None), "Markdown", true);
+
+        [Test]
+        public async Task TestText() => await TestSerializer(JsonSerializer.CreateAsText(SerializationOptions.None), "Text", true);
+
+        #endregion
 
 #endif
 
@@ -40,7 +87,7 @@ namespace Sanctuary.Tests
             SaveLocation location = new(TestChunkId, TestObjectId);
 
             // Create a new instance of the test data
-            TestData data = new("John Doe", 30, 5.9f, new string[] { "Reading", "Gaming", "Hiking" });
+            TestSaveData data = new("John Doe", 30, 5.9f, new string[] { "Reading", "Gaming", "Hiking" });
 
             // Write the test data to the save data
             saveData.Write(location, data);
@@ -124,14 +171,14 @@ namespace Sanctuary.Tests
         }
 
         [System.Serializable]
-        public struct TestData
+        public struct TestSaveData
         {
             public string Name;
             public int Age;
             public float Height;
             public string[] Hobbies;
 
-            public TestData(string name, int age, float height, string[] hobbies)
+            public TestSaveData(string name, int age, float height, string[] hobbies)
             {
                 Name = name;
                 Age = age;
