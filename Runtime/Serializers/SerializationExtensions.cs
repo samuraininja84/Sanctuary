@@ -43,6 +43,9 @@ namespace Sanctuary.Serializers
                     // Use the DirectoryUtility to copy the backup file to the original file path.
                     await DirectoryUtility.CopyFileAsync(backupFilePath, filePath);
 
+                    // Log a message indicating that the rollback was successful.
+                    UnityEngine.Debug.Log($"[Sanctuary]: Rollback successful: {backupFilePath} has been restored to {filePath}.");
+
                     // Indicate that the rollback was successful.
                     success = true;
                 }
@@ -50,7 +53,7 @@ namespace Sanctuary.Serializers
             catch (Exception e)
             {
                 // Throw an exception if the rollback failed to copy the backup file to the original file path.
-                throw new Exception("Error occured when trying to roll back to backup file at: " + backupFilePath + " to " + filePath + ", did not work.\n" + e);
+                throw new Exception("[Sanctuary]: Error occured when trying to roll back to backup file at: " + backupFilePath + " to " + filePath + ", did not work.\n" + e);
             }
 
             // Indicate that the rollback was successful.
