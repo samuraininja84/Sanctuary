@@ -1,8 +1,6 @@
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
-using Sanctuary.Extensions;
 
 namespace Sanctuary.Serializers
 {
@@ -10,43 +8,46 @@ namespace Sanctuary.Serializers
     {
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
-            // Ensure the folder path exists.
-            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-            // Create a file stream to write to the file.
-            using var saveStream = new FileStream(filePath, FileMode.Create);
-
-            // Create a binary writer to write to the file.
-            using var writer = new BinaryWriter(saveStream, Encoding.UTF8, false);
-
-            // Write each chunk of data.
-            foreach (var chunkId in data.GetChunkIDs())
+            await Task.Run(() =>
             {
-                // Get the chunk data.
-                var chunk = data.GetChunk(chunkId);
+                // Ensure the folder path exists.
+                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
-                // Write a true boolean to indicate a chunk follows.
-                writer.Write(true);
+                // Create a file stream to write to the file.
+                using var saveStream = new FileStream(filePath, FileMode.Create);
 
-                // Write the chunk ID and the number of key-value pairs in the chunk.
-                writer.Write(chunkId);
+                // Create a binary writer to write to the file.
+                using var writer = new BinaryWriter(saveStream, Encoding.UTF8, false);
 
-                // Write the number of key-value pairs in the chunk.
-                writer.Write(chunk.Count);
-
-                // Write each key-value pair in the chunk.
-                foreach (var (key, value) in chunk)
+                // Write each chunk of data.
+                foreach (var chunkId in data.GetChunkIDs())
                 {
-                    // Write the key.to the file.
-                    writer.Write(key);
+                    // Get the chunk data.
+                    var chunk = data.GetChunk(chunkId);
 
-                    // Write the value to the file.
-                    writer.Write(value);
+                    // Write a true boolean to indicate a chunk follows.
+                    writer.Write(true);
+
+                    // Write the chunk ID and the number of key-value pairs in the chunk.
+                    writer.Write(chunkId);
+
+                    // Write the number of key-value pairs in the chunk.
+                    writer.Write(chunk.Count);
+
+                    // Write each key-value pair in the chunk.
+                    foreach (var (key, value) in chunk)
+                    {
+                        // Write the key.to the file.
+                        writer.Write(key);
+
+                        // Write the value to the file.
+                        writer.Write(value);
+                    }
                 }
-            }
 
-            // Write a false boolean to indicate the end of chunks.
-            writer.Write(false);
+                // Write a false boolean to indicate the end of chunks.
+                writer.Write(false);
+            });
         }
 
         public async Task<ISaveData> Deserialize(string filePath)

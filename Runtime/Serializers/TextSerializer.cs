@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using UnityEngine;
 using Sanctuary.Extensions;
 
 namespace Sanctuary.Serializers
@@ -11,54 +10,57 @@ namespace Sanctuary.Serializers
     {
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
-            // Ensure the folder path exists.
-            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-            // Create a file stream to write to the file.
-            using var saveStream = new FileStream(filePath, FileMode.Create);
-
-            // Create a stream writer to write to the file.
-            using var writer = new StreamWriter(saveStream, Encoding.UTF8, 1024, false);
-
-            // Write each chunk of data.
-            foreach (var chunkId in data.GetChunkIDs())
+            await Task.Run(() =>
             {
-                // Get the chunk data.
-                var chunk = data.GetChunk(chunkId);
+                // Ensure the folder path exists.
+                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
-                // Write a true boolean to indicate a chunk follows.
-                writer.Write(true);
+                // Create a file stream to write to the file.
+                using var saveStream = new FileStream(filePath, FileMode.Create);
 
-                // Add a newline after the boolean for readability.
-                writer.Write(Environment.NewLine);
+                // Create a stream writer to write to the file.
+                using var writer = new StreamWriter(saveStream, Encoding.UTF8, 1024, false);
 
-                // Write the chunk ID and the number of key-value pairs in the chunk.
-                writer.Write(FormattingExtensions.TryFormat(chunkId
-                    //+ ": "
-                    ));
-
-                // Write the number of key-value pairs in the chunk.
-                writer.Write(chunk.Count);
-
-                // Add a newline after the boolean for readability.
-                writer.Write(Environment.NewLine);
-
-                // Write each key-value pair in the chunk.
-                foreach (var (key, value) in chunk)
+                // Write each chunk of data.
+                foreach (var chunkId in data.GetChunkIDs())
                 {
-                    // Write the key.to the file.
-                    writer.Write(FormattingExtensions.TryFormat(key));
+                    // Get the chunk data.
+                    var chunk = data.GetChunk(chunkId);
 
-                    // Write the value to the file.
-                    writer.Write(FormattingExtensions.TryFormat(value));
+                    // Write a true boolean to indicate a chunk follows.
+                    writer.Write(true);
 
                     // Add a newline after the boolean for readability.
                     writer.Write(Environment.NewLine);
-                }
 
-                // Add a newline after each chunk for readability.
-                writer.Write(Environment.NewLine);
-            }
+                    // Write the chunk ID and the number of key-value pairs in the chunk.
+                    writer.Write(FormattingExtensions.TryFormat(chunkId
+                        //+ ": "
+                        ));
+
+                    // Write the number of key-value pairs in the chunk.
+                    writer.Write(chunk.Count);
+
+                    // Add a newline after the boolean for readability.
+                    writer.Write(Environment.NewLine);
+
+                    // Write each key-value pair in the chunk.
+                    foreach (var (key, value) in chunk)
+                    {
+                        // Write the key.to the file.
+                        writer.Write(FormattingExtensions.TryFormat(key));
+
+                        // Write the value to the file.
+                        writer.Write(FormattingExtensions.TryFormat(value));
+
+                        // Add a newline after the boolean for readability.
+                        writer.Write(Environment.NewLine);
+                    }
+
+                    // Add a newline after each chunk for readability.
+                    writer.Write(Environment.NewLine);
+                }
+            });
         }
 
         public async Task<ISaveData> Deserialize(string filePath)
