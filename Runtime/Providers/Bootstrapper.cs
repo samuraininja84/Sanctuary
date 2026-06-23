@@ -7,7 +7,7 @@ namespace Sanctuary
     /// An abstract base class for bootstrapping a SaveProvider in Unity.
     /// </summary>
     [DisallowMultipleComponent]
-    [DefaultExecutionOrder(-100)]
+    [DefaultExecutionOrder(-1000)]
     [RequireComponent(typeof(SaveProvider))]
     public abstract class Bootstrapper : MonoBehaviour
     {

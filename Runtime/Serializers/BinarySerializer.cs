@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Sanctuary.Serializers
 {
-    public readonly struct BinarySerializer : ISerializer 
+    public readonly struct BinarySerializer : ISerializer
     {
         private readonly bool useCompression;
         private readonly bool useEncryption;
@@ -37,7 +37,7 @@ namespace Sanctuary.Serializers
                 using var saveStream = new FileStream(filePath, FileMode.Create);
 
                 // Create a binary writer to write to the file.
-                using BinaryWriter writer = useCompression ? new BinaryWriter(new GZipStream(saveStream, CompressionMode.Compress), Encoding.UTF8, false) : new BinaryWriter(saveStream, Encoding.UTF8, false);
+                using BinaryWriter writer = useCompression ? new(new GZipStream(saveStream, CompressionMode.Compress), Encoding.UTF8, false) : new(saveStream, Encoding.UTF8, false);
 
                 // Write each chunk of data.
                 foreach (var chunkId in data.GetChunkIDs())
