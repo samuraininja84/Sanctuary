@@ -2,21 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Sanctuary.Editor
 {
     /// <summary>
-    /// Provides a custom property drawer for fields of type <see cref="InterfaceReference{T}"/> and <see
-    /// cref="InterfaceReference{T1, T2}"/>.
+    /// Provides a custom property drawer for fields of type <see cref="InterfaceReference{T}"/>.
     /// </summary>
-    /// <remarks>This property drawer enables Unity's Inspector to display and edit fields that reference
-    /// objects implementing specific interfaces. It ensures that assigned objects meet the required interface
-    /// constraints and provides validation feedback.</remarks>
+    /// <remarks>This property drawer enables Unity's Inspector to display and edit fields that reference objects implementing specific interfaces. 
+    /// It ensures that assigned objects meet the required interface constraints and provides validation feedback.
+    /// </remarks>
     [CustomPropertyDrawer(typeof(InterfaceReference<>))]
-    [CustomPropertyDrawer(typeof(InterfaceReference<,>))]
     public class InterfaceReferencePropertyDrawer : PropertyDrawer
     {
         /// <summary>
@@ -50,26 +48,33 @@ namespace Sanctuary.Editor
                 // Check if the assigned object is a GameObject or if it directly implements the interface.
                 if (assignedObject is GameObject gameObject)
                 {
+                    // If the assigned object is a GameObject, attempt to get a component that implements the required interface.
                     component = gameObject.GetComponent(args.InterfaceType);
                 }
                 else if (args.InterfaceType.IsAssignableFrom(assignedObject.GetType()))
                 {
+                    // If the assigned object directly implements the interface, assign it to the component variable.
                     component = assignedObject;
                 }
 
                 // If a component implementing the interface is found, validate and assign it to the underlying property.
                 if (component != null)
                 {
+                    // Validate the component and assign it to the underlying property, ensuring it meets the interface requirements.
                     ValidateAndAssignObject(underlyingProperty, component, component.name, args.InterfaceType.Name);
                 }
                 else
                 {
+                    // If no component implementing the interface is found, log a warning and clear the underlying property.
                     Debug.LogWarning($"Assigned object does not implement required interface '{args.InterfaceType.Name}'.");
+
+                    // Clear the underlying property to ensure it does not hold a stale reference if the assigned object does not implement the required interface.
                     underlyingProperty.objectReferenceValue = null;
                 }
             }
             else
             {
+                // If no object is assigned, clear the underlying property to ensure it does not hold a stale reference.
                 underlyingProperty.objectReferenceValue = null;
             }
 
@@ -83,13 +88,13 @@ namespace Sanctuary.Editor
         /// <summary>
         /// Extracts object and interface types from a given field's type.
         /// </summary>
-        /// <remarks>This method identifies object and interface types based on specific patterns in the
-        /// field's type: <list type="bullet"> <item> If the field's type is a generic type matching <see
-        /// cref="InterfaceReference{T}"/> or <see cref="InterfaceReference{T1, T2}"/>, the object and interface types
-        /// are extracted from the generic arguments. </item> <item> If the field's type implements <see
-        /// cref="IList{T}"/>, the method attempts to extract the object and interface types from the element type of
-        /// the list. </item> </list> If neither pattern is matched, the returned <see cref="InterfaceArgs"/> will
-        /// contain <see langword="null"/> values.</remarks>
+        /// <remarks>
+        /// This method identifies object and interface types based on specific patterns in the field's type: 
+        /// <list type="bullet"> 
+        /// <item>If the field's type is a generic type matching <see cref="InterfaceReference{T}"/> or <see cref="InterfaceReference{T1, T2}"/>, the object and interface types are extracted from the generic arguments.</item> 
+        /// <item>If the field's type implements <see cref="IList{T}"/>, the method attempts to extract the object and interface types from the element type of the list.</item> 
+        /// </list> 
+        /// If neither pattern is matched, the returned <see cref="InterfaceArgs"/> will contain <see langword="null"/> values.</remarks>
         /// <param name="fieldInfo">The metadata information of the field whose type is analyzed.</param>
         /// <returns>
         /// An <see cref="InterfaceArgs"/> instance containing the object type and interface type derived from the field's type. 
@@ -104,35 +109,45 @@ namespace Sanctuary.Editor
             // Helper method to extract types from InterfaceReference or InterfaceReference<T1, T2>.
             bool TryGetTypesFromInterfaceReference(Type type, out Type objType, out Type intfType)
             {
+                // Initialize the output types to null.
                 objType = intfType = null;
 
+                // Check if the type is a generic type and matches the expected InterfaceReference patterns.
                 if (type?.IsGenericType != true) return false;
 
-                var genericType = type.GetGenericTypeDefinition();
-                if (genericType == typeof(InterfaceReference<>)) type = type.BaseType;
+                // Set the obj type to an Object
+                objType = typeof(Object);
 
-                if (type?.GetGenericTypeDefinition() == typeof(InterfaceReference<,>))
+                // Get the interface type from the first part of the arguments
+                intfType = type.GetGenericArguments()[0];
+
+                // Ensure the interface type is indeed an interface
+                if (!intfType.IsInterface)
                 {
-                    var types = type.GetGenericArguments();
-                    intfType = types[0];
-                    objType = types[1];
-                    return true;
+                    intfType = null;
+                    return false;
                 }
 
-                return false;
+                // If the type has two generic arguments, set the object type to the second argument
+                return true;
             }
 
             // Helper method to extract types from IList<T> interface.
             void GetTypesFromList(Type type, out Type objType, out Type intfType)
             {
+                // Initialize the output types to null.
                 objType = intfType = null;
 
-                var listInterface = type.GetInterfaces()
-                    .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IList<>));
+                // Check if the type implements IList<T> and extract the element type.
+                var listInterface = type.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IList<>));
 
+                // If the type implements IList<T>, extract the element type and try to get types from InterfaceReference.
                 if (listInterface != null)
                 {
+                    // Get the element type of the list, which is the first generic argument of IList<T>.
                     var elementType = listInterface.GetGenericArguments()[0];
+
+                    // Try to get types from InterfaceReference or InterfaceReference<T1, T2> for the element type.
                     TryGetTypesFromInterfaceReference(elementType, out objType, out intfType);
                 }
             }
@@ -140,6 +155,7 @@ namespace Sanctuary.Editor
             // Try to get types from InterfaceReference or InterfaceReference<T1, T2>.
             if (!TryGetTypesFromInterfaceReference(fieldType, out objectType, out interfaceType))
             {
+                // If that fails, try to get types from IList<T> interface.
                 GetTypesFromList(fieldType, out objectType, out interfaceType);
             }
 
@@ -150,10 +166,10 @@ namespace Sanctuary.Editor
         /// <summary>
         /// Validates the specified target object and assigns it to the given serialized property.
         /// </summary>
-        /// <remarks>If <paramref name="targetObject"/> is not null, it is assigned to <paramref
-        /// name="property"/>. If <paramref name="targetObject"/> is null, a warning is logged indicating that the
-        /// object does not implement the specified interface (if provided), and <paramref name="property"/> is set to
-        /// null.</remarks>
+        /// <remarks>
+        /// If <paramref name="targetObject"/> is not null, it is assigned to <paramref name="property"/>. 
+        /// If <paramref name="targetObject"/> is null, a warning is logged indicating that the object does not implement the specified interface (if provided), and <paramref name="property"/> is set to null.
+        /// </remarks>
         /// <param name="property">The serialized property to which the object reference will be assigned.</param>
         /// <param name="targetObject">The object to validate and assign. If null, a warning will be logged and the property will be set to null.</param>
         /// <param name="componentNameOrType">The name or type of the component associated with the target object, used for logging purposes.</param>
@@ -166,13 +182,8 @@ namespace Sanctuary.Editor
             }
             else
             {
-                var message = interfaceName != null
-                    ? $"GameObject '{componentNameOrType}'"
-                    : "assigned object";
-
-                Debug.LogWarning(
-                    $"The {message} does not have a component that implements '{interfaceName}'."
-                );
+                var message = interfaceName != null ? $"GameObject '{componentNameOrType}'" : "assigned object";
+                Debug.LogWarning($"The {message} does not have a component that implements '{interfaceName}'.");
                 property.objectReferenceValue = null;
             }
         }
@@ -181,9 +192,10 @@ namespace Sanctuary.Editor
     /// <summary>
     /// Represents the association between an object type and an interface type.
     /// </summary>
-    /// <remarks>This struct is used to define a relationship between a specific object type and an interface
-    /// type. The <see cref="ObjectType"/> must be a type that derives from <see cref="Object"/>, and the  <see
-    /// cref="InterfaceType"/> must be an interface.</remarks>
+    /// <remarks>
+    /// This struct is used to define a relationship between a specific object type and an interface type. 
+    /// The <see cref="ObjectType"/> must be a type that derives from <see cref="Object"/>, and the <see cref="InterfaceType"/> must be an interface.
+    /// </remarks>
     public readonly struct InterfaceArgs
     {
         /// <summary>
