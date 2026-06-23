@@ -1,7 +1,9 @@
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
 using System.Threading.Tasks;
+using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 
 namespace Sanctuary.Serializers
 {
@@ -10,7 +12,8 @@ namespace Sanctuary.Serializers
     /// </summary>
     public readonly struct BinarySerializer : ISerializer
     {
-        private readonly SerializationOptions options;
+        internal readonly SerializationOptions options;
+        internal readonly string fileExtension;
 
         public static BinarySerializer Default => new();
 
@@ -22,14 +25,30 @@ namespace Sanctuary.Serializers
 
         public static BinarySerializer All => new(SerializationOptions.All);
 
-        internal BinarySerializer(SerializationOptions options) => this.options = options;
+        internal BinarySerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".bin")
+        {
+            this.options = options;
+            this.fileExtension = fileExtension;
+        }
 
-        public static BinarySerializer Create(SerializationOptions options) => new(options);
+        public static BinarySerializer Create(SerializationOptions options, string fileExtension = ".bin") => new(options, fileExtension);
+
+        public static BinarySerializer Create(bool useCompression, bool useEncryption, bool allowBackup, string fileExtension = ".bin")
+        {
+            SerializationOptions options = SerializationOptions.None;
+            if (useCompression) options |= SerializationOptions.Compressed;
+            if (useEncryption) options |= SerializationOptions.Encrypted;
+            if (allowBackup) options |= SerializationOptions.Backup;
+            return new BinarySerializer(options, fileExtension);
+        }
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
             bool useCompression = options.HasFlag(SerializationOptions.Compressed);
+
+            // Capture the backupAllowed value in a local variable to avoid closure issues in the async task.
+            bool backupAllowed = options.HasFlag(SerializationOptions.Backup);
 
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
@@ -72,12 +91,32 @@ namespace Sanctuary.Serializers
                 // Write a false boolean to indicate the end of chunks.
                 writer.Write(false);
             });
+
+            // Create a backup of the file if the setting is enabled.
+            if (backupAllowed) await DirectoryUtility.CopyFileAsync(filePath, filePath + SerializationDefaults.BackupFileExtension);
         }
 
         public async Task<ISaveData> Deserialize(string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
             bool useCompression = options.HasFlag(SerializationOptions.Compressed);
+
+            // Check if the file exists before attempting to deserialize it.
+            if (!File.Exists(filePath))
+            {
+                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
+                if (!await SerializationDefaults.AttemptRollback(filePath))
+                {
+                    // Determine the appropriate error message based on whether backups are allowed.
+                    string errorMessage = "rollback to backup failed, the backup file may not exist or is corrupted.";
+
+                    // Log an error if rollback failed or backups are not allowed.
+                    UnityEngine.Debug.LogError($"Save file not found at {filePath} and {errorMessage}.");
+
+                    // Return a new empty save data object.
+                    return new SaveData();
+                }
+            }
 
             // Create a file stream to read from the file.
             await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -108,6 +147,6 @@ namespace Sanctuary.Serializers
             return save;
         }
 
-        public readonly string GetFileExtension() => ".bin";
+        public readonly string GetFileExtension() => fileExtension;
     }
 }

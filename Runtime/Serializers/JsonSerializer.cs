@@ -2,6 +2,8 @@ using System.IO;
 using System.Text;
 using System.IO.Compression;
 using System.Threading.Tasks;
+using System;
+using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 
 #if UNITY_NEWTONSOFT_JSON
 
@@ -17,9 +19,10 @@ namespace Sanctuary.Serializers
     /// </summary>
     public readonly struct JsonSerializer : ISerializer 
     {
-        private readonly SerializationOptions options;
+        internal readonly SerializationOptions options;
+        internal readonly string fileExtension;
 
-        public static JsonSerializer Default => new();
+        public static JsonSerializer Default => new(SerializationOptions.None);
 
         public static JsonSerializer Compressed => new(SerializationOptions.Compressed);
 
@@ -29,14 +32,30 @@ namespace Sanctuary.Serializers
 
         public static JsonSerializer All => new(SerializationOptions.All);
 
-        internal JsonSerializer(SerializationOptions options = SerializationOptions.None) => this.options = options;
+        internal JsonSerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".json")
+        {
+            this.options = options;
+            this.fileExtension = fileExtension;
+        }
 
-        public static JsonSerializer Create(SerializationOptions options) => new(options);
+        public static JsonSerializer Create(SerializationOptions options, string fileExtension = ".json") => new(options, fileExtension);
+
+        public static JsonSerializer Create(bool useCompression, bool useEncryption, bool allowBackup, string fileExtension = ".json")
+        {
+            SerializationOptions options = SerializationOptions.None;
+            if (useCompression) options |= SerializationOptions.Compressed;
+            if (useEncryption) options |= SerializationOptions.Encrypted;
+            if (allowBackup) options |= SerializationOptions.Backup;
+            return new JsonSerializer(options, fileExtension);
+        }
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
             bool useCompression = options.HasFlag(SerializationOptions.Compressed);
+
+            // Capture the backupAllowed value in a local variable to avoid closure issues in the async task.
+            bool backupAllowed = options.HasFlag(SerializationOptions.Backup);
 
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
@@ -53,12 +72,32 @@ namespace Sanctuary.Serializers
                 // Serialize the save data to a JSON string using Newtonsoft.Json
                 writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
             });
+
+            // Create a backup of the file if the setting is enabled.
+            if (backupAllowed) await DirectoryUtility.CopyFileAsync(filePath, filePath + SerializationDefaults.BackupFileExtension);
         }
 
         public async Task<ISaveData> Deserialize(string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
             bool useCompression = options.HasFlag(SerializationOptions.Compressed);
+
+            // Check if the file exists before attempting to deserialize it.
+            if (!File.Exists(filePath))
+            {
+                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
+                if (!await SerializationDefaults.AttemptRollback(filePath))
+                {
+                    // Determine the appropriate error message based on whether backups are allowed.
+                    string errorMessage = "rollback to backup failed, the backup file may not exist or is corrupted.";
+
+                    // Log an error if rollback failed or backups are not allowed.
+                    UnityEngine.Debug.LogError($"Save file not found at {filePath} and {errorMessage}.");
+
+                    // Return a new empty save data object.
+                    return new SaveData();
+                }
+            }
 
             // Create a file stream to read from the file.
             await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -73,7 +112,7 @@ namespace Sanctuary.Serializers
             return new NewtonsoftJsonSerializer().Deserialize<SaveData>(jsonReader);
         }
 
-        public string GetFileExtension() => ".json";
+        public readonly string GetFileExtension() => fileExtension;
     }
 }
 

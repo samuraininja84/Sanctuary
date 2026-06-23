@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -28,7 +27,6 @@ namespace Sanctuary.Loaders
         private string _filePath = string.Empty;
         private string _folderPath = string.Empty;
         private string _fileExtension = ".data";
-        private bool _backupAllowed = true;
 
         /// <summary>
         /// The file name derived from the profile data.
@@ -132,9 +130,6 @@ namespace Sanctuary.Loaders
             // Write the data to the file asynchronously using the serializer.
             await _serializer.Serialize(data, _folderPath, _filePath);
 
-            // Create a backup of the file if the setting is enabled.
-            if (_backupAllowed) File.Copy(_filePath, GetBackupFilePath(), true);
-
             // Release the lock.
             _lock.Release();
         }
@@ -160,26 +155,6 @@ namespace Sanctuary.Loaders
         {
             // Acquire the lock.
             await _lock.WaitAsync();
-
-            // If the file doesn't exist, try to roll back to a backup file.
-            if (!File.Exists(filePath)) 
-            {
-                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
-                if (!await AttemptRollback())
-                {
-                    // Release the lock.
-                    _lock.Release();
-
-                    // Determine the appropriate error message based on whether backups are allowed.
-                    string errorMessage = _backupAllowed ? "rollback to backup failed" : "rollback to backup failed because backup likely doesn't exist";
-
-                    // Log an error if rollback failed or backups are not allowed.
-                    Debug.LogError($"Save file not found at {filePath} and {errorMessage}, Creating new empty save data.");
-
-                    // Return a new empty save data object.
-                    return new SaveData();
-                }
-            }
 
             // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.`
             var save = await _serializer.Deserialize(filePath);
@@ -245,61 +220,6 @@ namespace Sanctuary.Loaders
 
             // Return the array of loaded save data objects.
             return saves.ToArray();
-        }
-
-        /// <summary>
-        /// Attempts to roll back a file to its backup version if the backup file exists.
-        /// </summary>
-        /// <remarks>
-        /// This method checks for the existence of a backup file at the specified location, appending a predefined backup file extension to the original file path. 
-        /// If the backup file exists, it replaces the original file with the backup. If the backup file is missing, the method logs an error and returns <see langword="false"/>. Any exceptions encountered during the rollback process are propagated to the caller.
-        /// </remarks>
-        /// <returns> <see langword="true"/> if the rollback was successful and the backup file was restored; otherwise, <see langword="false"/> if the backup file does not exist.</returns>
-        /// <exception cref="Exception">Thrown if an error occurs during the rollback process, such as a failure to copy the backup file.</exception>
-        public async Task<bool> AttemptRollback()
-        {
-            // Acquire the lock.
-            await _lock.WaitAsync();
-
-            // Initialize the success variable to false
-            bool success = false;
-
-            // Construct the backup file path.
-            var backupFilePath = GetBackupFilePath();
-
-            // Attempt to roll back to the backup file.
-            try
-            {
-                // Check if the backup file exists.
-                if (!File.Exists(backupFilePath)) 
-                {
-                    // Release the lock.
-                    _lock.Release();
-
-                    // Indicate that the rollback was not successful.
-                    return success;
-                }
-
-                // Copy the backup file to the original file path, overwriting it.
-                File.Copy(backupFilePath, _filePath, true);
-
-                // Indicate that the rollback was successful.
-                success = true;
-            }
-            catch (Exception e)
-            {
-                // Release the lock.
-                _lock.Release();
-
-                // Throw an exception if the rollback failed
-                throw new Exception("Error occured when trying to roll back to backup file at: " + backupFilePath + ", did not work.\n" + e);
-            }
-
-            // Release the lock.
-            _lock.Release();
-
-            // Indicate that the rollback was successful.
-            return success;
         }
 
         /// <summary>
@@ -371,16 +291,16 @@ namespace Sanctuary.Loaders
         public Task<string> GetName() => Task.FromResult(_name);
 
         /// <summary>
-        /// Asynchronously gets the last modified time of the save file.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the last modified time.</returns>
-        public Task<TimeSpan> GetLastModifiedTime() => Task.FromResult(File.GetLastWriteTimeUtc(_filePath).TimeOfDay);
-
-        /// <summary>
         /// Asynchronously checks if the save file exists.
         /// </summary>
         /// <returns>A task that represents the asynchronous existence check operation. The task result contains true if the file exists, false otherwise.</returns>
         public Task<bool> Exists() => Task.FromResult(File.Exists(_filePath));
+
+        /// <summary>
+        /// Asynchronously gets the last modified time of the save file.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the last modified time.</returns>
+        public Task<TimeSpan> GetLastModifiedTime() => Task.FromResult(File.GetLastWriteTimeUtc(_filePath).TimeOfDay);
 
         /// <summary>
         /// Gets the existing save IDs by scanning the save directory for folders named with integer IDs.
@@ -419,6 +339,6 @@ namespace Sanctuary.Loaders
         /// Gets the backup file path by appending the backup file extension to the original file path.
         /// </summary>
         /// <returns>The backup file path.</returns>
-        private string GetBackupFilePath() => _filePath + SaveLoaderDefaults.BackupFileExtension;
+        private string GetBackupFilePath() => _filePath + SerializationDefaults.BackupFileExtension;
     }
 }

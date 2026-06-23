@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Sanctuary.Utility
@@ -101,5 +103,42 @@ namespace Sanctuary.Utility
         /// <param name="directory">The <see cref="DirectoryInfo"/> representing the directory to check. Must not be <see langword="null"/>.</param>
         /// <returns><see langword="true"/> if the directory contains at least one file or subdirectory; otherwise, <see langword="false"/>.</returns>
         public static bool HasContents(this DirectoryInfo directory) => HasFiles(directory) || HasSubDirectories(directory);
+
+        /// <summary>
+        /// Asynchronously checks if a directory exists at the specified path, with support for cancellation.
+        /// </summary>
+        /// <param name="path">The path of the directory to check. Must not be <see langword="null"/> or empty.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, containing <see langword="true"/> if the directory exists; otherwise, <see langword="false"/>.</returns>
+        public static Task<bool> ExistsAsync(string path, CancellationToken cancellationToken = default) => Task.Run(() => Directory.Exists(path), cancellationToken);
+
+        // Source - https://stackoverflow.com/a/35467471
+        // Posted by Drew Noakes
+        // Retrieved 2026-06-23, License - CC BY-SA 3.0
+
+        /// <summary>
+        /// Asynchronously copies a file from the specified source path to the specified destination path, with support for cancellation.
+        /// </summary>
+        /// <param name="sourceFile">The full path of the source file to copy. Must not be <see langword="null"/> or empty.</param>
+        /// <param name="destinationFile">The full path of the destination file. Must not be <see langword="null"/> or empty.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous copy operation.</returns>
+        public static async Task CopyFileAsync(string sourceFile, string destinationFile, CancellationToken cancellationToken = default)
+        {
+            // Define file options for asynchronous operations and sequential scanning
+            var fileOptions = FileOptions.Asynchronous | FileOptions.SequentialScan;
+
+            // Define a buffer size for the file copy operation
+            var bufferSize = 4096;
+
+            // Open the source file for reading with asynchronous options
+            using var sourceStream = new FileStream(sourceFile, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, fileOptions);
+
+            // Ensure the destination directory exists
+            using var destinationStream = new FileStream(destinationFile, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize, fileOptions);
+
+            // Copy the contents of the source file to the destination file asynchronously
+            await sourceStream.CopyToAsync(destinationStream, bufferSize, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

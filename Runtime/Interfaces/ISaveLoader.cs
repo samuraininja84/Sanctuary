@@ -53,12 +53,6 @@ namespace Sanctuary.Loaders
         virtual Task<ISaveData[]> LoadAll() => Task.FromResult(new ISaveData[0]);
 
         /// <summary>
-        /// Attempt to rollback from a backup save.
-        /// </summary>
-        /// <returns>True if the rollback was successful; otherwise, false.</returns>
-        virtual Task<bool> AttemptRollback() => Task.FromResult(false);
-
-        /// <summary>
         /// Remove this save from the persistent storage.
         /// </summary>
         /// <returns>A task representing the asynchronous delete operation.</returns>
@@ -74,15 +68,15 @@ namespace Sanctuary.Loaders
         Task<string> GetName();
 
         /// <summary>
-        /// Asynchronously gets the last modified time of the save file.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the last modified time.</returns>
-        virtual Task<TimeSpan> GetLastModifiedTime() => Task.FromResult(TimeSpan.Zero);
-
-        /// <summary>
         /// Check if the save has already been created.
         /// </summary>
         /// <returns>Whether the save exists.</returns>
         Task<bool> Exists();
+
+        /// <summary>
+        /// Asynchronously gets the last modified time of the save file.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the last modified time.</returns>
+        virtual Task<TimeSpan> GetLastModifiedTime() => Task.FromResult(TimeSpan.Zero);
     }
 }

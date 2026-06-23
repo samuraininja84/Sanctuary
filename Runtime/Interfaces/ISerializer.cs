@@ -1,6 +1,7 @@
+using System;
 using System.Threading.Tasks;
 
-namespace Sanctuary 
+namespace Sanctuary.Serializers
 {
     /// <summary>
     /// Defines the interface for a serializer that can serialize and deserialize ISaveData objects to and from files.

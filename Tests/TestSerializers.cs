@@ -18,6 +18,9 @@ namespace Sanctuary.Tests
         [Test]
         public async Task TestBinaryCompressed() => await TestSerializer(BinarySerializer.Compressed, "BinaryCompressed", true);
 
+        [Test]
+        public async Task TestBinaryBackup() => await TestSerializer(BinarySerializer.Backup, "BinaryBackup", true);
+
 #if UNITY_NEWTONSOFT_JSON
 
         [Test]
@@ -25,18 +28,6 @@ namespace Sanctuary.Tests
 
         [Test]
         public async Task TestJsonCompressed() => await TestSerializer(JsonSerializer.Compressed, "JsonCompressed", true);
-
-        [Test]
-        public async Task TestMarkdown() => await TestSerializer(MarkdownSerializer.Default, "Markdown", true);
-
-        [Test]
-        public async Task TestMarkdownCompressed() => await TestSerializer(MarkdownSerializer.Compressed, "MarkdownCompressed", true);
-
-        [Test]
-        public async Task TestText() => await TestSerializer(TextSerializer.Default, "Text", true);
-
-        [Test]
-        public async Task TestTextCompressed() => await TestSerializer(TextSerializer.Compressed, "TextCompressed", true);
 
 #endif
 
@@ -103,6 +94,18 @@ namespace Sanctuary.Tests
 
                     // Log the file path for debugging purposes
                     Debug.Log($"Deleted test data file: {filePath}");
+                }
+
+                // Check if there is a backup file for the test data and delete it if it exists
+                string backupFilePath = filePath + SerializationDefaults.BackupFileExtension;
+
+                if (File.Exists(backupFilePath))
+                {
+                    // Delete the backup file
+                    File.Delete(backupFilePath);
+
+                    // Log the backup file path for debugging purposes
+                    Debug.Log($"Deleted backup file: {backupFilePath}");
                 }
 
                 // If there are no more files in the test folder, delete the test folder as well
