@@ -30,12 +30,6 @@ namespace Sanctuary
         public Dictionary<string, Dictionary<string, string>> Data { get => _data; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SaveData"/> class.
-        /// </summary>
-        /// <remarks>Private constructor to prevent direct instantiation. Use the static <see cref="Empty"/> instance for an empty save data.</remarks>
-        private SaveData() { }
-
-        /// <summary>
         /// A static instance of <see cref="SaveData"/> that represents an empty save data.
         /// </summary>
         public static SaveData Empty = new();

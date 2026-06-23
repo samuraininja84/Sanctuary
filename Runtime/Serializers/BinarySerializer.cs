@@ -86,7 +86,7 @@ namespace Sanctuary.Serializers
             });
 
             // Create a backup of the file if the setting is enabled.
-            if (options.HasFlag(SerializationOptions.Backup)) await DirectoryUtility.CopyFileAsync(filePath, filePath + SerializationExtensions.BackupFileExtension);
+            if (options.HasFlag(SerializationOptions.Backup)) File.Copy(filePath, filePath + SerializationExtensions.BackupFileExtension, true);
         }
 
         // To Do: Add check to see if the file is encrypted and if so, decrypt it before attempting to deserialize it, regardless of whether the options include the Encrypted flag or not.
@@ -116,7 +116,7 @@ namespace Sanctuary.Serializers
             using var reader = SerializationExtensions.CreateBinaryReader(options, loadStream);
 
             // Create a new save data object to hold the loaded data.
-            var save = SaveData.Empty;
+            var save = new SaveData();
 
             // Read each chunk of data.
             while (reader.ReadBoolean())
