@@ -90,37 +90,6 @@ namespace Sanctuary.Loaders
         }
 
         /// <summary>
-        /// Sets the file extension for this save loader.
-        /// </summary>
-        /// <param name="extension">The file extension to set.</param>
-        /// <returns>An instance of <see cref="ISaveLoader"/> with the specified file extension set.</returns>
-        public ISaveLoader WithExtension(string extension)
-        {
-            // Update the file extension.
-            _fileExtension = extension;
-
-            // Update the file path to include the new extension.
-            _filePath = Path.ChangeExtension(_filePath, _fileExtension);
-
-            // Return the current instance for method chaining.
-            return this;
-        }
-
-        /// <summary>
-        /// Sets whether to create a backup file when saving.
-        /// </summary>
-        /// <param name="createBackup">The flag indicating whether to create a backup file.</param>
-        /// <returns>The current instance of <see cref="FileSaveLoader"/> with the updated backup setting.</returns>
-        public ISaveLoader WithBackup(bool createBackup)
-        {
-            // Update the create backup setting.
-            _backupAllowed = createBackup;
-
-            // Return the current instance for method chaining.
-            return this;
-        }
-
-        /// <summary>
         /// Sets the profile ID for this save loader.
         /// </summary>
         /// <param name="id">The profile ID to set.</param>

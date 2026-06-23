@@ -2,8 +2,22 @@ using UnityEngine;
 
 namespace Sanctuary.Serializers
 {
+    /// <summary>
+    /// Defines the settings that can be applied during serialization.
+    /// </summary>
+    /// <remarks>
+    /// Select from the following options:
+    /// <list type="bullet">
+    /// <item><see cref="None"/>: No special settings are applied.</item>
+    /// <item><see cref="Compressed"/>: Indicates that the serializer should compress the data during serialization.</item>
+    /// <item><see cref="Encrypted"/>: Indicates that the serializer should encrypt the data during serialization.</item>
+    /// <item><see cref="Backup"/>: Enables backup functionality for the serializer.</item>
+    /// <item><see cref="All"/>: Indicates that the serializer should use all available settings (compressed, encrypted, and backup).</item>
+    /// </list>
+    /// </remarks>
     [System.Flags]
-    public enum SerializationSettings
+    [System.Serializable]
+    public enum SerializationOptions
     {
         /// <summary>
         /// No special settings are applied.

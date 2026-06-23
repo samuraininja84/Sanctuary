@@ -14,25 +14,26 @@ namespace Sanctuary.Serializers
 {
     public readonly struct TextSerializer : ISerializer 
     {
-        private readonly bool useCompression;
-        private readonly bool useEncryption;
+        private readonly SerializationOptions options;
 
         public static TextSerializer Default => new();
 
-        public static TextSerializer Compressed => new(true, false);
+        public static TextSerializer Compressed => new(SerializationOptions.Compressed);
 
-        public static TextSerializer Encrypted => new(false, true);
+        public static TextSerializer Encrypted => new(SerializationOptions.Encrypted);
 
-        public TextSerializer(bool useCompression = false, bool useEncryption = false)
-        {
-            this.useCompression = useCompression;
-            this.useEncryption = useEncryption;
-        }
+        public static TextSerializer Backup => new(SerializationOptions.Backup);
+
+        public static TextSerializer All => new(SerializationOptions.All);
+
+        internal TextSerializer(SerializationOptions options = SerializationOptions.None) => this.options = options;
+
+        public static TextSerializer Create(SerializationOptions options) => new(options);
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = this.useCompression;
+            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
 
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
@@ -54,7 +55,7 @@ namespace Sanctuary.Serializers
         public async Task<ISaveData> Deserialize(string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = this.useCompression;
+            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
 
             // Create a file stream to read from the file.
             await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);

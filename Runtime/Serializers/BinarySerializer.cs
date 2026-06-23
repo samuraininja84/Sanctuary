@@ -5,27 +5,31 @@ using System.Threading.Tasks;
 
 namespace Sanctuary.Serializers
 {
+    /// <summary>
+    /// A serializer that uses a binary format to serialize and deserialize ISaveData objects.
+    /// </summary>
     public readonly struct BinarySerializer : ISerializer
     {
-        private readonly bool useCompression;
-        private readonly bool useEncryption;
+        private readonly SerializationOptions options;
 
         public static BinarySerializer Default => new();
 
-        public static BinarySerializer Compressed => new(true, false);
+        public static BinarySerializer Compressed => new(SerializationOptions.Compressed);
 
-        public static BinarySerializer Encrypted => new(false, true);
+        public static BinarySerializer Encrypted => new(SerializationOptions.Encrypted);
 
-        public BinarySerializer(bool useCompression = false, bool useEncryption = false)
-        {
-            this.useCompression = useCompression;
-            this.useEncryption = useEncryption;
-        }
+        public static BinarySerializer Backup => new(SerializationOptions.Backup);
+
+        public static BinarySerializer All => new(SerializationOptions.All);
+
+        internal BinarySerializer(SerializationOptions options) => this.options = options;
+
+        public static BinarySerializer Create(SerializationOptions options) => new(options);
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = this.useCompression;
+            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
 
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
@@ -73,7 +77,7 @@ namespace Sanctuary.Serializers
         public async Task<ISaveData> Deserialize(string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = this.useCompression;
+            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
 
             // Create a file stream to read from the file.
             await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);

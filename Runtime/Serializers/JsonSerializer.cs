@@ -12,27 +12,31 @@ using NewtonsoftJsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace Sanctuary.Serializers
 {
+    /// <summary>
+    /// A serializer that uses JSON format to serialize and deserialize ISaveData objects.
+    /// </summary>
     public readonly struct JsonSerializer : ISerializer 
     {
-        private readonly bool useCompression;
-        private readonly bool useEncryption;
+        private readonly SerializationOptions options;
 
         public static JsonSerializer Default => new();
 
-        public static JsonSerializer Compressed => new(true, false);
+        public static JsonSerializer Compressed => new(SerializationOptions.Compressed);
 
-        public static JsonSerializer Encrypted => new(false, true);
+        public static JsonSerializer Encrypted => new(SerializationOptions.Encrypted);
 
-        public JsonSerializer(bool useCompression = false, bool useEncryption = false)
-        {
-            this.useCompression = useCompression;
-            this.useEncryption = useEncryption;
-        }
+        public static JsonSerializer Backup => new(SerializationOptions.Backup);
+
+        public static JsonSerializer All => new(SerializationOptions.All);
+
+        internal JsonSerializer(SerializationOptions options = SerializationOptions.None) => this.options = options;
+
+        public static JsonSerializer Create(SerializationOptions options) => new(options);
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = this.useCompression;
+            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
 
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
@@ -54,7 +58,7 @@ namespace Sanctuary.Serializers
         public async Task<ISaveData> Deserialize(string filePath)
         {
             // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = this.useCompression;
+            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
 
             // Create a file stream to read from the file.
             await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
