@@ -1,6 +1,5 @@
 using System.IO;
 using System.Threading.Tasks;
-using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 
 namespace Sanctuary.Serializers
 {
