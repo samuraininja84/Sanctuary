@@ -54,11 +54,8 @@ namespace Sanctuary.Serializers
 
         public async Task Serialize(ISaveData data, string folderPath, string filePath)
         {
-            // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
-
-            // Capture the backupAllowed value in a local variable to avoid closure issues in the async task.
-            bool backupAllowed = options.HasFlag(SerializationOptions.Backup);
+            // Capture the options in a local variable to avoid closure issues in the async task.
+            var options = this.options;
 
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
@@ -70,32 +67,33 @@ namespace Sanctuary.Serializers
                 using var saveStream = new FileStream(filePath, FileMode.Create);
 
                 // Create a stream writer to write to the file with optional compression.
-                using StreamWriter writer = useCompression ? new(new GZipStream(saveStream, CompressionMode.Compress), Encoding.UTF8, 1024, false) : new(saveStream, Encoding.UTF8, 1024, false);
+                using StreamWriter writer = SerializationExtensions.CreateStreamWriter(options, saveStream);
 
                 // Serialize the save data to a JSON string using Newtonsoft.Json
                 writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
             });
 
             // Create a backup of the file if the setting is enabled.
-            if (backupAllowed) await DirectoryUtility.CopyFileAsync(filePath, filePath + SerializationDefaults.BackupFileExtension);
+            if (options.HasFlag(SerializationOptions.Backup)) await DirectoryUtility.CopyFileAsync(filePath, filePath + SerializationExtensions.BackupFileExtension);
         }
+
+        // To Do: Add check to see if the file is encrypted and if so, decrypt it before attempting to deserialize it, regardless of whether the options include the Encrypted flag or not.
+        // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
+        // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
 
         public async Task<ISaveData> Deserialize(string filePath)
         {
-            // Capture the useCompression value in a local variable to avoid closure issues in the async task.
-            bool useCompression = options.HasFlag(SerializationOptions.Compressed);
+            // Capture the options in a local variable to avoid closure issues in the async task.
+            var options = this.options;
 
             // Check if the file exists before attempting to deserialize it.
             if (!File.Exists(filePath))
             {
                 // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
-                if (!await SerializationDefaults.AttemptRollback(filePath))
+                if (!await SerializationExtensions.AttemptRollback(filePath))
                 {
-                    // Determine the appropriate error message based on whether backups are allowed.
-                    string errorMessage = "rollback to backup failed, the backup file may not exist or is corrupted.";
-
                     // Log an error if rollback failed or backups are not allowed.
-                    UnityEngine.Debug.LogError($"Save file not found at {filePath} and {errorMessage}.");
+                    UnityEngine.Debug.LogError("Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted.");
 
                     // Return a new empty save data object.
                     return new SaveData();
@@ -106,7 +104,7 @@ namespace Sanctuary.Serializers
             await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
             // Create a stream reader to read from the file with optional decompression.
-            using StreamReader reader = useCompression ? new(new GZipStream(loadStream, CompressionMode.Decompress), Encoding.UTF8, false) : new(loadStream, Encoding.UTF8, false);
+            using StreamReader reader = SerializationExtensions.CreateStreamReader(options, loadStream);
 
             // Create a JSON text reader to read the JSON data from the stream.
             using var jsonReader = new JsonTextReader(reader);

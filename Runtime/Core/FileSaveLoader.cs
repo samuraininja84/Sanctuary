@@ -339,6 +339,6 @@ namespace Sanctuary.Loaders
         /// Gets the backup file path by appending the backup file extension to the original file path.
         /// </summary>
         /// <returns>The backup file path.</returns>
-        private string GetBackupFilePath() => _filePath + SerializationDefaults.BackupFileExtension;
+        private string GetBackupFilePath() => _filePath + SerializationExtensions.BackupFileExtension;
     }
 }

@@ -89,7 +89,7 @@ namespace Sanctuary.Utility
             using var ms = new MemoryStream();
 
             // Create a CryptoStream to perform the encryption.
-            using var cs = CreateCryptoStream(ms, encryptionKey, CryptoStreamMode.Write);
+            using var cs = CreateCryptoStream(ms, CryptoStreamMode.Write, encryptionKey);
 
             // Write the clear bytes to the CryptoStream for encryption.
             cs.Write(clearBytes, 0, clearBytes.Length);
@@ -129,7 +129,7 @@ namespace Sanctuary.Utility
             using var ms = new MemoryStream();
 
             // Create a CryptoStream to perform the decryption.
-            using var cs = CreateCryptoStream(ms, encryptionKey, CryptoStreamMode.Write);
+            using var cs = CreateCryptoStream(ms, CryptoStreamMode.Write, encryptionKey);
 
             // Write the cipher bytes to the CryptoStream for decryption.
             cs.Write(cipherBytes, 0, cipherBytes.Length);
@@ -151,7 +151,7 @@ namespace Sanctuary.Utility
         /// <param name="encryptionKey">The key used for encryption or decryption.</param>
         /// <param name="mode">The mode of the CryptoStream, either <see cref="CryptoStreamMode.Write"/> for encryption or <see cref="CryptoStreamMode.Read"/> for decryption.</param>
         /// <returns>A <see cref="CryptoStream"/> configured for the specified mode.</returns>
-        public static CryptoStream CreateCryptoStream(Stream stream, string encryptionKey, CryptoStreamMode mode)
+        public static CryptoStream CreateCryptoStream(Stream stream, CryptoStreamMode mode, string encryptionKey = DemonstrationEncryptionKey)
         {
             // Create an Aes encryptor to perform the encryption or decryption.
             using var encryptor = Aes.Create();
