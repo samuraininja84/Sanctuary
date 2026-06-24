@@ -83,7 +83,7 @@ namespace Sanctuary.Serializers
         /// <param name="filePath">The path of the file to create the FileStream for.</param>
         /// <param name="fileStream">The output FileStream for the specified file path.</param>
         /// <returns>A boolean indicating whether the FileStream was successfully created.</returns>
-        public static async Task<FileStream> CreateFileDeserializationContext(string filePath)
+        public static async Task<FileStream> CreateFileDeserializationStream(string filePath)
         {
             // Check if the file exists before attempting to deserialize it.
             if (!File.Exists(filePath))
@@ -138,40 +138,6 @@ namespace Sanctuary.Serializers
         }
 
         /// <summary>
-        /// Creates a BinaryReader based on the specified serialization options and the provided FileStream.
-        /// </summary>
-        /// <param name="options">The serialization options to apply.</param>
-        /// <param name="saveStream">The <see cref="Stream"/> to read from.</param>
-        /// <returns>A configured BinaryReader instance.</returns>
-        public static BinaryReader CreateBinaryReader(SerializationOptions options, Stream saveStream)
-        {
-            // Create a BinaryReader based on the specified serialization options.
-            return options switch
-            {
-                // Handle the "None" option by creating a BinaryReader directly on the provided FileStream.
-                SerializationOptions.None => new(saveStream, Encoding.UTF8, false),
-
-                // Handle the "Compressed" option by creating a GZipStream for decompression and wrapping it in a BinaryReader.
-                SerializationOptions.Compressed => new(new GZipStream(saveStream, CompressionMode.Decompress), Encoding.UTF8, false),
-
-                // Handle the "Encrypted" option by creating a CryptoStream for decryption and wrapping it in a BinaryReader.
-                SerializationOptions.Encrypted => new(EncryptionUtility.CreateCryptoStream(saveStream, CryptoStreamMode.Read), Encoding.UTF8, false),
-
-                // Functionally equivalent to the "None" option, as it does not apply any compression or encryption.
-                SerializationOptions.Backup => new(saveStream, Encoding.UTF8, false),
-
-                // Handle combined options by applying both decompression and decryption, functionally equivalent to the "All" option. Decompression is applied first, followed by decryption.
-                SerializationOptions.Compressed | SerializationOptions.Encrypted => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
-
-                // Handle the "All" option by applying both decompression and decryption, functionally equivalent to the combined options above. Decompression is applied first, followed by decryption.
-                SerializationOptions.All => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
-
-                // Default case to handle any unexpected options, functionally equivalent to the "None" option.
-                _ => new(saveStream, Encoding.UTF8, false)
-            };
-        }
-
-        /// <summary>
         /// Creates a StreamWriter based on the specified serialization options and the provided FileStream.
         /// </summary>
         /// <param name="options">The serialization options to use.</param>
@@ -202,6 +168,44 @@ namespace Sanctuary.Serializers
 
                 // Default case to handle any unexpected options, functionally equivalent to the "None" option.
                 _ => new(saveStream, Encoding.UTF8, 1024, false)
+            };
+        }
+
+        // To Do: Add check to see if the file is encrypted and if so, decrypt it before attempting to deserialize it, regardless of whether the options include the Encrypted flag or not.
+        // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
+        // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
+
+        /// <summary>
+        /// Creates a BinaryReader based on the specified serialization options and the provided FileStream.
+        /// </summary>
+        /// <param name="options">The serialization options to apply.</param>
+        /// <param name="saveStream">The <see cref="Stream"/> to read from.</param>
+        /// <returns>A configured BinaryReader instance.</returns>
+        public static BinaryReader CreateBinaryReader(SerializationOptions options, Stream saveStream)
+        {
+            // Create a BinaryReader based on the specified serialization options.
+            return options switch
+            {
+                // Handle the "None" option by creating a BinaryReader directly on the provided FileStream.
+                SerializationOptions.None => new(saveStream, Encoding.UTF8, false),
+
+                // Handle the "Compressed" option by creating a GZipStream for decompression and wrapping it in a BinaryReader.
+                SerializationOptions.Compressed => new(new GZipStream(saveStream, CompressionMode.Decompress), Encoding.UTF8, false),
+
+                // Handle the "Encrypted" option by creating a CryptoStream for decryption and wrapping it in a BinaryReader.
+                SerializationOptions.Encrypted => new(EncryptionUtility.CreateCryptoStream(saveStream, CryptoStreamMode.Read), Encoding.UTF8, false),
+
+                // Functionally equivalent to the "None" option, as it does not apply any compression or encryption.
+                SerializationOptions.Backup => new(saveStream, Encoding.UTF8, false),
+
+                // Handle combined options by applying both decompression and decryption, functionally equivalent to the "All" option. Decompression is applied first, followed by decryption.
+                SerializationOptions.Compressed | SerializationOptions.Encrypted => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
+
+                // Handle the "All" option by applying both decompression and decryption, functionally equivalent to the combined options above. Decompression is applied first, followed by decryption.
+                SerializationOptions.All => new(EncryptionUtility.CreateCryptoStream(new GZipStream(saveStream, CompressionMode.Decompress), CryptoStreamMode.Read), Encoding.UTF8, false),
+
+                // Default case to handle any unexpected options, functionally equivalent to the "None" option.
+                _ => new(saveStream, Encoding.UTF8, false)
             };
         }
 

@@ -1,3 +1,4 @@
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Sanctuary.Serializers
@@ -8,19 +9,24 @@ namespace Sanctuary.Serializers
     public interface ISerializer 
     {
         /// <summary>
-        /// Serializes the given ISaveData object to a file at the specified folder and file path.
+        /// Gets the serialization options used by this serializer.
         /// </summary>
-        /// <param name="data">The ISaveData object to serialize.</param>
-        /// <param name="filePath">The file path where the data will be saved.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        Task Serialize(ISaveData data, string filePath);
+        SerializationOptions Options { get; }
 
         /// <summary>
-        /// Deserializes the data from the specified file path into an ISaveData object.
+        /// Serializes the given ISaveData object to a stream.
         /// </summary>
-        /// <param name="filePath">The file path from which to deserialize the data.</param>
+        /// <param name="data">The ISaveData object to serialize.</param>
+        /// <param name="stream">The <see cref="Stream"/> to which the data will be serialized.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task Serialize(ISaveData data, Stream stream);
+
+        /// <summary>
+        /// Deserializes the data from the specified stream into an ISaveData object.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> from which the data will be deserialized.</param>
         /// <returns>A task representing the asynchronous operation, with the deserialized ISaveData object as the result.</returns>
-        Task<ISaveData> Deserialize(string filePath);
+        Task<ISaveData> Deserialize(Stream stream);
 
         /// <summary>
         /// Gets the file extension used by this serializer.

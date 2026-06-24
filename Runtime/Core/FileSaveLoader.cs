@@ -126,8 +126,16 @@ namespace Sanctuary.Loaders
             // Acquire the lock.
             await _lock.WaitAsync();
 
+            // Create a file serialization stream for the specified file path.
+            using var stream = SerializationExtensions.CreateFileSerializationStream(_filePath);
+
             // Write the data to the file asynchronously using the serializer.
-            await _serializer.Serialize(data, _filePath);
+            await _serializer.Serialize(data, stream);
+
+            // Create a backup of the file if the setting is enabled.
+            // To Do: Find a better way to handle this, as there is a potential mismatch if backups are enabled but the format is not compatible with the backup file extension.
+            // This could lead to confusion or errors when attempting to restore from a backup.
+            if (_serializer.Options.HasFlag(SerializationOptions.Backup)) File.Copy(_filePath, _filePath + SerializationExtensions.BackupFileExtension, true);
 
             // Release the lock.
             _lock.Release();
@@ -155,8 +163,11 @@ namespace Sanctuary.Loaders
             // Acquire the lock.
             await _lock.WaitAsync();
 
-            // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.`
-            var save = await _serializer.Deserialize(filePath);
+            // Create a file deserialization stream for the specified file path.
+            using var stream = await SerializationExtensions.CreateFileDeserializationStream(filePath);
+
+            // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.
+            var save = await _serializer.Deserialize(stream);
 
             // Release the lock.
             _lock.Release();

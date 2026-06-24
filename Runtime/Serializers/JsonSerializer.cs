@@ -19,6 +19,8 @@ namespace Sanctuary.Serializers
         internal readonly SerializationOptions options;
         internal readonly string fileExtension;
 
+        public SerializationOptions Options => options;
+
         public static JsonSerializer Default => new(SerializationOptions.None);
 
         public static JsonSerializer Compressed => new(SerializationOptions.Compressed);
@@ -49,7 +51,7 @@ namespace Sanctuary.Serializers
 
         public static JsonSerializer CreateAsText(SerializationOptions options, string fileExtension = ".txt") => new(options, fileExtension);
 
-        public async Task Serialize(ISaveData data, string filePath)
+        public async Task Serialize(ISaveData data, Stream stream)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
             var options = this.options;
@@ -57,54 +59,21 @@ namespace Sanctuary.Serializers
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
             {
-                // Ensure the folder path exists.
-                var folderPath = Path.GetDirectoryName(filePath);
-
-                // Create the directory if it does not exist.
-                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-                // Create a file stream to write to the file.
-                using var saveStream = new FileStream(filePath, FileMode.Create);
-
                 // Create a stream writer to write to the file with optional compression.
-                using StreamWriter writer = SerializationExtensions.CreateStreamWriter(options, saveStream);
+                using StreamWriter writer = SerializationExtensions.CreateStreamWriter(options, stream);
 
                 // Serialize the save data to a JSON string using Newtonsoft.Json
                 writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
             });
-
-            // Create a backup of the file if the setting is enabled.
-            if (options.HasFlag(SerializationOptions.Backup)) await DirectoryUtility.CopyFileAsync(filePath, filePath + SerializationExtensions.BackupFileExtension);
         }
 
-        // To Do: Add check to see if the file is encrypted and if so, decrypt it before attempting to deserialize it, regardless of whether the options include the Encrypted flag or not.
-        // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
-        // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
-
-        public async Task<ISaveData> Deserialize(string filePath)
+        public async Task<ISaveData> Deserialize(Stream stream)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
             var options = this.options;
 
-            // Check if the file exists before attempting to deserialize it.
-            if (!File.Exists(filePath))
-            {
-                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
-                if (!await SerializationExtensions.AttemptRollback(filePath))
-                {
-                    // Log an error if rollback failed or backups are not allowed.
-                    UnityEngine.Debug.LogError("[Sanctuary]: Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted. Returning a new empty save data object.");
-
-                    // Return a new empty save data object.
-                    return SaveData.Empty;
-                }
-            }
-
-            // Create a file stream to read from the file.
-            await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
             // Create a stream reader to read from the file with optional decompression.
-            using StreamReader reader = SerializationExtensions.CreateStreamReader(options, loadStream);
+            using StreamReader reader = SerializationExtensions.CreateStreamReader(options, stream);
 
             // Create a JSON text reader to read the JSON data from the stream.
             using var jsonReader = new JsonTextReader(reader);

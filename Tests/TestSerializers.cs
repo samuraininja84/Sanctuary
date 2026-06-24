@@ -118,8 +118,11 @@ namespace Sanctuary.Tests
             // Set the file path for the save data
             string filePath = Path.Combine(folderPath, fileName);
 
+            // Await the creation of a file serialization stream for the save data file
+            using var stream = SerializationExtensions.CreateFileSerializationStream(filePath);
+
             // Try to serialize the save data using the binary serializer
-            await serializer.Serialize(saveData, filePath);
+            await serializer.Serialize(saveData, stream);
 
             // Log the file path for debugging purposes
             Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");
@@ -167,8 +170,11 @@ namespace Sanctuary.Tests
 
         private static async Task TestDeserialization(ISerializer serializer, SaveLocation location, TestSaveData data, string filePath)
         {
+            // Await the creation of a file deserialization stream for the save data file
+            using var stream = await SerializationExtensions.CreateFileDeserializationStream(filePath);
+
             // Try to deserialize the save data using the appropriate serializer
-            var saveData = await serializer.Deserialize(filePath);
+            var saveData = await serializer.Deserialize(stream);
 
             // Log the file path for debugging purposes
             Debug.Log($"[Sanctuary]: Deserialized save data from: {filePath}");

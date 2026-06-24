@@ -11,6 +11,8 @@ namespace Sanctuary.Serializers
         internal readonly SerializationOptions options;
         internal readonly string fileExtension;
 
+        public SerializationOptions Options => options;
+
         public static BinarySerializer Default => new(SerializationOptions.None);
 
         public static BinarySerializer Compressed => new(SerializationOptions.Compressed);
@@ -37,19 +39,16 @@ namespace Sanctuary.Serializers
 
         public static BinarySerializer CreateAsBinary(SerializationOptions options, string fileExtension = ".bin") => new(options, fileExtension);
 
-        public async Task Serialize(ISaveData data, string filePath)
+        public async Task Serialize(ISaveData data, Stream stream)
         {
             // Capture the folderPath and filePath in local variables to avoid closure issues in the async task.
             var options = this.options;
-
-            // Create a file stream to write to the file, creating the file if it doesn't exist.
-            using var saveStream = SerializationExtensions.CreateFileSerializationStream(filePath);
 
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
             {
                 // Create a binary writer to write to the file.
-                using var writer = SerializationExtensions.CreateBinaryWriter(options, saveStream);
+                using var writer = SerializationExtensions.CreateBinaryWriter(options, stream);
 
                 // Write each chunk of data.
                 foreach (var chunkId in data.GetChunkIDs())
@@ -80,25 +79,19 @@ namespace Sanctuary.Serializers
                 // Write a false boolean to indicate the end of chunks.
                 writer.Write(false);
             });
-
-            // Create a backup of the file if the setting is enabled.
-            if (options.HasFlag(SerializationOptions.Backup)) File.Copy(filePath, filePath + SerializationExtensions.BackupFileExtension, true);
         }
 
         // To Do: Add check to see if the file is encrypted and if so, decrypt it before attempting to deserialize it, regardless of whether the options include the Encrypted flag or not.
         // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
         // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
 
-        public async Task<ISaveData> Deserialize(string filePath)
+        public async Task<ISaveData> Deserialize(Stream stream)
         {
-            // Create a file stream to read from the file.
-            await using var loadStream = await SerializationExtensions.CreateFileDeserializationContext(filePath);
-
             // If the file could not be opened, return an empty save data object.
-            if (loadStream == null) return SaveData.Empty;
+            if (stream == null) return SaveData.Empty;
 
             // Create a binary reader to read from the file with optional decompression.
-            using var reader = SerializationExtensions.CreateBinaryReader(options, loadStream);
+            using var reader = SerializationExtensions.CreateBinaryReader(options, stream);
 
             // Create a new save data object to hold the loaded data.
             var save = new SaveData();
