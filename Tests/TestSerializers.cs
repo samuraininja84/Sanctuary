@@ -122,7 +122,18 @@ namespace Sanctuary.Tests
             Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");
 
             // If testBackups is true, check if a backup file was created and log the result
-            if (testBackups)
+            if (testBackups) await TestBackups(filePath);
+
+            // Try to deserialize the save data using the appropriate serializer
+            await TestDeserialization(serializer, location, saveData, data, filePath);
+
+            // Clean up the test data file after the test is complete
+            if (deleteAfterTest) await Cleanup(folderPath, filePath);
+        }
+
+        private static async Task TestBackups(string filePath)
+        {
+            await Task.Run(() =>
             {
                 // Set the backup file path for the save data
                 string backupFilePath = filePath + SerializationExtensions.BackupFileExtension;
@@ -148,13 +159,16 @@ namespace Sanctuary.Tests
                     // Log the exception message for debugging purposes
                     Debug.LogError($"[Sanctuary]: Exception occurred while checking for backup file: {ex.Message}");
                 }
-            }
+            });
+        }
 
+        private static async Task TestDeserialization(ISerializer serializer, SaveLocation location, ISaveData saveData, TestSaveData data, string filePath)
+        {
             // Try to deserialize the save data using the appropriate serializer
             saveData = await serializer.Deserialize(filePath);
 
             // Log the file path for debugging purposes
-            Debug.Log($"[Sanctuary]: Deserialized {fileName} save data from: {filePath}");
+            Debug.Log($"[Sanctuary]: Deserialized save data from: {filePath}");
 
             // Try to read the test data from the save data
             try
@@ -172,9 +186,11 @@ namespace Sanctuary.Tests
             {
                 Debug.LogError($"[Sanctuary]: Exception occurred while reading test data: {ex.Message}");
             }
+        }
 
-            // Clean up the test data file after the test is complete
-            if (deleteAfterTest)
+        private static async Task Cleanup(string folderPath, string filePath)
+        {
+            await Task.Run(() =>
             {
                 // Check if the test data file exists before attempting to delete it
                 if (File.Exists(filePath))
@@ -211,7 +227,7 @@ namespace Sanctuary.Tests
 
                 // Log a message indicating that the cleanup is complete
                 Debug.Log("[Sanctuary]: Test file cleanup complete.");
-            }
+            });
         }
 
         [System.Serializable]
