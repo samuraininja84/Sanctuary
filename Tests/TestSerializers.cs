@@ -12,6 +12,9 @@ namespace Sanctuary.Tests
         public const string TestChunkId = "Tests";
         public const string TestObjectId = "5561391260475779002";
 
+        //[Test]
+        //public async Task TestMemoryData() => await TestSerializer(MemorySerializer.Default, "MemoryData", false, false);
+
         #region Binary Serializer Tests
 
         [Test]
@@ -248,4 +251,3 @@ namespace Sanctuary.Tests
         }
     }
 }
-

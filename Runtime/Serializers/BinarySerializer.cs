@@ -75,7 +75,7 @@ namespace Sanctuary.Serializers
                     // Write each key-value pair in the chunk.
                     foreach (var (key, value) in chunk)
                     {
-                        // Write the key.to the file.
+                        // Write the key to the file.
                         writer.Write(key);
 
                         // Write the value to the file.
