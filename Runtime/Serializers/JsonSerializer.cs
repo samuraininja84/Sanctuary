@@ -49,7 +49,7 @@ namespace Sanctuary.Serializers
 
         public static JsonSerializer CreateAsText(SerializationOptions options, string fileExtension = ".txt") => new(options, fileExtension);
 
-        public async Task Serialize(ISaveData data, string folderPath, string filePath)
+        public async Task Serialize(ISaveData data, string filePath)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
             var options = this.options;
@@ -58,6 +58,9 @@ namespace Sanctuary.Serializers
             await Task.Run(() =>
             {
                 // Ensure the folder path exists.
+                var folderPath = Path.GetDirectoryName(filePath);
+
+                // Create the directory if it does not exist.
                 if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
                 // Create a file stream to write to the file.

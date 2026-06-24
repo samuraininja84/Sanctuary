@@ -64,9 +64,9 @@ namespace Sanctuary.Serializers
         /// Creates a BinaryWriter based on the specified serialization options and the provided FileStream.
         /// </summary>
         /// <param name="options">The serialization options to apply when creating the BinaryWriter.</param>
-        /// <param name="saveStream">The FileStream to write to.</param>
+        /// <param name="saveStream">The <see cref="Stream"/> to write to.</param>
         /// <returns>A BinaryWriter configured according to the specified serialization options.</returns>
-        public static BinaryWriter CreateBinaryWriter(SerializationOptions options, FileStream saveStream)
+        public static BinaryWriter CreateBinaryWriter(SerializationOptions options, Stream saveStream)
         {
             // Create a BinaryWriter based on the specified serialization options.
             return options switch
@@ -98,9 +98,9 @@ namespace Sanctuary.Serializers
         /// Creates a BinaryReader based on the specified serialization options and the provided FileStream.
         /// </summary>
         /// <param name="options">The serialization options to apply.</param>
-        /// <param name="saveStream">The FileStream to read from.</param>
+        /// <param name="saveStream">The <see cref="Stream"/> to read from.</param>
         /// <returns>A configured BinaryReader instance.</returns>
-        public static BinaryReader CreateBinaryReader(SerializationOptions options, FileStream saveStream)
+        public static BinaryReader CreateBinaryReader(SerializationOptions options, Stream saveStream)
         {
             // Create a BinaryReader based on the specified serialization options.
             return options switch
@@ -132,9 +132,9 @@ namespace Sanctuary.Serializers
         /// Creates a StreamWriter based on the specified serialization options and the provided FileStream.
         /// </summary>
         /// <param name="options">The serialization options to use.</param>
-        /// <param name="saveStream">The file stream to write to.</param>
+        /// <param name="saveStream">The <see cref="Stream"/> to write to.</param>
         /// <returns>A StreamWriter configured based on the specified serialization options.</returns>
-        public static StreamWriter CreateStreamWriter(SerializationOptions options, FileStream saveStream)
+        public static StreamWriter CreateStreamWriter(SerializationOptions options, Stream saveStream)
         {
             // Create a StreamWriter based on the specified serialization options.
             return options switch
@@ -166,9 +166,9 @@ namespace Sanctuary.Serializers
         /// Creates a StreamReader based on the specified serialization options and the provided FileStream.
         /// </summary>
         /// <param name="options">The serialization options to use.</param>
-        /// <param name="saveStream">The file stream to read from.</param>
+        /// <param name="saveStream">The <see cref="Stream"/> to read from.</param>
         /// <returns>A StreamReader configured based on the specified serialization options.</returns>
-        public static StreamReader CreateStreamReader(SerializationOptions options, FileStream saveStream)
+        public static StreamReader CreateStreamReader(SerializationOptions options, Stream saveStream)
         {
             // Create a StreamReader based on the specified serialization options.
             return options switch

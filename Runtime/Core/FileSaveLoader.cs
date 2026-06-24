@@ -127,7 +127,7 @@ namespace Sanctuary.Loaders
             await _lock.WaitAsync();
 
             // Write the data to the file asynchronously using the serializer.
-            await _serializer.Serialize(data, _folderPath, _filePath);
+            await _serializer.Serialize(data, _filePath);
 
             // Release the lock.
             _lock.Release();

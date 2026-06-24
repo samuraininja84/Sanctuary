@@ -109,14 +109,11 @@ namespace Sanctuary.Tests
             // Set the folder path for the save data to be serialized to the tests folder in the persistent data path
             string folderPath = Path.Combine(Application.persistentDataPath, TestFolderName);
 
-            // Append the appropriate file extension to the file name based on the serializer being used
-            fileName += serializer.GetFileExtension();
-
             // Set the file path for the save data
-            string filePath = Path.Combine(folderPath, fileName);
+            string filePath = Path.Combine(folderPath, fileName, serializer.GetFileExtension());
 
             // Try to serialize the save data using the binary serializer
-            await serializer.Serialize(saveData, folderPath, filePath);
+            await serializer.Serialize(saveData, filePath);
 
             // Log the file path for debugging purposes
             Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");

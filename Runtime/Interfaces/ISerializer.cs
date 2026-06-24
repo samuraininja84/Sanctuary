@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 namespace Sanctuary.Serializers
@@ -12,10 +11,9 @@ namespace Sanctuary.Serializers
         /// Serializes the given ISaveData object to a file at the specified folder and file path.
         /// </summary>
         /// <param name="data">The ISaveData object to serialize.</param>
-        /// <param name="folderPath">The folder path where the file will be saved.</param>
         /// <param name="filePath">The file path where the data will be saved.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task Serialize(ISaveData data, string folderPath, string filePath);
+        Task Serialize(ISaveData data, string filePath);
 
         /// <summary>
         /// Deserializes the data from the specified file path into an ISaveData object.

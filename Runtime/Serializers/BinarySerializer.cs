@@ -37,7 +37,7 @@ namespace Sanctuary.Serializers
 
         public static BinarySerializer CreateAsBinary(SerializationOptions options, string fileExtension = ".bin") => new(options, fileExtension);
 
-        public async Task Serialize(ISaveData data, string folderPath, string filePath)
+        public async Task Serialize(ISaveData data, string filePath)
         {
             // Capture the folderPath and filePath in local variables to avoid closure issues in the async task.
             var options = this.options;
@@ -46,6 +46,9 @@ namespace Sanctuary.Serializers
             await Task.Run(() =>
             {
                 // Ensure the folder path exists.
+                var folderPath = Path.GetDirectoryName(filePath);
+
+                // Create the directory if it does not exist.
                 if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
                 // Create a file stream to write to the file.
