@@ -1,6 +1,13 @@
 using System.IO;
 using System.Threading.Tasks;
 
+#if UNITY_NEWTONSOFT_JSON
+
+using Formatting = Newtonsoft.Json.Formatting;
+using JsonConvert = Newtonsoft.Json.JsonConvert;
+using JsonTextReader = Newtonsoft.Json.JsonTextReader;
+using NewtonsoftJsonSerializer = Newtonsoft.Json.JsonSerializer;
+
 namespace Sanctuary.Serializers
 {
     public readonly struct MemorySerializer : ISerializer
@@ -43,37 +50,11 @@ namespace Sanctuary.Serializers
                 // Capture the memoryStream in a local variable to avoid closure issues in the async task.
                 using var saveStream = new MemoryStream();
 
-                // Create a binary writer to write to the memory stream.
-                using var writer = SerializationExtensions.CreateBinaryWriter(options, saveStream);
+                // Create a stream writer to write to the file with optional compression.
+                using StreamWriter writer = SerializationExtensions.CreateStreamWriter(options, saveStream);
 
-                // Write each chunk of data.
-                foreach (var chunkId in data.GetChunkIDs())
-                {
-                    // Get the chunk data.
-                    var chunk = data.GetChunk(chunkId);
-
-                    // Write a true boolean to indicate a chunk follows.
-                    writer.Write(true);
-
-                    // Write the chunk ID and the number of key-value pairs in the chunk.
-                    writer.Write(chunkId);
-
-                    // Write the number of key-value pairs in the chunk.
-                    writer.Write(chunk.Count);
-
-                    // Write each key-value pair in the chunk.
-                    foreach (var (key, value) in chunk)
-                    {
-                        // Write the key to the file.
-                        writer.Write(key);
-
-                        // Write the value to the file.
-                        writer.Write(value);
-                    }
-                }
-
-                // Write a false boolean to indicate the end of chunks.
-                writer.Write(false);
+                // Serialize the save data to a JSON string using Newtonsoft.Json
+                writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
             });
         }
 
@@ -82,39 +63,18 @@ namespace Sanctuary.Serializers
             // Create a memory stream to read from the file.
             await using var loadStream = new MemoryStream();
 
-            // Reset the position of the memory stream to the beginning before reading.
-            loadStream.Position = 0;
+            // Create a stream reader to read from the file with optional decompression.
+            using StreamReader reader = SerializationExtensions.CreateStreamReader(options, loadStream);
 
-            // Create a binary reader to read from the memory stream with optional decompression.
-            using var reader = SerializationExtensions.CreateBinaryReader(options, loadStream);
-
-            // Create a new save data object to hold the loaded data.
-            var save = new SaveData();
-
-            // Read each chunk of data.
-            while (reader.ReadBoolean())
-            {
-                // Read the chunk ID.
-                var chunkId = reader.ReadString();
-
-                // Get the chunk data using the chunk ID.
-                var chunk = save.GetChunk(chunkId);
-
-                // Read the number of key-value pairs in the chunk.
-                var count = reader.ReadInt32();
-
-                // Read each key-value pair in the chunk and add it to the chunk.
-                for (var i = 0; i < count; i++) chunk.Add(reader.ReadString(), reader.ReadString());
-            }
-
-            // Clear the memory stream after reading to free up resources.
-            loadStream.SetLength(0);
-            loadStream.Position = 0;
+            // Create a JSON text reader to read the JSON data from the stream.
+            using var jsonReader = new JsonTextReader(reader);
 
             // Return the loaded save data.
-            return save;
+            return new NewtonsoftJsonSerializer().Deserialize<SaveData>(jsonReader);
         }
 
         public string GetFileExtension() => fileExtension;
     }
 }
+
+#endif

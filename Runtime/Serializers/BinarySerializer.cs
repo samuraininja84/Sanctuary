@@ -42,18 +42,12 @@ namespace Sanctuary.Serializers
             // Capture the folderPath and filePath in local variables to avoid closure issues in the async task.
             var options = this.options;
 
+            // Create a file stream to write to the file, creating the file if it doesn't exist.
+            using var saveStream = SerializationExtensions.CreateFileSerializationStream(filePath);
+
             // Run the serialization in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
             {
-                // Ensure the folder path exists.
-                var folderPath = Path.GetDirectoryName(filePath);
-
-                // Create the directory if it does not exist.
-                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-                // Create a file stream to write to the file.
-                using var saveStream = new FileStream(filePath, FileMode.Create);
-
                 // Create a binary writer to write to the file.
                 using var writer = SerializationExtensions.CreateBinaryWriter(options, saveStream);
 
@@ -97,22 +91,11 @@ namespace Sanctuary.Serializers
 
         public async Task<ISaveData> Deserialize(string filePath)
         {
-            // Check if the file exists before attempting to deserialize it.
-            if (!File.Exists(filePath))
-            {
-                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
-                if (!await SerializationExtensions.AttemptRollback(filePath))
-                {
-                    // Log an error if rollback failed or backups are not allowed.
-                    UnityEngine.Debug.LogError("[Sanctuary]: Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted. Returning a new empty save data object.");
-
-                    // Return a new empty save data object.
-                    return SaveData.Empty;
-                }
-            }
-
             // Create a file stream to read from the file.
-            await using var loadStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            await using var loadStream = await SerializationExtensions.CreateFileDeserializationContext(filePath);
+
+            // If the file could not be opened, return an empty save data object.
+            if (loadStream == null) return SaveData.Empty;
 
             // Create a binary reader to read from the file with optional decompression.
             using var reader = SerializationExtensions.CreateBinaryReader(options, loadStream);

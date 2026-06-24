@@ -2,7 +2,7 @@
 using Sanctuary;
 using Sanctuary.Loaders;
 
-namespace Sanctaury.Tests
+namespace Sanctaury.Samples
 {
     /// <summary>
     /// A dummy save loader that does nothing.

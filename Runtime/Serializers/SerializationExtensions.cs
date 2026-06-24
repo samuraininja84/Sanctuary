@@ -61,6 +61,49 @@ namespace Sanctuary.Serializers
         }
 
         /// <summary>
+        /// Creates a FileStream for serialization, ensuring that the directory exists before creating the file.
+        /// </summary>
+        /// <param name="filePath">The path of the file to create the FileStream for.</param>
+        /// <returns>A FileStream for the specified file path.</returns>
+        public static FileStream CreateFileSerializationStream(string filePath)
+        {
+            // Ensure the folder path exists.
+            var folderPath = Path.GetDirectoryName(filePath);
+
+            // Create the directory if it does not exist.
+            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+            // Create a FileStream with the specified parameters.
+            return new FileStream(filePath, FileMode.Create);
+        }
+
+        /// <summary>
+        /// Creates a FileStream for deserialization, checking if the file exists and attempting to roll back to a backup if it does not.
+        /// </summary>
+        /// <param name="filePath">The path of the file to create the FileStream for.</param>
+        /// <param name="fileStream">The output FileStream for the specified file path.</param>
+        /// <returns>A boolean indicating whether the FileStream was successfully created.</returns>
+        public static async Task<FileStream> CreateFileDeserializationContext(string filePath)
+        {
+            // Check if the file exists before attempting to deserialize it.
+            if (!File.Exists(filePath))
+            {
+                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
+                if (!await AttemptRollback(filePath))
+                {
+                    // Log an error if rollback failed or backups are not allowed.
+                    UnityEngine.Debug.LogError("[Sanctuary]: Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted. Returning a new empty save data object.");
+
+                    //  Return null to indicate that the FileStream could not be created.
+                    return null;
+                }
+            }
+
+            // Indicate that the FileStream was successfully created.
+            return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        }
+
+        /// <summary>
         /// Creates a BinaryWriter based on the specified serialization options and the provided FileStream.
         /// </summary>
         /// <param name="options">The serialization options to apply when creating the BinaryWriter.</param>
