@@ -125,7 +125,7 @@ namespace Sanctuary.Tests
             if (testBackups) await TestBackups(filePath);
 
             // Try to deserialize the save data using the appropriate serializer
-            await TestDeserialization(serializer, location, saveData, data, filePath);
+            await TestDeserialization(serializer, location, data, filePath);
 
             // Clean up the test data file after the test is complete
             if (deleteAfterTest) await Cleanup(folderPath, filePath);
@@ -162,10 +162,10 @@ namespace Sanctuary.Tests
             });
         }
 
-        private static async Task TestDeserialization(ISerializer serializer, SaveLocation location, ISaveData saveData, TestSaveData data, string filePath)
+        private static async Task TestDeserialization(ISerializer serializer, SaveLocation location, TestSaveData data, string filePath)
         {
             // Try to deserialize the save data using the appropriate serializer
-            saveData = await serializer.Deserialize(filePath);
+            var saveData = await serializer.Deserialize(filePath);
 
             // Log the file path for debugging purposes
             Debug.Log($"[Sanctuary]: Deserialized save data from: {filePath}");
