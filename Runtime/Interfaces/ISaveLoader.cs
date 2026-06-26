@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Stream = System.IO.Stream;
 using TimeSpan = System.TimeSpan;
 
 namespace Sanctuary.Loaders 
@@ -36,21 +37,22 @@ namespace Sanctuary.Loaders
         /// <summary>
         /// Load the data from the persistent storage.
         /// </summary>
-        /// <returns>The loaded data.</returns>
-        Task<ISaveData> Load();
+        /// <param name="stream">The stream to load the data from.</param>
+        /// <returns>The <see cref="LoadResult"/> representing the result of the load operation.</returns>
+        Task<LoadResult> Load();
 
         /// <summary>
-        /// Load the data from a specific file path.
+        /// Load the data from the persistent storage.
         /// </summary>
-        /// <param name="filePath">The file path to load the save data from.</param>
-        /// <returns>A task that represents the asynchronous load operation. The task result contains the loaded save data.</returns>
-        virtual Task<ISaveData> LoadAt(string filePath) => Task.FromResult<ISaveData>(null);
+        /// <param name="stream">The stream to load the data from.</param>
+        /// <returns>The <see cref="LoadResult"/> representing the result of the load operation.</returns>
+        virtual Task<LoadResult> Load(Stream stream) => Task.FromResult(LoadResult.Failure());
 
         /// <summary>
         /// Load all saves from the persistent storage.
         /// </summary>
-        /// <returns>A list of all loaded saves.</returns>
-        virtual Task<ISaveData[]> LoadAll() => Task.FromResult(new ISaveData[0]);
+        /// <returns>A list of all loaded saves as <see cref="LoadResult"/> objects.</returns>
+        virtual Task<LoadResult[]> LoadAll() => Task.FromResult(new LoadResult[0]);
 
         /// <summary>
         /// Remove this save from the persistent storage.

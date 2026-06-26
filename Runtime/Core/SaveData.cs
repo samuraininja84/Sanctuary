@@ -115,13 +115,47 @@ namespace Sanctuary
         }
 
         /// <summary>
-        /// Tries to read an object from the save data and overwrites the provided target object with the data.
+        /// Tries to read an object from the save data and outputs it to the provided target variable.
         /// </summary>
+        /// <remarks>
+        /// If the object does not exist, the target will be set to the default value of T.
+        /// Intended for use with value types like structs and classes that have a parameterless constructor.
+        /// </remarks>
         /// <typeparam name="T">The type of object to read.</typeparam>
         /// <param name="location">The location of the object to read.</param>
         /// <param name="target">The object to overwrite with the data read from the save data.</param>
         /// <returns>A boolean indicating whether the read was successful.</returns>
-        public bool TryRead<T>(SaveLocation location, T target)
+        public bool TryRead<T>(SaveLocation location, out T target) where T : new()
+        {
+            // Use the default chunk if no chunk ID is provided
+            var realChunkId = location.ChunkId ?? _defaultChunkId;
+
+            // If the chunk or object doesn't exist, return false
+            if (location.ObjectId == null || !_data.ContainsKey(realChunkId) || !_data[realChunkId].ContainsKey(location.ObjectId))
+            {
+                // Set the target to the default value of T
+                target = default;
+
+                // Indicate that the read was unsuccessful
+                return false;
+            }
+
+            // Overwrite the target object with the data from the save
+            target = JsonUtility.FromJson<T>(_data[realChunkId][location.ObjectId]);
+
+            // Indicate that the read was successful
+            return true;
+        }
+
+        /// <summary>
+        /// Tries to read an object from the save data and overwrites the provided target object with the data.
+        /// </summary>
+        /// <remarks>Intended for use with objects like MonoBehaviours or ScriptableObjects that cannot be instantiated with a parameterless constructor.</remarks>
+        /// <typeparam name="T">The type of object to read.</typeparam>
+        /// <param name="location">The location of the object to read.</param>
+        /// <param name="target">The object to overwrite with the data read from the save data.</param>
+        /// <returns>A boolean indicating whether the read was successful.</returns>
+        public bool TryReadToObject<T>(SaveLocation location, T target) where T : Object
         {
             // Use the default chunk if no chunk ID is provided
             var realChunkId = location.ChunkId ?? _defaultChunkId;

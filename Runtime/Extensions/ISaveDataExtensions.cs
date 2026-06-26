@@ -9,10 +9,10 @@ namespace Sanctuary.Extensions
         /// </summary>
         /// <typeparam name="T">The type of target objects to read into.</typeparam>
         /// <param name="targets">The dictionary to populate with loaded data.</param>
-        /// <param name="saveData">The collection of save data chunks to read from.</param>
+        /// <param name="results">The collection of save data chunks to read from.</param>
         /// <param name="location">The location to read from.</param>
-        /// <returns></returns>
-        public static SerializableDictionary<int, T> ReadAllTo<T>(this SerializableDictionary<int, T> targets, IEnumerable<ISaveData> saveData, SaveLocation location) where T : new()
+        /// <returns>A dictionary of all loaded target objects, indexed by their order in the results.</returns>
+        public static SerializableDictionary<int, T> ReadAllTo<T>(this SerializableDictionary<int, T> targets, IEnumerable<LoadResult> results, SaveLocation location) where T : new()
         {
             // Clear existing data
             targets.Clear();
@@ -21,16 +21,17 @@ namespace Sanctuary.Extensions
             int index = -1;
 
             // Iterate through each loaded chunk
-            foreach (ISaveData chunk in saveData)
+            foreach (LoadResult result in results)
             {
-                // Create a new SlotData instance to hold the chunk data
-                T slotData = new();
-
-                // Increment the index
+                // Increment the index regardless of success or failure, to maintain the correct order of chunks
                 index++;
 
-                // Try to read each chunk into a SlotData instance, and add it to the dictionary if successful
-                if (chunk.TryRead(location, slotData)) targets.Add(index, slotData);
+                // Skip any failed load results
+                if (!result.IsSuccess) continue;
+
+
+                // Try to read each chunk into a data instance, and add it to the dictionary if successful
+                if (result.Data.TryRead(location, out T data)) targets.Add(index, data);
             }
 
             // Return the dictionary of all loaded data
@@ -42,22 +43,22 @@ namespace Sanctuary.Extensions
         /// </summary>
         /// <typeparam name="T">The type of target objects to read into.</typeparam>
         /// <param name="targets">The list to populate with loaded data.</param>
-        /// <param name="saveData">The collection of save data chunks to read from.</param>
+        /// <param name="results">The collection of save data chunks to read from.</param>
         /// <param name="location">The location to read from.</param>
         /// <returns>A collection of all loaded target objects.</returns>
-        public static IEnumerable<T> ReadAllTo<T>(this List<T> targets, IEnumerable<ISaveData> saveData, SaveLocation location) where T : new()
+        public static IEnumerable<T> ReadAllTo<T>(this List<T> targets, IEnumerable<LoadResult> results, SaveLocation location) where T : new()
         {
             // Clear existing data
             targets.Clear();
 
             // Iterate through each loaded chunk
-            foreach (ISaveData chunk in saveData)
+            foreach (LoadResult result in results)
             {
-                // Create a new SlotData instance to hold the chunk data
-                T slotData = new();
+                // Skip any failed load results
+                if (!result.IsSuccess) continue;
 
-                // Try to read each chunk into a SlotData instance, and add it to the list if successful
-                if (chunk.TryRead(location, slotData)) targets.Add(slotData);
+                // Try to read each chunk into a data instance, and add it to the list if successful
+                if (result.Data.TryRead(location, out T data)) targets.Add(data);
             }
 
             // Return the list of all loaded data

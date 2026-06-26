@@ -132,29 +132,11 @@ namespace Sanctuary
         #region Configuration
 
         /// <summary>
-        /// Create a new save controller with the given loader and scope, then initialize it.
-        /// </summary>
-        /// <param name="loader">The loader to use for loading and saving the data.</param>
-        /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
-        /// <returns>A new instance of the save controller.</returns>
-        public static SaveControllerBase New(ISaveLoader loader, SaveScope scope = SaveScope.Global) 
-        {
-            // Create a new save controller with the provided loader
-            var save = new SaveControllerBase(loader, scope);
-
-            // Initialize the save controller
-            save.Initialize();
-
-            // Return the newly created save controller
-            return save;
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="SaveControllerBase"/> class with the specified save loader.
         /// </summary>
         /// <param name="loader">The save loader used to handle loading and saving operations. This parameter cannot be <see langword="null"/>.</param>
         /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
-        public SaveControllerBase(ISaveLoader loader, SaveScope scope = SaveScope.Global)
+        protected SaveControllerBase(ISaveLoader loader, SaveScope scope = SaveScope.Global)
         {
             // Set the loader
             _loader = loader;
@@ -164,6 +146,24 @@ namespace Sanctuary
 
             // Set the lock
             _lock = new SemaphoreSlim(1);
+        }
+
+        /// <summary>
+        /// Create a new save controller with the given loader and scope, then initialize it.
+        /// </summary>
+        /// <param name="loader">The loader to use for loading and saving the data.</param>
+        /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
+        /// <returns>A new instance of the save controller.</returns>
+        public static SaveControllerBase Create(ISaveLoader loader, SaveScope scope = SaveScope.Global) 
+        {
+            // Create a new save controller with the provided loader
+            var save = new SaveControllerBase(loader, scope);
+
+            // Initialize the save controller
+            save.Initialize();
+
+            // Return the newly created save controller
+            return save;
         }
 
         /// <summary>
@@ -276,7 +276,24 @@ namespace Sanctuary
             await Lock();
 
             // Load from persistent storage if needed
-            if (mode != SaveMode.MemoryOnly) Data = await _loader.Load();
+            if (mode != SaveMode.MemoryOnly)
+            {
+                // Load the save data from persistent storage
+                var result = await _loader.Load();
+
+                // Handle the result of the load operation
+                switch (result.Output)
+                {
+                    case LoadResult.Result.Success:
+                        Data = result.Data;
+                        break;
+                    case LoadResult.Result.Failure:
+                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage. The save may not exist or may be corrupted.");
+                        break;
+                    default: 
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
 
             // Notify stores and invoke OnLoad if needed
             if (mode != SaveMode.PersistentOnly)
@@ -300,13 +317,13 @@ namespace Sanctuary
         public async Task<bool> TryLoadAll<T>(SaveLocation location, SerializableDictionary<int, T> targets) where T : new()
         {
             // Load all data chunks from persistent storage
-            ISaveData[] allData = await _loader.LoadAll();
+            var results = await _loader.LoadAll();
 
             // If no data chunks were loaded, return false
-            if (allData.Length == 0) return false;
+            if (results.Length == 0) return false;
 
             // Try to read each chunk into the corresponding target
-            targets.ReadAllTo(allData, location);
+            targets.ReadAllTo(results, location);
 
             // Return true indicating success
             return true;
@@ -320,13 +337,13 @@ namespace Sanctuary
         public async Task<bool> TryLoadAll<T>(SaveLocation location, List<T> targets) where T : new()
         {
             // Load all data chunks from persistent storage
-            ISaveData[] allData = await _loader.LoadAll();
+            var results = await _loader.LoadAll();
 
             // If no data chunks were loaded, return false
-            if (allData.Length == 0) return false;
+            if (results.Length == 0) return false;
 
             // Try to read each chunk into the corresponding target
-            targets.ReadAllTo(allData, location);
+            targets.ReadAllTo(results, location);
 
             // Return true indicating success
             return true;

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Sanctuary
 {
@@ -43,13 +44,22 @@ namespace Sanctuary
         T Read<T>(SaveLocation location) where T : new();
 
         /// <summary>
+        /// Tries to read the save data from the given location into a new instance of the given type.
+        /// </summary>
+        /// <typeparam name="T">The type of the data.</typeparam>
+        /// <param name="location">The location to read from.</param>
+        /// <param name="target">The target to read into.</param>
+        /// <returns>Whether the data was read.</returns>
+        bool TryRead<T>(SaveLocation location, out T target) where T : new();
+
+        /// <summary>
         /// Tries to read the save data from the given location into the given target.
         /// </summary>
         /// <param name="location">The location to read from.</param>
         /// <param name="target">The target to read into.</param>
         /// <typeparam name="T">The type of the data.</typeparam>
         /// <returns>Whether the data was read.</returns>
-        bool TryRead<T>(SaveLocation location, T target);
+        bool TryReadToObject<T>(SaveLocation location, T target) where T : Object;
 
         /// <summary>
         /// Tries to delete the chunk at the given location.

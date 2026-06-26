@@ -1,6 +1,5 @@
 using System.IO;
 using System.Threading.Tasks;
-using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 
 #if UNITY_NEWTONSOFT_JSON
 
@@ -67,7 +66,7 @@ namespace Sanctuary.Serializers
             });
         }
 
-        public async Task<ISaveData> Deserialize(Stream stream)
+        public async Task<LoadResult> Deserialize(Stream stream)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
             var options = this.options;
@@ -79,7 +78,10 @@ namespace Sanctuary.Serializers
             using var jsonReader = new JsonTextReader(reader);
 
             // Return the loaded save data.
-            return new NewtonsoftJsonSerializer().Deserialize<SaveData>(jsonReader);
+            var data = new NewtonsoftJsonSerializer().Deserialize<SaveData>(jsonReader);
+
+            // Return a LoadResult indicating success or failure based on whether saveData is null.
+            return data != null ? LoadResult.Success(data) : LoadResult.Failure();
         }
 
         public readonly string GetFileExtension() => fileExtension;

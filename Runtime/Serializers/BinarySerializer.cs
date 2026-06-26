@@ -85,10 +85,10 @@ namespace Sanctuary.Serializers
         // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
         // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
 
-        public async Task<ISaveData> Deserialize(Stream stream)
+        public async Task<LoadResult> Deserialize(Stream stream)
         {
             // If the file could not be opened, return an empty save data object.
-            if (stream == null) return SaveData.Empty;
+            if (stream == null) return LoadResult.Failure();
 
             // Create a binary reader to read from the file with optional decompression.
             using var reader = SerializationExtensions.CreateBinaryReader(options, stream);
@@ -113,7 +113,7 @@ namespace Sanctuary.Serializers
             }
 
             // Return the loaded save data.
-            return save;
+            return LoadResult.Success(save);
         }
 
         public readonly string GetFileExtension() => fileExtension;

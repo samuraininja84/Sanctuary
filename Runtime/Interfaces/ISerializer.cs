@@ -25,8 +25,8 @@ namespace Sanctuary.Serializers
         /// Deserializes the data from the specified stream into an ISaveData object.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> from which the data will be deserialized.</param>
-        /// <returns>A task representing the asynchronous operation, with the deserialized ISaveData object as the result.</returns>
-        Task<ISaveData> Deserialize(Stream stream);
+        /// <returns>A task representing the asynchronous operation, with the deserialized <see cref="LoadResult"/> object as the result.</returns>
+        Task<LoadResult> Deserialize(Stream stream);
 
         /// <summary>
         /// Gets the file extension used by this serializer.

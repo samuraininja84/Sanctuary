@@ -86,6 +86,8 @@ namespace Sanctuary.Loaders
             public readonly FileSaveLoader Build() => new(_profile, _serializer);
         }
 
+        // To Do: Remove the WithID method and handle the ID look up through the load method, as this will allow for a more flexible and dynamic approach to loading save data without requiring the user to specify an ID beforehand.
+
         /// <summary>
         /// Sets the profile ID for this save loader.
         /// </summary>
@@ -141,39 +143,36 @@ namespace Sanctuary.Loaders
             _lock.Release();
         }
 
-        /// <summary>
-        /// Asynchronously loads the save data from the file.
-        /// </summary>
-        /// <remarks>
-        /// Loading is done in a thread-safe manner using a semaphore to prevent multiple operations to interfere with each other.
-        /// The method reads the file in chunks, where each chunk contains a set of key-value pairs before moving on to the next chunk.
-        /// After all chunks have been read, the method returns the fully constructed save data object.
-        /// If the file does not exist, a new empty save data object is returned.
-        /// </remarks>
-        /// <returns>A task that represents the asynchronous load operation. The task result contains the loaded save data.</returns>
-        public async Task<ISaveData> Load() => await LoadAt(_filePath);
+        // To Do: Remove the parameter-less Load method to handle streams that are not file-based, as this method currently only works for file-based saves.
+        // This may require a different approach or additional parameters to handle non-file-based streams.
+
+        public async Task<LoadResult> Load()
+        {
+            // Create a file deserialization stream for the specified file path.
+            using var stream = await SerializationExtensions.CreateFileDeserializationStream(_filePath);
+
+            // Load the save data using the new stream and return the result.
+            return await Load(stream);
+        }
 
         /// <summary>
-        /// Asynchronously loads the save data from the specified file path.
+        /// Asynchronously gets the <see cref="LoadResult"/> from the specified stream.
         /// </summary>
-        /// <param name="filePath">The file path to load the save data from.</param>
-        /// <returns>A task that represents the asynchronous load operation. The task result contains the loaded save data.</returns>
-        public async Task<ISaveData> LoadAt(string filePath) 
+        /// <param name="stream">The stream to load the data from.</param>
+        /// <returns>A task that represents the asynchronous load operation. The task result contains the <see cref="LoadResult"/>.</returns>
+        public async Task<LoadResult> Load(Stream stream)
         {
             // Acquire the lock.
             await _lock.WaitAsync();
 
-            // Create a file deserialization stream for the specified file path.
-            using var stream = await SerializationExtensions.CreateFileDeserializationStream(filePath);
-
             // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.
-            var save = await _serializer.Deserialize(stream);
+            var result = await _serializer.Deserialize(stream);
 
             // Release the lock.
             _lock.Release();
 
             // Return the loaded save data.
-            return save;
+            return result;
         }
 
         /// <summary>
@@ -181,26 +180,19 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <remarks>This method loads all existing save data files for the current profile's scope.</remarks>
         /// <returns>An array of loaded save data objects.</returns>
-        public async Task<ISaveData[]> LoadAll() 
+        public async Task<LoadResult[]> LoadAll() 
         {
             // Return early if the scope is not Global or Scene
-            if (!(_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)) return Array.Empty<ISaveData>();
+            if (!(_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)) return Array.Empty<LoadResult>();
 
             // Get the existing save IDs.
             int[] existingIds = await ExistingSaveIDs();
 
             // If there are no existing IDs, return an empty array.
-            if (existingIds.Length == 0) 
-            {
-                // Release the lock.
-                _lock.Release();
+            if (existingIds.Length == 0) return Array.Empty<LoadResult>();
 
-                // Return an empty array if there are no existing IDs.
-                return Array.Empty<ISaveData>();
-            }
-
-            // Create a list to hold the loaded save data objects.
-            var saves = new System.Collections.Generic.List<ISaveData>();
+            // Create a list to hold the results of the load operations.
+            var results = new System.Collections.Generic.List<LoadResult>();
 
             // Load each save data object.
             foreach (int id in existingIds) 
@@ -211,25 +203,18 @@ namespace Sanctuary.Loaders
                 // Update the file path to include the new profile and the serializer's file extension.
                 string filePath = Path.Combine(folderPath, FileName + _serializer.GetFileExtension());
 
-                // Check if the file exists
-                if (!File.Exists(filePath))
-                {   
-                    // Log a warning if the file doesn't exist
-                    Debug.LogWarning($"[Sanctuary]: Save file not found at {filePath}, skipping.");
+                // Create a file deserialization stream for the specified file path.
+                using var stream = await SerializationExtensions.CreateFileDeserializationStream(filePath);
 
-                    // Skip this ID if the file doesn't exist.
-                    continue;
-                }
+                // Load the save data using the new stream and add it to the results list.
+                var result = await Load(stream);
 
-                // Load the save data using the new file path.
-                ISaveData saveData = await LoadAt(filePath);
-
-                // Add the loaded save data to the list.
-                saves.Add(saveData);
+                // Add the loaded save data to the list if the load was successful.
+                results.Add(result);
             }
 
             // Return the array of loaded save data objects.
-            return saves.ToArray();
+            return results.ToArray();
         }
 
         /// <summary>
@@ -300,6 +285,9 @@ namespace Sanctuary.Loaders
         /// <returns>Gets the name of the save.</returns>
         public Task<string> GetName() => Task.FromResult(_name);
 
+        // To Do: Update Exists, GetLastModifiedTime, & ExistingSaveIDs to handle streams that are not file-based, as these methods currently only work for file-based saves.
+        // This may require a different approach or additional parameters to handle non-file-based streams.
+
         /// <summary>
         /// Asynchronously checks if the save file exists.
         /// </summary>
@@ -328,7 +316,7 @@ namespace Sanctuary.Loaders
             var ids = new System.Collections.Generic.List<int>();
 
             // Get all folders in the saves directory
-            DirectoryInfo savesDirectory = new DirectoryInfo(existingSavesPath);
+            var savesDirectory = new DirectoryInfo(existingSavesPath);
 
             // Iterate through each directory in the saves directory
             foreach (var dir in savesDirectory.GetDirectories())
