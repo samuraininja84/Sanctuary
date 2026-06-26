@@ -104,6 +104,20 @@ namespace Sanctuary.Serialization
         }
 
         /// <summary>
+        /// Creates a MemoryStream for serialization with the specified initial capacity.
+        /// </summary>
+        /// <param name="initialCapacity">The initial capacity of the memory stream.</param>
+        /// <returns>A MemoryStream with the specified initial capacity.</returns>
+        public static MemoryStream CreateMemorySerializationStream(int initialCapacity) => new(initialCapacity);
+
+        /// <summary>
+        /// Creates a MemoryStream for deserialization with the specified initial capacity.
+        /// </summary>
+        /// <param name="initialCapacity">The initial capacity of the memory stream.</param>
+        /// <returns>A MemoryStream with the specified initial capacity.</returns>
+        public static MemoryStream CreateMemoryDeserializationStream(int initialCapacity) => new(initialCapacity);
+
+        /// <summary>
         /// Creates a BinaryWriter based on the specified serialization options and the provided FileStream.
         /// </summary>
         /// <param name="options">The serialization options to apply when creating the BinaryWriter.</param>

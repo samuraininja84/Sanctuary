@@ -3,6 +3,9 @@ using Sanctuary.Serialization;
 
 namespace Sanctuary.Configuration
 {
+    /// <summary>
+    /// Represents a configuration for a serializer, allowing customization of serialization options and file extensions.
+    /// </summary>
     public abstract class SerializerConfiguration : ScriptableObject
     {
         [Header("Serializer Settings")]

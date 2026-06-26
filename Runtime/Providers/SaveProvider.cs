@@ -445,7 +445,7 @@ namespace Sanctuary
                 SaveScope.Temporary => Temporary,
 
                 // Should never happen due to enum constraints but throw an exception if an unsupported scope is provided
-                _ => throw new System.ArgumentOutOfRangeException(nameof(scope), $"Unsupported Save Scope: {scope}"),
+                _ => throw new System.ArgumentOutOfRangeException(nameof(scope), $"Unsupported Save Scope: {scope}")
             };
         }
 
