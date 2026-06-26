@@ -72,13 +72,13 @@ namespace Sanctuary
         /// Constructs an InterfaceReference from the underlying type.
         /// </summary>
         /// <param name="target"></param>
-        public InterfaceReference(Object target) => underlyingValue = target;
+        private InterfaceReference(Object target) => underlyingValue = target;
 
         /// <summary>
         /// Constructs an InterfaceReference from an interface.
         /// </summary>
         /// <param name="interface"></param>
-        public InterfaceReference(TInterface @interface) => underlyingValue = @interface as Object;
+        private InterfaceReference(TInterface @interface) => underlyingValue = @interface as Object;
 
         /// <summary>
         /// Creates a new <see cref="InterfaceReference{TInterface, TObject}"/> instance for the specified target
@@ -88,7 +88,7 @@ namespace Sanctuary
         /// <returns>
         /// An <see cref="InterfaceReference{TInterface}"/> that represents the association between the specified interface and target object.
         /// </returns>
-        public static InterfaceReference<TInterface> FromObject(Object target) => new InterfaceReference<TInterface>(target);
+        public static InterfaceReference<TInterface> FromObject(Object target) => new(target);
 
         /// <summary>
         /// Creates a new instance of <see cref="InterfaceReference{TInterface}"/> using the specified
@@ -98,7 +98,7 @@ namespace Sanctuary
         /// <returns>
         /// An <see cref="InterfaceReference{TInterface}"/> that encapsulates the specified interface.
         /// </returns>
-        public static InterfaceReference<TInterface> FromValue(TInterface @interface) => new InterfaceReference<TInterface>(@interface);
+        public static InterfaceReference<TInterface> FromValue(TInterface @interface) => new(@interface);
 
         /// <summary>
         /// Sets the underlying value to the specified target object.

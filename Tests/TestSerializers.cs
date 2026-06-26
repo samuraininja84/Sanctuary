@@ -12,11 +12,19 @@ namespace Sanctuary.Tests
         public const string TestFolderName = "Save Data_Tests";
         public const string TestChunkId = "Tests";
         public const string TestObjectId = "5561391260475779002";
-
-        //[Test]
-        //public async Task TestMemoryData() => await TestSerializer(MemorySerializer.Default, "MemoryData", false, false);
+        public const int BenchmarkIterations = 100;
 
         #region Binary Serializer Tests
+
+        [Test]
+        public async Task TestBinaryBenchmark()
+        {
+            // Run the benchmark for both binary and JSON serializers for the specified number of iterations
+            for (int i = 0; i < BenchmarkIterations; i++) await TestSerializer(BinarySerializer.Default, "BinaryData", false, true, false);
+
+            // Log a message indicating that the benchmark is complete
+            Debug.Log($"[Sanctuary]: Benchmark complete for {BenchmarkIterations} iterations of binary serialization.");
+        }
 
         [Test]
         public async Task TestBinaryData() => await TestSerializer(BinarySerializer.Default, "BinaryData", false, true);
@@ -54,6 +62,16 @@ namespace Sanctuary.Tests
         #region Json Serializer Tests
 
 #if UNITY_NEWTONSOFT_JSON
+
+        [Test]
+        public async Task TestJsonBenchmark()
+        {
+            // Run the benchmark for both binary and JSON serializers for the specified number of iterations
+            for (int i = 0; i < BenchmarkIterations; i++) await TestSerializer(JsonSerializer.Default, "JsonData", false, true, false);
+
+            // Log a message indicating that the benchmark is complete
+            Debug.Log($"[Sanctuary]: Benchmark complete for {BenchmarkIterations} iterations of JSON serialization.");
+        }
 
         [Test]
         public async Task TestJsonData() => await TestSerializer(JsonSerializer.Default, "JsonData", false, true);
@@ -96,7 +114,9 @@ namespace Sanctuary.Tests
 
         #endregion
 
-        public async Task TestSerializer(ISerializer serializer, string fileName, bool testBackups = false, bool deleteAfterTest = false)
+        #region Serializer Test Helper Methods
+
+        public async Task TestSerializer(ISerializer serializer, string fileName, bool testBackups = false, bool deleteAfterTest = false, bool debug = true)
         {
             // Create a new instance of the save data
             ISaveData saveData = SaveData.Empty;
@@ -126,19 +146,19 @@ namespace Sanctuary.Tests
             await serializer.Serialize(saveData, source);
 
             // Log the file path for debugging purposes
-            Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");
+            if (debug) Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");
 
             // If testBackups is true, check if a backup file was created and log the result
-            if (testBackups) await TestBackups(serializer, filePath);
+            if (testBackups) await TestBackups(serializer, filePath, debug);
 
             // Try to deserialize the save data using the appropriate serializer
-            await TestDeserialization(serializer, location, data, filePath);
+            await TestDeserialization(serializer, location, filePath, debug);
 
             // Clean up the test data file after the test is complete
-            if (deleteAfterTest) await Cleanup(folderPath, filePath);
+            if (deleteAfterTest) await Cleanup(folderPath, filePath, debug);
         }
 
-        private static async Task TestBackups(ISerializer serializer, string filePath)
+        private static async Task TestBackups(ISerializer serializer, string filePath, bool debug)
         {
             // Create a source stream for file serialization using the appropriate serializer and file path.
             using (var source = SerializationExtensions.CreateCorruptionStream(filePath))
@@ -169,18 +189,18 @@ namespace Sanctuary.Tests
                         File.Delete(filePath);
 
                         // Log the deletion of the original file for debugging purposes
-                        Debug.Log($"[Sanctuary]: Deleted original file to test rollback.");
+                        if (debug) Debug.Log($"[Sanctuary]: Deleted original file to test rollback.");
                     }
                 }
                 catch (System.Exception ex)
                 {
                     // Log the exception message for debugging purposes
-                    Debug.LogError($"[Sanctuary]: Exception occurred while checking for backup file: {ex.Message}");
+                    if (debug) Debug.LogError($"[Sanctuary]: Exception occurred while checking for backup file: {ex.Message}");
                 }
             });
         }
 
-        private static async Task TestDeserialization(ISerializer serializer, SaveLocation location, TestSaveData data, string filePath)
+        private static async Task TestDeserialization(ISerializer serializer, SaveLocation location, string filePath, bool debug)
         {
             // Await the creation of a file deserialization stream for the save data file
             using var stream = await SerializationExtensions.CreateFileDeserializationStream(filePath);
@@ -189,7 +209,7 @@ namespace Sanctuary.Tests
             var result = await serializer.Deserialize(stream);
 
             // Log the file path for debugging purposes
-            Debug.Log($"[Sanctuary]: Deserialized save data from: {filePath}");
+            if (debug) Debug.Log($"[Sanctuary]: Deserialized save data from: {filePath}");
 
             // Try to read the test data from the save data
             try
@@ -197,24 +217,24 @@ namespace Sanctuary.Tests
                 switch (result.Output)
                 {
                     case LoadResult.Result.Success:
-                        data = result.Data.Read<TestSaveData>(location);
-                        Debug.Log($"[Sanctuary]: Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
+                        var data = result.Data.Read<TestSaveData>(location);
+                        if (debug) Debug.Log($"[Sanctuary]: Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
                         break;
                     case LoadResult.Result.Failure:
-                        Debug.LogError("[Sanctuary]: Failed to read test data from deserialized save data.");
+                        if (debug) Debug.LogError("[Sanctuary]: Failed to read test data from deserialized save data.");
                         break;
                     default:
-                        Debug.LogError("[Sanctuary]: Unknown deserialization result.");
+                        if (debug) Debug.LogError("[Sanctuary]: Unknown deserialization result.");
                         break;
                 }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[Sanctuary]: Exception occurred while reading test data: {ex.Message}");
+                if (debug) Debug.LogError($"[Sanctuary]: Exception occurred while reading test data: {ex.Message}");
             }
         }
 
-        private static async Task Cleanup(string folderPath, string filePath)
+        private static async Task Cleanup(string folderPath, string filePath, bool debug)
         {
             await Task.Run(() =>
             {
@@ -225,7 +245,7 @@ namespace Sanctuary.Tests
                     File.Delete(filePath);
 
                     // Log the file path for debugging purposes
-                    Debug.Log($"[Sanctuary]: Deleted test data file: {filePath}");
+                    if (debug) Debug.Log($"[Sanctuary]: Deleted test data file: {filePath}");
                 }
 
                 // Check if there is a backup file for the test data and delete it if it exists
@@ -238,7 +258,7 @@ namespace Sanctuary.Tests
                     File.Delete(backupFilePath);
 
                     // Log the backup file path for debugging purposes
-                    Debug.Log($"[Sanctuary]: Deleted backup file: {backupFilePath}");
+                    if (debug) Debug.Log($"[Sanctuary]: Deleted backup file: {backupFilePath}");
                 }
 
                 // If there are no more files in the test folder, delete the test folder as well
@@ -248,13 +268,16 @@ namespace Sanctuary.Tests
                     Directory.Delete(folderPath);
 
                     // Log the folder path for debugging purposes
-                    Debug.Log($"[Sanctuary]: Deleted test folder: {folderPath}");
+                    if (debug) Debug.Log($"[Sanctuary]: Deleted test folder: {folderPath}");
                 }
 
                 // Log a message indicating that the cleanup is complete
-                Debug.Log("[Sanctuary]: Test file cleanup complete.");
+                if (debug) Debug.Log("[Sanctuary]: Test file cleanup complete.");
             });
         }
+
+        #endregion
+
 
         [System.Serializable]
         public struct TestSaveData

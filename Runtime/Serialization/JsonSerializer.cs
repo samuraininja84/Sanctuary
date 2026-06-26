@@ -37,19 +37,19 @@ namespace Sanctuary.Serialization
 
         public static JsonSerializer All => new(SerializationOptions.All);
 
-        private JsonSerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = ".data")
+        private JsonSerializer(SerializationOptions options = SerializationOptions.None, string fileExtension = SerializationExtensions.DefaultFileExtension)
         {
             this.options = options;
             this.fileExtension = fileExtension;
         }
 
-        public static JsonSerializer Create(SerializationOptions options, string fileExtension = ".data") => new(options, fileExtension);
+        public static JsonSerializer Create(SerializationOptions options, string fileExtension = SerializationExtensions.DefaultFileExtension) => new(options, fileExtension);
 
-        public static JsonSerializer CreateAsJson(SerializationOptions options, string fileExtension = ".json") => new(options, fileExtension);
+        public static JsonSerializer CreateAsJson(SerializationOptions options) => new(options, ".json");
 
-        public static JsonSerializer CreateAsMarkDown(SerializationOptions options, string fileExtension = ".md") => new(options, fileExtension);
+        public static JsonSerializer CreateAsMarkDown(SerializationOptions options) => new(options, ".md");
 
-        public static JsonSerializer CreateAsText(SerializationOptions options, string fileExtension = ".txt") => new(options, fileExtension);
+        public static JsonSerializer CreateAsText(SerializationOptions options) => new(options, ".txt");
 
         public async Task Serialize(ISaveData data, Stream source)
         {

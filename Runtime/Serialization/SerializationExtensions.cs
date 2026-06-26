@@ -17,6 +17,11 @@ namespace Sanctuary.Serialization
         public const string DefaultFolderName = "Save Data";
 
         /// <summary>
+        /// Represents the default file extension used for serialized data files.
+        /// </summary>
+        public const string DefaultFileExtension = ".data";
+
+        /// <summary>
         /// Represents the file extension used for backup files.
         /// </summary>
         public const string DefaultBackupExtension = ".bak";
