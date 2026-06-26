@@ -266,7 +266,7 @@ namespace Sanctuary
             }
 
             // Save to persistent storage if needed
-            if (mode != SaveMode.MemoryOnly) await _loader.Save(Data);
+            if (mode != SaveMode.MemoryOnly) await _loader.Save(_configuration, Data);
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
@@ -326,7 +326,7 @@ namespace Sanctuary
         public async Task<bool> TryLoadAll<T>(SaveLocation location, SerializableDictionary<int, T> targets) where T : new()
         {
             // Load all data chunks from persistent storage
-            var results = await _loader.LoadAll();
+            var results = await _loader.LoadAll(_configuration);
 
             // If no data chunks were loaded, return false
             if (results.Length == 0) return false;
@@ -346,7 +346,7 @@ namespace Sanctuary
         public async Task<bool> TryLoadAll<T>(SaveLocation location, List<T> targets) where T : new()
         {
             // Load all data chunks from persistent storage
-            var results = await _loader.LoadAll();
+            var results = await _loader.LoadAll(_configuration);
 
             // If no data chunks were loaded, return false
             if (results.Length == 0) return false;

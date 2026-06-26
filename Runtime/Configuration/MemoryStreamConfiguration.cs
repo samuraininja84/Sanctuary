@@ -5,7 +5,7 @@ using Sanctuary.Serialization;
 
 namespace Sanctuary.Configuration
 {
-    [CreateAssetMenu(fileName = "MemoryStreamConfiguration", menuName = "Sanctuary/Configuration/Memory Stream Configuration")]
+    [CreateAssetMenu(fileName = "MemoryStreamConfiguration", menuName = "Sanctuary/Configuration/Streams/Memory Stream Configuration")]
     public class MemoryStreamConfiguration : StreamConfiguration
     {
         [Header("Memory Stream Settings")]
@@ -30,5 +30,14 @@ namespace Sanctuary.Configuration
                 _ => throw new System.ArgumentOutOfRangeException(nameof(streamType), streamType, null)
             };
         }
+
+        /// <summary>
+        /// Constructs a file path for memory streams. Since memory streams do not have a physical file path, this method returns an empty string.
+        /// </summary>
+        /// <param name="folderPath">The folder path where the file would be located, if applicable.</param>
+        /// <param name="fileName">The name of the file, if applicable.</param>
+        /// <param name="extension">The file extension, if applicable.</param>
+        /// <returns>An empty string, as memory streams do not have a physical file path.</returns>
+        public override string ConstructPath(string folderPath, string fileName, string extension) => string.Empty;
     }
 }

@@ -39,6 +39,8 @@ namespace Sanctuary.Loaders
         /// </summary>
         private readonly SemaphoreSlim _lock = new(1);
 
+        // To Do: Remove default folder name and file name from the constructor, as they are now derived from the profile data and serializer.
+
         /// <summary>
         /// Initializes a new instance of the <see cref="FileSaveLoader"/> class with the specified profile and serializer.
         /// </summary>
@@ -125,13 +127,13 @@ namespace Sanctuary.Loaders
         /// After all chunks have been written, a boolean value is written to indicate the end of the data.
         /// <param name="data">The data to save.</param>
         /// <returns>A task that represents the asynchronous save operation.</returns>
-        public async Task Save(ISaveData data) 
+        public async Task Save(StreamConfiguration config, ISaveData data) 
         {
             // Acquire the lock.
             await _lock.WaitAsync();
 
             // Create a file serialization stream for the specified file path.
-            using var stream = SerializationExtensions.CreateFileSerializationStream(_filePath);
+            using var stream = await config.GetStream(StreamType.Serialization, _filePath);
 
             // Write the data to the file asynchronously using the serializer.
             await _serializer.Serialize(data, stream);
@@ -143,26 +145,6 @@ namespace Sanctuary.Loaders
 
             // Release the lock.
             _lock.Release();
-        }
-
-        /// <summary>
-        /// Asynchronously gets the <see cref="LoadResult"/> from the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream to load the data from.</param>
-        /// <returns>A task that represents the asynchronous load operation. The task result contains the <see cref="LoadResult"/>.</returns>
-        public async Task<LoadResult> Load(Stream stream)
-        {
-            // Acquire the lock.
-            await _lock.WaitAsync();
-
-            // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.
-            var result = await _serializer.Deserialize(stream);
-
-            // Release the lock.
-            _lock.Release();
-
-            // Return the loaded save data.
-            return result;
         }
 
         /// <summary>
@@ -193,32 +175,39 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <remarks>This method loads all existing save data files for the current profile's scope.</remarks>
         /// <returns>An array of loaded save data objects.</returns>
-        public async Task<LoadResult[]> LoadAll() 
+        public async Task<LoadResult[]> LoadAll(StreamConfiguration config) 
         {
             // Return early if the scope is not Global or Scene
             if (!(_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)) return Array.Empty<LoadResult>();
 
-            // Get the existing save IDs.
-            int[] existingIds = await ExistingSaveIDs();
+            // Get the existing saves for the current profile's scope using the provided stream configuration.
+            var streams = await config.GetStreams();
 
             // If there are no existing IDs, return an empty array.
-            if (existingIds.Length == 0) return Array.Empty<LoadResult>();
+            if (streams.Length == 0) return Array.Empty<LoadResult>();
 
             // Create a list to hold the results of the load operations.
             var results = new System.Collections.Generic.List<LoadResult>();
 
-            // Load each save data object.
-            foreach (int id in existingIds) 
+            // Define a local function to load a single save data object from a stream.
+            async Task<LoadResult> Load(Stream stream)
             {
-                // Set the file path for the current ID.
-                string folderPath = Path.Combine(_directory, $"{id}");
+                // Acquire the lock.
+                await _lock.WaitAsync();
 
-                // Update the file path to include the new profile and the serializer's file extension.
-                string filePath = Path.Combine(folderPath, FileName + _serializer.GetFileExtension());
+                // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.
+                var result = await _serializer.Deserialize(stream);
 
-                // Create a file deserialization stream for the specified file path.
-                using var stream = await SerializationExtensions.CreateFileDeserializationStream(filePath);
+                // Release the lock.
+                _lock.Release();
 
+                // Return the loaded save data.
+                return result;
+            }
+
+            // Load each save data object.
+            foreach (var stream in streams) 
+            {
                 // Load the save data using the new stream and add it to the results list.
                 var result = await Load(stream);
 
@@ -261,7 +250,7 @@ namespace Sanctuary.Loaders
             }
 
             // Create a DirectoryInfo object for the scoped path
-            DirectoryInfo scopedDirectory = new DirectoryInfo(_folderPath);
+            var scopedDirectory = new DirectoryInfo(_folderPath);
 
             // If there are no files left in the directory, delete the directory
             if (!scopedDirectory.HasFiles())
@@ -300,6 +289,12 @@ namespace Sanctuary.Loaders
         /// <returns>Gets the name of the save.</returns>
         public Task<string> GetName() => Task.FromResult(_name);
 
+        /// <summary>
+        /// Gets the file extension for this save.
+        /// </summary>
+        /// <returns>The file extension for this save.</returns>
+        public string GetExtension() => _serializer.GetFileExtension();
+
         // To Do: Update Exists, GetLastModifiedTime, & ExistingSaveIDs to handle streams that are not file-based, as these methods currently only work for file-based saves.
         // This may require a different approach or additional parameters to handle non-file-based streams.
 
@@ -314,39 +309,6 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the last modified time.</returns>
         public Task<TimeSpan> GetLastModifiedTime() => Task.FromResult(File.GetLastWriteTimeUtc(_filePath).TimeOfDay);
-
-        /// <summary>
-        /// Gets the existing save IDs by scanning the save directory for folders named with integer IDs.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation. The task result contains an array of existing save IDs.</returns>
-        private Task<int[]> ExistingSaveIDs()
-        {
-            // Construct the path to the existing saves directory.
-            string existingSavesPath = Path.Combine(Application.persistentDataPath, SaveLoaderDefaults.DefaultFolderName);
-
-            // Ensure the directory exists.
-            if (!Directory.Exists(existingSavesPath)) return Task.FromResult(Array.Empty<int>());
-
-            // Create a list to hold the existing save IDs.
-            var ids = new System.Collections.Generic.List<int>();
-
-            // Get all folders in the saves directory
-            var savesDirectory = new DirectoryInfo(existingSavesPath);
-
-            // Iterate through each directory in the saves directory
-            foreach (var dir in savesDirectory.GetDirectories())
-            {
-                // Try to parse the directory name as an integer ID
-                if (int.TryParse(dir.Name, out int id))
-                {
-                    // If successful, add the ID to the list
-                    ids.Add(id);
-                }
-            }
-
-            // Return the array of existing save IDs.
-            return Task.FromResult(ids.ToArray());
-        }
 
         /// <summary>
         /// Gets the backup file path by appending the backup file extension to the original file path.

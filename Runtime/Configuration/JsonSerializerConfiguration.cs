@@ -5,7 +5,7 @@ using Sanctuary.Serialization;
 
 namespace Sanctuary.Configuration
 {
-    [CreateAssetMenu(fileName = "JsonSerializerConfiguration", menuName = "Sanctuary/Configuration/Json Serializer", order = 2)]
+    [CreateAssetMenu(fileName = "JsonSerializerConfiguration", menuName = "Sanctuary/Configuration/Serializers/Json Serializer", order = 2)]
     public class JsonSerializerConfiguration : SerializerConfiguration
     {
         /// <summary>

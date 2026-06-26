@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Sanctuary;
 using Sanctuary.Loaders;
+using Sanctuary.Configuration;
 
 namespace Sanctaury.Samples
 {
@@ -17,7 +18,7 @@ namespace Sanctaury.Samples
 
         public Task<LoadResult> Load() => Task.FromResult(LoadResult.Success(SaveData.Empty));
 
-        public Task Save(ISaveData data) => Task.CompletedTask;
+        public Task Save(StreamConfiguration config, ISaveData data) => Task.CompletedTask;
 
         public Task<ISaveData> Create()
         {
