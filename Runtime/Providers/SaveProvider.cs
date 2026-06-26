@@ -1,11 +1,12 @@
-﻿using System.Linq;
+﻿using Sanctuary.Extensions;
+using Sanctuary.Loaders;
+using Sanctuary.Serialization;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Sanctuary.Loaders;
-using Sanctuary.Extensions;
-using Sanctuary.Serialization;
 
 namespace Sanctuary
 {
@@ -357,13 +358,6 @@ namespace Sanctuary
         public static SaveControllerBase ActiveScene => ForScene(SceneManager.GetActiveScene());
 
         /// <summary>
-        /// Gets the closest <see cref="SaveControllerBase"/> instance to the provided MonoBehaviour in hierarchy, the <see cref="SaveControllerBase"/> for its scene, or the Global <see cref="SaveControllerBase"/>.
-        /// </summary>
-        /// <param name="behaviour">The MonoBehaviour to find the <see cref="SaveControllerBase"/> for.</param>
-        /// <returns>The closest <see cref="SaveControllerBase"/> instance, or the scene/global instance if none found in hierarchy.</returns>
-        public static SaveControllerBase For(MonoBehaviour behaviour) => behaviour.GetComponentInParent<SaveProvider>().OrNull().Controller ?? ForSceneOf(behaviour) ?? Global;
-
-        /// <summary>
         /// Gets the <see cref="SaveControllerBase"/> configured for the specified scene.
         /// </summary>
         /// <param name="scene">The scene to get the <see cref="SaveControllerBase"/> for.</param>
@@ -420,15 +414,6 @@ namespace Sanctuary
         public static SaveControllerBase ForScene(string sceneName) => ForScene(SceneManager.GetSceneByName(sceneName));
 
         /// <summary>
-        /// Gets the <see cref="SaveControllerBase"/> configured for the scene of a MonoBehaviour.
-        /// </summary>
-        /// <remarks>
-        /// Falls back to the global instance if no scene-specific SaveProvider is found.
-        /// </remarks>
-        /// <returns>The <see cref="SaveControllerBase"/> for the scene of the provided MonoBehaviour, or the global instance if none found.</returns>
-        public static SaveControllerBase ForSceneOf(MonoBehaviour behaviour) => ForScene(behaviour.gameObject.scene);
-
-        /// <summary>
         /// Gets the appropriate SaveController based on the provided SaveScope.
         /// </summary>
         /// <param name="scope">The scope to get the SaveController for.</param>
@@ -446,8 +431,34 @@ namespace Sanctuary
                 SaveScope.Temporary => Temporary,
 
                 // Should never happen due to enum constraints but throw an exception if an unsupported scope is provided
-                _ => throw new System.ArgumentOutOfRangeException(nameof(scope), $"Unsupported SaveScope: {scope}"),
+                _ => throw new System.ArgumentOutOfRangeException(nameof(scope), $"Unsupported Save Scope: {scope}"),
             };
+        }
+
+        // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void Bootstrap()
+        {
+            //// Check if there is already a SaveProvider in the scene
+            //container = Object.FindAnyObjectByType<SaveProvider>();
+
+            //// If not, create a new GameObject and add the SaveProvider component
+            //if (container == null)
+            //{
+            //    // Create a new GameObject to hold the SaveProvider
+            //    var saveProviderObject = new GameObject("SaveProvider");
+
+            //    // Add the SaveProvider component to the new GameObject
+            //    container = saveProviderObject.AddComponent<SaveProvider>();
+
+            //    // Make the GameObject persistent across scenes
+            //    Object.DontDestroyOnLoad(saveProviderObject);
+            //}
+
+            //// Configure the SaveProvider as Absolute with the specified profile data
+            //container.ConfigureAsAbsolute(ProfileData, true);
+
+            //// Load data on boot if specified
+            //if (LoadOnBoot) Load();
         }
 
         /// <summary>
@@ -543,5 +554,39 @@ namespace Sanctuary
         }
 
 #endif
+    }
+
+    public static class SaveProviderExtensions
+    {
+        /// <summary>
+        /// Gets the closest <see cref="SaveControllerBase"/> instance to the provided MonoBehaviour in hierarchy, the <see cref="SaveControllerBase"/> for its scene, or the Global <see cref="SaveControllerBase"/>.
+        /// </summary>
+        /// <param name="behaviour">The MonoBehaviour to find the <see cref="SaveControllerBase"/> for.</param>
+        /// <returns>The closest <see cref="SaveControllerBase"/> instance, or the scene/global instance if none found in hierarchy.</returns>
+        public static SaveControllerBase For(this MonoBehaviour behaviour) => behaviour.GetComponentInParent<SaveProvider>().OrNull().Controller ?? ForSceneOf(behaviour) ?? SaveProvider.Global;
+
+        /// <summary>
+        /// Gets the <see cref="SaveControllerBase"/> configured for the specified scene name.
+        /// </summary>
+        /// <param name="sceneName">The name of the scene to get the <see cref="SaveControllerBase"/> for.</param>
+        /// <returns>The <see cref="SaveControllerBase"/> for the specified scene.</returns>
+        public static SaveControllerBase ForScene(this string sceneName) => SaveProvider.ForScene(SceneManager.GetSceneByName(sceneName));
+
+        /// <summary>
+        /// Gets the <see cref="SaveControllerBase"/> configured for the scene of a MonoBehaviour.
+        /// </summary>
+        /// <remarks>
+        /// Falls back to the global instance if no scene-specific SaveProvider is found.
+        /// </remarks>
+        /// <returns>The <see cref="SaveControllerBase"/> for the scene of the provided MonoBehaviour, or the global instance if none found.</returns>
+        public static SaveControllerBase ForSceneOf(this MonoBehaviour behaviour) => SaveProvider.ForScene(behaviour.gameObject.scene);
+
+        /// <summary>
+        /// Gets the appropriate SaveController based on the provided SaveScope.
+        /// </summary>
+        /// <param name="scope">The scope to get the SaveController for.</param>
+        /// <exception cref="System.ArgumentOutOfRangeException">Thrown if an unsupported SaveScope is provided.</exception>
+        /// <returns>A SaveController corresponding to the provided scope.</returns>
+        public static SaveControllerBase ByScope(this SaveScope scope) => SaveProvider.ByScope(scope);
     }
 }

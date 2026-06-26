@@ -19,7 +19,7 @@ namespace Sanctuary
         /// <summary>
         /// The SaveProvider instance managed by this Bootstrapper.
         /// </summary>
-        internal SaveProvider Container => container.OrNull() ?? (container = GetComponent<SaveProvider>());
+        internal SaveProvider Container => gameObject.GetOrAdd<SaveProvider>();
 
         /// <summary>
         /// A flag indicating whether this Bootstrapper has already performed its bootstrap process.

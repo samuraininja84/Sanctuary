@@ -30,7 +30,7 @@ namespace Sanctuary
         /// </summary>
         /// <param name="fileName">The name associated with the absolute profile data. Cannot be null or empty.</param>
         /// <returns>A <see cref="ProfileData"/> instance configured with a absolute save data scope and the specified name.</returns>
-        public static ProfileData Absolute(string fileName) => new ProfileData(SaveScope.Absolute, fileName);
+        public static ProfileData Absolute(string fileName) => new(SaveScope.Absolute, fileName);
 
         /// <summary>
         /// Creates a new instance of <see cref="ProfileData"/> with the specified name and ID, using the <see cref="SaveScope.Global"/> scope.
@@ -38,7 +38,7 @@ namespace Sanctuary
         /// <param name="fileName">The name associated with the profile. Cannot be null or empty.</param>
         /// <param name="id">The unique identifier for the profile. Must be a non-negative integer.</param>
         /// <returns>A new <see cref="ProfileData"/> instance configured with the specified name, ID, and scope.</returns>
-        public static ProfileData Global(string fileName) => new ProfileData(SaveScope.Global, fileName);
+        public static ProfileData Global(string fileName) => new(SaveScope.Global, fileName);
 
         /// <summary>
         /// Creates a new instance of <see cref="ProfileData"/> with the specified name and ID, using the <see cref="SaveScope.Scene"/> scope.
@@ -46,14 +46,14 @@ namespace Sanctuary
         /// <param name="fileName">The name associated with the profile. Cannot be null or empty.</param>
         /// <param name="id">The unique identifier for the profile. Must be a non-negative integer.</param>
         /// <returns>A new <see cref="ProfileData"/> instance configured with the specified name, ID, and scope.</returns>
-        public static ProfileData Scene(string fileName) => new ProfileData(SaveScope.Scene, fileName);
+        public static ProfileData Scene(string fileName) => new(SaveScope.Scene, fileName);
 
         /// <summary>
         /// Creates a new instance of <see cref="ProfileData"/> with a temporary save data scope.
         /// </summary>
         /// <param name="fileName">The name associated with the profile data. Cannot be null or empty.</param>
         /// <returns>A <see cref="ProfileData"/> instance configured with a temporary save data scope and the specified name.</returns>
-        public static ProfileData Temporary(string fileName) => new ProfileData(SaveScope.Temporary, fileName);
+        public static ProfileData Temporary(string fileName) => new(SaveScope.Temporary, fileName);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProfileData"/> class with the specified scope, name, and an optional ID.
@@ -121,7 +121,7 @@ namespace Sanctuary
         /// </remarks>
         /// <param name="scope">The scope of the save data to validate. Must be one of the defined <see cref="SaveScope"/> values.</param>
         /// <exception cref="System.ArgumentException">Thrown if the <paramref name="scope"/> is <see cref="SaveScope.Global"/> and the ID is a negative value.</exception>
-        private void ValidateScope(SaveScope scope)
+        private readonly void ValidateScope(SaveScope scope)
         {
             // Validate the ID based on the scope.
             switch (scope)

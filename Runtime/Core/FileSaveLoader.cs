@@ -217,6 +217,8 @@ namespace Sanctuary.Loaders
             return results.ToArray();
         }
 
+        // To Do: Remove the parameter-less Delete method to handle streams that are not file-based, as this method currently only works for file-based saves.
+
         /// <summary>
         /// Deletes the save file.
         /// </summary>
