@@ -6,6 +6,7 @@ using UnityEngine;
 using Sanctuary.Stores;
 using Sanctuary.Loaders;
 using Sanctuary.Extensions;
+using Sanctuary.Configuration;
 
 namespace Sanctuary
 {
@@ -64,6 +65,11 @@ namespace Sanctuary
         /// Whether the save exists.
         /// </summary>
         public bool Exists { get; private set; }
+
+        /// <summary>
+        /// The configuration for the save controller.
+        /// </summary>
+        protected StreamConfiguration _configuration;
 
         /// <summary>
         /// Provides the scope of the save.
@@ -136,8 +142,11 @@ namespace Sanctuary
         /// </summary>
         /// <param name="loader">The save loader used to handle loading and saving operations. This parameter cannot be <see langword="null"/>.</param>
         /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
-        protected SaveControllerBase(ISaveLoader loader, SaveScope scope = SaveScope.Global)
+        protected SaveControllerBase(StreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global)
         {
+            // Set the configuration
+            _configuration = configuration;
+
             // Set the loader
             _loader = loader;
 
@@ -154,10 +163,10 @@ namespace Sanctuary
         /// <param name="loader">The loader to use for loading and saving the data.</param>
         /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
         /// <returns>A new instance of the save controller.</returns>
-        public static SaveControllerBase Create(ISaveLoader loader, SaveScope scope = SaveScope.Global) 
+        public static SaveControllerBase Create(StreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global) 
         {
             // Create a new save controller with the provided loader
-            var save = new SaveControllerBase(loader, scope);
+            var save = new SaveControllerBase(configuration, loader, scope);
 
             // Initialize the save controller
             save.Initialize();
@@ -279,7 +288,7 @@ namespace Sanctuary
             if (mode != SaveMode.MemoryOnly)
             {
                 // Load the save data from persistent storage
-                var result = await _loader.Load();
+                var result = await _loader.Load(_configuration);
 
                 // Handle the result of the load operation
                 switch (result.Output)

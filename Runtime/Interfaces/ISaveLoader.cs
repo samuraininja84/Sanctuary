@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Sanctuary.Configuration;
 using Stream = System.IO.Stream;
 using TimeSpan = System.TimeSpan;
 
@@ -35,18 +36,18 @@ namespace Sanctuary.Loaders
         Task Save(ISaveData data);
 
         /// <summary>
-        /// Load the data from the persistent storage.
+        /// Load the data from the specified <see cref="Stream"/>.
         /// </summary>
-        /// <param name="stream">The stream to load the data from.</param>
-        /// <returns>The <see cref="LoadResult"/> representing the result of the load operation.</returns>
-        Task<LoadResult> Load();
-
-        /// <summary>
-        /// Load the data from the persistent storage.
-        /// </summary>
-        /// <param name="stream">The stream to load the data from.</param>
+        /// <param name="stream">The <see cref="Stream"/> to load the data from.</param>
         /// <returns>The <see cref="LoadResult"/> representing the result of the load operation.</returns>
         virtual Task<LoadResult> Load(Stream stream) => Task.FromResult(LoadResult.Failure());
+
+        /// <summary>
+        /// Load the data from the specified <see cref="StreamConfiguration"/>.
+        /// </summary>
+        /// <param name="stream">The <see cref="StreamConfiguration"/> to load the data from.</param>
+        /// <returns>The <see cref="LoadResult"/> representing the result of the load operation.</returns>
+        Task<LoadResult> Load(StreamConfiguration stream) => Task.FromResult(LoadResult.Failure());
 
         /// <summary>
         /// Load all saves from the persistent storage.

@@ -4,7 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Sanctuary.Utility;
+using Sanctuary.Configuration;
 using Sanctuary.Serialization;
+using StreamType = Sanctuary.Configuration.StreamConfiguration.StreamType;
 
 namespace Sanctuary.Loaders
 {
@@ -143,18 +145,6 @@ namespace Sanctuary.Loaders
             _lock.Release();
         }
 
-        // To Do: Remove the parameter-less Load method to handle streams that are not file-based, as this method currently only works for file-based saves.
-        // This may require a different approach or additional parameters to handle non-file-based streams.
-
-        public async Task<LoadResult> Load()
-        {
-            // Create a file deserialization stream for the specified file path.
-            using var stream = await SerializationExtensions.CreateFileDeserializationStream(_filePath);
-
-            // Load the save data using the new stream and return the result.
-            return await Load(stream);
-        }
-
         /// <summary>
         /// Asynchronously gets the <see cref="LoadResult"/> from the specified stream.
         /// </summary>
@@ -164,6 +154,29 @@ namespace Sanctuary.Loaders
         {
             // Acquire the lock.
             await _lock.WaitAsync();
+
+            // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.
+            var result = await _serializer.Deserialize(stream);
+
+            // Release the lock.
+            _lock.Release();
+
+            // Return the loaded save data.
+            return result;
+        }
+
+        /// <summary>
+        /// Asynchronously loads the save data from the specified <see cref="StreamConfiguration"/>.
+        /// </summary>
+        /// <param name="config">The <see cref="StreamConfiguration"/> to load the data from.</param>
+        /// <returns>A task that represents the asynchronous load operation. The task result contains the <see cref="LoadResult"/>.</returns>
+        public async Task<LoadResult> Load(StreamConfiguration config)
+        {
+            // Acquire the lock.
+            await _lock.WaitAsync();
+
+            // Create a file deserialization stream for the specified file path.
+            using var stream = await config.GetStream(StreamType.Deserialization, _filePath);
 
             // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.
             var result = await _serializer.Deserialize(stream);
