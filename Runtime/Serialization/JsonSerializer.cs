@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 #if UNITY_NEWTONSOFT_JSON
@@ -50,7 +51,7 @@ namespace Sanctuary.Serialization
 
         public static JsonSerializer CreateAsText(SerializationOptions options, string fileExtension = ".txt") => new(options, fileExtension);
 
-        public async Task Serialize(ISaveData data, Stream stream)
+        public async Task Serialize(ISaveData data, Stream source)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
             var options = this.options;
@@ -59,12 +60,32 @@ namespace Sanctuary.Serialization
             await Task.Run(() =>
             {
                 // Create a stream writer to write to the file with optional compression.
-                using StreamWriter writer = SerializationExtensions.CreateStreamWriter(options, stream);
+                using var writer = SerializationExtensions.CreateStreamWriter(options, source);
 
                 // Serialize the save data to a JSON string using Newtonsoft.Json
                 writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
             });
         }
+
+        public async Task CopyTo(Stream source, Stream destination, CancellationToken cancellationToken = default)
+        {
+            // If the source or destination stream is null, return without doing anything.
+            if (source == null || destination == null) return;
+
+            // If we don't have backup enabled, we don't need to copy the data.
+            if (!options.HasFlag(SerializationOptions.Backup)) return;
+
+            // If the source stream is not readable or the destination stream is not writable, throw an exception.
+            if (!source.CanRead) throw new System.InvalidOperationException("Source stream is not readable.");
+            if (!destination.CanWrite) throw new System.InvalidOperationException("Destination stream is not writable.");
+
+            // Copy the source stream to the destination stream.
+            await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
+        }
+
+        // To Do: Add check to see if the file is encrypted and if so, decrypt it before attempting to deserialize it, regardless of whether the options include the Encrypted flag or not.
+        // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
+        // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
 
         public async Task<LoadResult> Deserialize(Stream stream)
         {
@@ -72,7 +93,7 @@ namespace Sanctuary.Serialization
             var options = this.options;
 
             // Create a stream reader to read from the file with optional decompression.
-            using StreamReader reader = SerializationExtensions.CreateStreamReader(options, stream);
+            using var reader = SerializationExtensions.CreateStreamReader(options, stream);
 
             // Create a JSON text reader to read the JSON data from the stream.
             using var jsonReader = new JsonTextReader(reader);

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Sanctuary.Serialization
@@ -39,7 +40,7 @@ namespace Sanctuary.Serialization
 
         public static BinarySerializer CreateAsBinary(SerializationOptions options, string fileExtension = ".bin") => new(options, fileExtension);
 
-        public async Task Serialize(ISaveData data, Stream stream)
+        public async Task Serialize(ISaveData data, Stream source)
         {
             // Capture the folderPath and filePath in local variables to avoid closure issues in the async task.
             var options = this.options;
@@ -48,7 +49,7 @@ namespace Sanctuary.Serialization
             await Task.Run(() =>
             {
                 // Create a binary writer to write to the file.
-                using var writer = SerializationExtensions.CreateBinaryWriter(options, stream);
+                using var writer = SerializationExtensions.CreateBinaryWriter(options, source);
 
                 // Write each chunk of data.
                 foreach (var chunkId in data.GetChunkIDs())
@@ -79,6 +80,22 @@ namespace Sanctuary.Serialization
                 // Write a false boolean to indicate the end of chunks.
                 writer.Write(false);
             });
+        }
+
+        public async Task CopyTo(Stream source, Stream destination, CancellationToken cancellationToken = default)
+        {
+            // If the source or destination stream is null, return without doing anything.
+            if (source == null || destination == null) return;
+
+            // If we don't have backup enabled, we don't need to copy the data.
+            if (!options.HasFlag(SerializationOptions.Backup)) return;
+
+            // If the source stream is not readable or the destination stream is not writable, throw an exception.
+            if (!source.CanRead) throw new System.InvalidOperationException("Source stream is not readable.");
+            if (!destination.CanWrite) throw new System.InvalidOperationException("Destination stream is not writable.");
+
+            // Copy the source stream to the destination stream.
+            await source.CopyToAsync(destination, cancellationToken).ConfigureAwait(false);
         }
 
         // To Do: Add check to see if the file is encrypted and if so, decrypt it before attempting to deserialize it, regardless of whether the options include the Encrypted flag or not.

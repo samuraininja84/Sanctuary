@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
 using Sanctuary.Serialization;
+using CancellationToken = System.Threading.CancellationToken;
 
 namespace Sanctuary.Tests
 {
@@ -118,17 +119,17 @@ namespace Sanctuary.Tests
             // Set the file path for the save data
             string filePath = Path.Combine(folderPath, fileName);
 
-            // Await the creation of a file serialization stream for the save data file
-            using var stream = SerializationExtensions.CreateFileSerializationStream(filePath);
+            // Create a source stream for file serialization using the appropriate serializer and file path
+            using var source = SerializationExtensions.CreateFileSerializationStream(filePath);
 
             // Try to serialize the save data using the binary serializer
-            await serializer.Serialize(saveData, stream);
+            await serializer.Serialize(saveData, source);
 
             // Log the file path for debugging purposes
             Debug.Log($"[Sanctuary]: Serialized {fileName} save data to: {filePath}");
 
             // If testBackups is true, check if a backup file was created and log the result
-            if (testBackups) await TestBackups(filePath);
+            if (testBackups) await TestBackups(serializer, filePath);
 
             // Try to deserialize the save data using the appropriate serializer
             await TestDeserialization(serializer, location, data, filePath);
@@ -137,12 +138,23 @@ namespace Sanctuary.Tests
             if (deleteAfterTest) await Cleanup(folderPath, filePath);
         }
 
-        private static async Task TestBackups(string filePath)
+        private static async Task TestBackups(ISerializer serializer, string filePath)
         {
+            // Create a source stream for file serialization using the appropriate serializer and file path.
+            using (var source = SerializationExtensions.CreateCorruptionStream(filePath))
+            {
+                // Create the backup stream if the serializer has the backup option enabled
+                using var backup = await SerializationExtensions.CreateFileBackupStream(filePath, SerializationExtensions.DefaultBackupExtension);
+
+                // If the serializer has the backup option enabled, try to serialize the save data to the backup stream as well
+                await serializer.CopyTo(source, backup, CancellationToken.None);
+            }
+
+            // Run the backup file existence check in a separate task to avoid blocking the main thread.
             await Task.Run(() =>
             {
                 // Set the backup file path for the save data
-                string backupFilePath = filePath + SerializationExtensions.BackupFileExtension;
+                string backupFilePath = filePath + SerializationExtensions.DefaultBackupExtension;
 
                 // Try to check if the backup file exists and log the result
                 try
@@ -217,7 +229,7 @@ namespace Sanctuary.Tests
                 }
 
                 // Check if there is a backup file for the test data and delete it if it exists
-                string backupFilePath = filePath + SerializationExtensions.BackupFileExtension;
+                string backupFilePath = filePath + SerializationExtensions.DefaultBackupExtension;
 
                 // Check if the backup file exists before attempting to delete it
                 if (File.Exists(backupFilePath))

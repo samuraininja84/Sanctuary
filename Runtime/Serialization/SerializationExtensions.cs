@@ -76,6 +76,28 @@ namespace Sanctuary.Serialization
         }
 
         /// <summary>
+        /// Creates a FileStream for corruption testing, ensuring that the directory exists before creating the file. 
+        /// </summary>
+        /// <remarks>
+        /// Intended for testing purposes, this method creates a FileStream that can be used to simulate file corruption scenarios.
+        /// The FileStream is created with the DeleteOnClose option, which means that the file will be automatically deleted when the stream is closed. 
+        /// This is useful for testing scenarios where you want to simulate file corruption without leaving behind any test files.
+        /// </remarks>
+        /// <param name="filePath">The path of the file to create the FileStream for.</param>
+        /// <returns>A FileStream for the specified file path.</returns>
+        public static FileStream CreateCorruptionStream(string filePath)
+        {
+            // Ensure the folder path exists.
+            var folderPath = Path.GetDirectoryName(filePath);
+
+            // Create the directory if it does not exist.
+            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+            // Create a FileStream with the specified parameters.
+            return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.DeleteOnClose | DefaultFileOptions);
+        }
+
+        /// <summary>
         /// Creates a FileStream for serialization, ensuring that the directory exists before creating the file.
         /// </summary>
         /// <param name="filePath">The path of the file to create the FileStream for.</param>
@@ -89,7 +111,7 @@ namespace Sanctuary.Serialization
             if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
             // Create a FileStream with the specified parameters.
-            return new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, DefaultBufferSize, DefaultFileOptions);
+            return new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite, DefaultBufferSize, DefaultFileOptions);
         }
 
         /// <summary>
