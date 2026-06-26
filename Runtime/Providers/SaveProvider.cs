@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Sanctuary.Loaders;
 using Sanctuary.Extensions;
-using Sanctuary.Serializers;
+using Sanctuary.Serialization;
 
 namespace Sanctuary
 {

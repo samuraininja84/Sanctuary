@@ -8,7 +8,7 @@ using JsonConvert = Newtonsoft.Json.JsonConvert;
 using JsonTextReader = Newtonsoft.Json.JsonTextReader;
 using NewtonsoftJsonSerializer = Newtonsoft.Json.JsonSerializer;
 
-namespace Sanctuary.Serializers
+namespace Sanctuary.Serialization
 {
     /// <summary>
     /// A serializer that uses JSON format to serialize and deserialize ISaveData objects.

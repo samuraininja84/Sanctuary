@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Sanctuary.Serializers
+namespace Sanctuary.Serialization
 {
     /// <summary>
     /// Defines the settings that can be applied during serialization.

@@ -2,7 +2,7 @@ using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
-using Sanctuary.Serializers;
+using Sanctuary.Serialization;
 
 namespace Sanctuary.Tests
 {

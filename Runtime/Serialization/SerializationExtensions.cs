@@ -7,7 +7,7 @@ using Encoding = System.Text.Encoding;
 using DirectoryUtility = Sanctuary.Utility.DirectoryUtility;
 using EncryptionUtility = Sanctuary.Utility.EncryptionUtility;
 
-namespace Sanctuary.Serializers
+namespace Sanctuary.Serialization
 {
     public static class SerializationExtensions
     {
