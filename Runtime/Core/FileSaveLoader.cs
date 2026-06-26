@@ -21,18 +21,12 @@ namespace Sanctuary.Loaders
     /// </remarks>
     public sealed class FileSaveLoader : ISaveLoader 
     {
-        private readonly string _name;
+        private readonly string _fileName;
         private readonly string _directory;
 
         private readonly ProfileData _profile;
         private readonly ISerializer _serializer;
-        private string _filePath = string.Empty;
-        private string _folderPath = string.Empty;
-
-        /// <summary>
-        /// The file name derived from the profile data.
-        /// </summary>
-        private string FileName => _profile.GetFileName();
+        private readonly string _fullName;
 
         /// <summary>
         /// Semaphore used to ensure thread-safe access to save and load operations as in only one operation is performed at a time.
@@ -47,7 +41,7 @@ namespace Sanctuary.Loaders
         /// <remarks>Only intended to be used by the <see cref="Builder"/> class, use the <see cref="Builder.Create(ProfileData, ISerializer)"/> method to create an instance of this class.</remarks>
         /// <param name="profile">The profile data used to determine the save file's scope and ID.</param>
         /// <param name="serializer">The serializer used to serialize and deserialize the save data.</param>
-        private FileSaveLoader(ProfileData profile, ISerializer serializer)
+        private FileSaveLoader(ProfileData profile, ISerializer serializer, string folderName)
         {
             // Store the profile.
             _profile = profile;
@@ -55,17 +49,14 @@ namespace Sanctuary.Loaders
             // Initialize the serializer, should be provided by the user, otherwise default to a binary serializer through the builder.
             _serializer = serializer;
 
+            // Get the file name from the profile data, which is used to determine the save file's name.
+            _fileName = profile.GetFileName();
+
             // Set the name to a more user-friendly format.
-            _name = $"File Save \"{FileName}\"";
+            _fullName = $"File Save \"{_fileName}\"";
 
             // Set the directory to a "Save Data" folder in the persistent data path.
-            _directory = Path.Combine(Application.persistentDataPath, SaveLoaderDefaults.DefaultFolderName);
-
-            // Get the scoped directory based on the profile scope and ID.
-            _folderPath = _profile.GetScopedPath(_directory);
-
-            // Set the file path to the specified file name with the serializer's file extension.
-            _filePath = Path.Combine(_folderPath, FileName + _serializer.GetFileExtension());
+            _directory = Path.Combine(Application.persistentDataPath, folderName);
         }
 
         /// <summary>
@@ -75,19 +66,23 @@ namespace Sanctuary.Loaders
         {
             private readonly ProfileData profile;
             private readonly ISerializer serializer;
+            private readonly string folderName;
 
-            private Builder(ProfileData profile, ISerializer serializer = null)
+            private Builder(ProfileData profile, ISerializer serializer, string folderName)
             {
-                // Store the profile and serializer.
+                // Store the profile data, which is used to determine the save file's scope and ID.
                 this.profile = profile;
+
+                // Store the folder name, which is used to determine where the save files will be stored.
+                this.folderName = folderName;
 
                 // If no serializer is provided, use the default binary serializer as a fallback.
                 this.serializer = serializer ?? BinarySerializer.Default;
             }
 
-            public static Builder Create(ProfileData profile, ISerializer serializer = null) => new(profile, serializer);
+            public static Builder Create(ProfileData profile, ISerializer serializer, string folderName = SaveLoaderDefaults.DefaultFolderName) => new(profile, serializer, folderName);
 
-            public readonly FileSaveLoader Build() => new(profile, serializer);
+            public readonly FileSaveLoader Build() => new(profile, serializer, folderName);
         }
 
         // To Do: Remove the WithID method and handle the ID look up through the load method, as this will allow for a more flexible and dynamic approach to loading save data without requiring the user to specify an ID beforehand.
@@ -101,12 +96,6 @@ namespace Sanctuary.Loaders
         {
             // Change the profile ID.
             _profile.SetId(id);
-
-            // Change the folder path to the new profile.
-            _folderPath = _profile.GetScopedPath(_directory);
-
-            // Update the file path to include the new profile and the serializer's file extension.
-            _filePath = Path.Combine(_folderPath, FileName + _serializer.GetFileExtension());
 
             // Return the current instance for method chaining.
             return this;
@@ -132,8 +121,11 @@ namespace Sanctuary.Loaders
             // Acquire the lock.
             await _lock.WaitAsync();
 
+            // Get the file path for the save file based on the profile's scope and ID.
+            string filePath = GetFilePath();
+
             // Create a file serialization stream for the specified file path.
-            using var stream = await config.GetStream(StreamType.Serialization, _filePath);
+            using var stream = await config.GetStream(StreamType.Serialization, filePath);
 
             // Write the data to the file asynchronously using the serializer.
             await _serializer.Serialize(data, stream);
@@ -141,7 +133,7 @@ namespace Sanctuary.Loaders
             // Create a backup of the file if the setting is enabled.
             // To Do: Find a better way to handle this, as there is a potential mismatch if backups are enabled but the format is not compatible with the backup file extension.
             // This could lead to confusion or errors when attempting to restore from a backup.
-            if (_serializer.Options.HasFlag(SerializationOptions.Backup)) File.Copy(_filePath, _filePath + SerializationExtensions.BackupFileExtension, true);
+            if (_serializer.Options.HasFlag(SerializationOptions.Backup)) File.Copy(filePath, filePath + SerializationExtensions.BackupFileExtension, true);
 
             // Release the lock.
             _lock.Release();
@@ -158,7 +150,7 @@ namespace Sanctuary.Loaders
             await _lock.WaitAsync();
 
             // Create a file deserialization stream for the specified file path.
-            using var stream = await config.GetStream(StreamType.Deserialization, _filePath);
+            using var stream = await config.GetStream(StreamType.Deserialization, GetFilePath());
 
             // Try to deserialize the save data using the binary serializer. If it fails, log an error and return a new empty save data object.
             var result = await _serializer.Deserialize(stream);
@@ -230,8 +222,11 @@ namespace Sanctuary.Loaders
             // Acquire the lock.
             await _lock.WaitAsync();
 
+            // Get the file path for the save file based on the profile's scope and ID.
+            string filePath = GetFilePath();
+
             // Delete the file if it exists.
-            if (File.Exists(_filePath)) File.Delete(_filePath);
+            if (File.Exists(filePath)) File.Delete(filePath);
 
             // Get the backup file path.
             var backupFilePath = GetBackupFilePath();
@@ -239,8 +234,11 @@ namespace Sanctuary.Loaders
             // Delete the backup file if it exists.
             if (File.Exists(backupFilePath)) File.Delete(backupFilePath);
 
+            // Get the scoped path for the current profile's scope and ID.
+            string folderPath = GetScopedPath();
+
             // Check if the scoped path exists
-            if (!Directory.Exists(_folderPath)) 
+            if (!Directory.Exists(folderPath)) 
             {
                 // Release the lock.
                 _lock.Release();
@@ -250,7 +248,7 @@ namespace Sanctuary.Loaders
             }
 
             // Create a DirectoryInfo object for the scoped path
-            var scopedDirectory = new DirectoryInfo(_folderPath);
+            var scopedDirectory = new DirectoryInfo(folderPath);
 
             // If there are no files left in the directory, delete the directory
             if (!scopedDirectory.HasFiles())
@@ -265,7 +263,7 @@ namespace Sanctuary.Loaders
                 if (_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)
                 {
                     // Get the parent directory of the scoped path
-                    DirectoryInfo parentDirectory = Directory.GetParent(_folderPath);
+                    DirectoryInfo parentDirectory = Directory.GetParent(folderPath);
 
                     // If the parent directory is empty, delete it
                     if (!parentDirectory.HasContents())
@@ -286,14 +284,9 @@ namespace Sanctuary.Loaders
         /// <summary>
         /// Asynchronously gets the name of the save.
         /// </summary>
+        /// <remarks>Editor Use Only</remarks>
         /// <returns>Gets the name of the save.</returns>
-        public Task<string> GetName() => Task.FromResult(_name);
-
-        /// <summary>
-        /// Gets the file extension for this save.
-        /// </summary>
-        /// <returns>The file extension for this save.</returns>
-        public string GetExtension() => _serializer.GetFileExtension();
+        public Task<string> GetName() => Task.FromResult(_fullName);
 
         // To Do: Update Exists, GetLastModifiedTime, & ExistingSaveIDs to handle streams that are not file-based, as these methods currently only work for file-based saves.
         // This may require a different approach or additional parameters to handle non-file-based streams.
@@ -302,18 +295,30 @@ namespace Sanctuary.Loaders
         /// Asynchronously checks if the save file exists.
         /// </summary>
         /// <returns>A task that represents the asynchronous existence check operation. The task result contains true if the file exists, false otherwise.</returns>
-        public Task<bool> Exists() => Task.FromResult(File.Exists(_filePath));
+        public Task<bool> Exists() => Task.FromResult(File.Exists(GetFilePath()));
 
         /// <summary>
         /// Asynchronously gets the last modified time of the save file.
         /// </summary>
         /// <returns>A task that represents the asynchronous operation. The task result contains the last modified time.</returns>
-        public Task<TimeSpan> GetLastModifiedTime() => Task.FromResult(File.GetLastWriteTimeUtc(_filePath).TimeOfDay);
+        public Task<TimeSpan> GetLastModifiedTime() => Task.FromResult(File.GetLastWriteTimeUtc(GetFilePath()).TimeOfDay);
+
+        /// <summary>
+        /// Gets the scoped path for the current profile's scope and ID.
+        /// </summary>
+        /// <returns>The scoped path for the current profile's scope and ID.</returns>
+        private string GetScopedPath() => _profile.GetScopedPath(_directory);
+
+        /// <summary>
+        /// Gets the file path for the save file based on the profile's scope and ID.
+        /// </summary>
+        /// <returns>The file path for the save file.</returns>
+        private string GetFilePath() => Path.Combine(GetScopedPath(), _fileName + _serializer.GetFileExtension());
 
         /// <summary>
         /// Gets the backup file path by appending the backup file extension to the original file path.
         /// </summary>
         /// <returns>The backup file path.</returns>
-        private string GetBackupFilePath() => _filePath + SerializationExtensions.BackupFileExtension;
+        private string GetBackupFilePath() => GetFilePath() + SerializationExtensions.BackupFileExtension;
     }
 }

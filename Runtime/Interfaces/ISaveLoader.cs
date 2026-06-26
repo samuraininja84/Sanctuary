@@ -65,12 +65,6 @@ namespace Sanctuary.Loaders
         Task<string> GetName();
 
         /// <summary>
-        /// Get the file extension for this save.
-        /// </summary>
-        /// <returns>The file extension for this save.</returns>
-        string GetExtension();
-
-        /// <summary>
         /// Check if the save has already been created.
         /// </summary>
         /// <returns>Whether the save exists.</returns>

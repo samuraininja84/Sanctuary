@@ -6,8 +6,6 @@ using Sanctuary.Loaders;
 using Sanctuary.Extensions;
 using Sanctuary.Configuration;
 using Sanctuary.Serialization;
-using Stream = System.IO.Stream;
-using StreamType = Sanctuary.Configuration.StreamConfiguration.StreamType;
 
 #if UNITY_EDITOR
 using UnityEditor;
