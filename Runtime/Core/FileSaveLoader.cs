@@ -51,6 +51,9 @@ namespace Sanctuary.Loaders
             // Initialize the serializer, should be provided by the user, otherwise default to a binary serializer through the builder.
             _serializer = serializer;
 
+            // Set the name to a more user-friendly format.
+            _name = $"File Save \"{FileName}\"";
+
             // Set the directory to a "Save Data" folder in the persistent data path.
             _directory = Path.Combine(Application.persistentDataPath, SaveLoaderDefaults.DefaultFolderName);
 
@@ -59,9 +62,6 @@ namespace Sanctuary.Loaders
 
             // Set the file path to the specified file name with the serializer's file extension.
             _filePath = Path.Combine(_folderPath, FileName + _serializer.GetFileExtension());
-
-            // Set the name to a more user-friendly format.
-            _name = $"File Save \"{FileName}\"";
         }
 
         /// <summary>
@@ -69,21 +69,21 @@ namespace Sanctuary.Loaders
         /// </summary>
         public readonly struct Builder
         {
-            private readonly ProfileData _profile;
-            private readonly ISerializer _serializer;
+            private readonly ProfileData profile;
+            private readonly ISerializer serializer;
 
             private Builder(ProfileData profile, ISerializer serializer = null)
             {
                 // Store the profile and serializer.
-                _profile = profile;
+                this.profile = profile;
 
                 // If no serializer is provided, use the default binary serializer as a fallback.
-                _serializer = serializer ?? BinarySerializer.Default;
+                this.serializer = serializer ?? BinarySerializer.Default;
             }
 
             public static Builder Create(ProfileData profile, ISerializer serializer = null) => new(profile, serializer);
 
-            public readonly FileSaveLoader Build() => new(_profile, _serializer);
+            public readonly FileSaveLoader Build() => new(profile, serializer);
         }
 
         // To Do: Remove the WithID method and handle the ID look up through the load method, as this will allow for a more flexible and dynamic approach to loading save data without requiring the user to specify an ID beforehand.
