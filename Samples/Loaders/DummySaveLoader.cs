@@ -15,7 +15,7 @@ namespace Sanctaury.Samples
 
         public Task<bool> Exists() => Task.FromResult(_exists);
 
-        public Task<ISaveData> Load() => Task.FromResult<ISaveData>(SaveData.Empty);
+        public Task<LoadResult> Load() => Task.FromResult(LoadResult.Success(SaveData.Empty));
 
         public Task Save(ISaveData data) => Task.CompletedTask;
 

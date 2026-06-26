@@ -29,7 +29,7 @@ namespace Sanctuary.Samples
             save.Data.SetChunkName(_location, gameObject.name).Write(_location, data);
         }
 
-        public void OnLoad(SaveControllerBase save) => save.Data.SetChunkName(_location, gameObject.name).TryRead(_location, data);
+        public void OnLoad(SaveControllerBase save) => save.Data.SetChunkName(_location, gameObject.name).TryRead(_location, out data);
 
         [ContextMenu("Load All")]
         public bool TryLoadAll() => TryLoadAll(SaveProvider.Global).Result;

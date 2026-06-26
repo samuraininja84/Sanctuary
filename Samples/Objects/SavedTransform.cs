@@ -37,10 +37,10 @@ namespace Sanctaury.Samples
         public void OnLoad(SaveControllerBase save)
         {
             // Try to read the data from the save controller
-            if (save.Data.TryRead(_location, data))
+            if (save.Data.TryRead(_location, out data))
             {
                 // Apply the loaded data to the transform
-                transform.position = data.position;
+                transform.position = data.position; 
                 transform.rotation = data.rotation;
 
                 // Optionally reset velocity

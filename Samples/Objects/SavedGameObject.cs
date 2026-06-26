@@ -41,7 +41,7 @@ namespace Sanctaury.Samples
         public void OnLoad(SaveControllerBase save)
         {
             // Try to read the active state from the save controller
-            if (save.Data.TryRead(_location, data))
+            if (save.Data.TryRead(_location, out data))
             {
                 // Optionally, you could also set the name
                 save.Data.SetChunkName(_location, gameObject.name);

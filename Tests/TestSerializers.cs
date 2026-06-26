@@ -174,7 +174,7 @@ namespace Sanctuary.Tests
             using var stream = await SerializationExtensions.CreateFileDeserializationStream(filePath);
 
             // Try to deserialize the save data using the appropriate serializer
-            var saveData = await serializer.Deserialize(stream);
+            var result = await serializer.Deserialize(stream);
 
             // Log the file path for debugging purposes
             Debug.Log($"[Sanctuary]: Deserialized save data from: {filePath}");
@@ -182,13 +182,18 @@ namespace Sanctuary.Tests
             // Try to read the test data from the save data
             try
             {
-                if (saveData.TryRead(location, data))
+                switch (result.Output)
                 {
-                    Debug.Log($"[Sanctuary]: Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
-                }
-                else
-                {
-                    Debug.LogError("[Sanctuary]: Failed to read test data from deserialized save data.");
+                    case LoadResult.Result.Success:
+                        data = result.Data.Read<TestSaveData>(location);
+                        Debug.Log($"[Sanctuary]: Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
+                        break;
+                    case LoadResult.Result.Failure:
+                        Debug.LogError("[Sanctuary]: Failed to read test data from deserialized save data.");
+                        break;
+                    default:
+                        Debug.LogError("[Sanctuary]: Unknown deserialization result.");
+                        break;
                 }
             }
             catch (System.Exception ex)
