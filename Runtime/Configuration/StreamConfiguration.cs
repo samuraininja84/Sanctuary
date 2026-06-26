@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
-using Sanctuary.Loaders;
 using Array = System.Array;
+using SerializationExtensions = Sanctuary.Serialization.SerializationExtensions;
 
 namespace Sanctuary.Configuration
 {
@@ -13,7 +13,8 @@ namespace Sanctuary.Configuration
     {
         [Header("Stream Configuration")]
         [Tooltip("The folder where saves are stored. Not applicable for all stream types.")]
-        [SerializeField] protected string saveFolder = SaveLoaderDefaults.DefaultFolderName;
+        [SerializeField] protected string saveFolder = SerializationExtensions.DefaultFolderName;
+        [SerializeField] protected string backupExtension = SerializationExtensions.DefaultBackupExtension;
 
         /// <summary>
         /// Gets a stream based on the specified stream type and optional file path.
@@ -60,7 +61,13 @@ namespace Sanctuary.Configuration
             /// Indicates that the stream is intended for deserialization purposes.
             /// </summary>
             /// <remarks>This type of stream is used to read data from a source, such as a file or network, and convert it into usable objects or data structures.</remarks>
-            Deserialization
+            Deserialization,
+
+            /// <summary>
+            /// Indicates that the stream is intended for backup purposes.
+            /// </summary>
+            /// <remarks>This type of stream is used to create a backup of data, ensuring that a copy is available for recovery in case of data loss or corruption.</remarks>
+            Backup
         }
     }
 }

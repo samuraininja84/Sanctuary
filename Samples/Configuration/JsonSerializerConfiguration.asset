@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06bbc136c130d26479329aa58a9791bd, type: 3}
   m_Name: JsonSerializerConfiguration
   m_EditorClassIdentifier: Sanctuary::Sanctuary.Configuration.JsonSerializerConfiguration
-  serializationOptions: 0
+  serializationOptions: 5
   overrideExtension: 

@@ -80,7 +80,7 @@ namespace Sanctuary.Loaders
                 this.serializer = serializer ?? BinarySerializer.Default;
             }
 
-            public static Builder Create(ProfileData profile, ISerializer serializer, string folderName = SaveLoaderDefaults.DefaultFolderName) => new(profile, serializer, folderName);
+            public static Builder Create(ProfileData profile, ISerializer serializer, string folderName = SerializationExtensions.DefaultFolderName) => new(profile, serializer, folderName);
 
             public readonly FileSaveLoader Build() => new(profile, serializer, folderName);
         }
@@ -125,15 +125,16 @@ namespace Sanctuary.Loaders
             string filePath = GetFilePath();
 
             // Create a file serialization stream for the specified file path.
-            using var stream = await config.GetStream(StreamType.Serialization, filePath);
+            using var source = await config.GetStream(StreamType.Serialization, filePath);
 
             // Write the data to the file asynchronously using the serializer.
-            await _serializer.Serialize(data, stream);
+            await _serializer.Serialize(data, source);
 
-            // Create a backup of the file if the setting is enabled.
-            // To Do: Find a better way to handle this, as there is a potential mismatch if backups are enabled but the format is not compatible with the backup file extension.
-            // This could lead to confusion or errors when attempting to restore from a backup.
-            if (_serializer.Options.HasFlag(SerializationOptions.Backup)) File.Copy(filePath, filePath + SerializationExtensions.BackupFileExtension, true);
+            // Create a backup stream for the specified file path.
+            using var backup = await config.GetStream(StreamType.Backup, GetBackupFilePath());
+
+            // Create a backup of the save file asynchronously using the serializer.
+            await _serializer.CopyTo(source, backup, CancellationToken.None);
 
             // Release the lock.
             _lock.Release();
@@ -319,6 +320,6 @@ namespace Sanctuary.Loaders
         /// Gets the backup file path by appending the backup file extension to the original file path.
         /// </summary>
         /// <returns>The backup file path.</returns>
-        private string GetBackupFilePath() => GetFilePath() + SerializationExtensions.BackupFileExtension;
+        private string GetBackupFilePath() => GetFilePath() + SerializationExtensions.DefaultBackupExtension;
     }
 }

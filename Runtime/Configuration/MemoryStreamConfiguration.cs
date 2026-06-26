@@ -25,6 +25,7 @@ namespace Sanctuary.Configuration
             {
                 StreamType.Serialization => SerializationExtensions.CreateMemorySerializationStream(initialCapacity),
                 StreamType.Deserialization => SerializationExtensions.CreateMemoryDeserializationStream(initialCapacity),
+                StreamType.Backup => SerializationExtensions.CreateMemoryBackupStream(initialCapacity),
 
                 // Should never reach this point because all enum values are handled above, but this is a safeguard in case of future changes to the enum.
                 _ => throw new System.ArgumentOutOfRangeException(nameof(streamType), streamType, null)

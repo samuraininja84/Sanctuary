@@ -18,10 +18,6 @@ namespace Sanctuary.Configuration
         /// <param name="options">The serialization options to use for this serializer.</param>
         /// <param name="overrideExtension">The file extension to use for serialized files. If null, the default extension will be used.</param>
         /// <returns>The configured <see cref="BinarySerializer"/> instance.</returns>
-        public override ISerializer GetSerializer(SerializationOptions options, string overrideExtension = null)
-        {
-            // If there is an override extension, create a new serializer with the provided options and extension; otherwise, create a new serializer with the provided options and the default extension.
-            return overrideExtension != null ? BinarySerializer.Create(options, overrideExtension) : BinarySerializer.Create(options);
-        }
+        public override ISerializer GetSerializer(SerializationOptions options, string overrideExtension = null) => overrideExtension != null ? BinarySerializer.Create(options, overrideExtension) : BinarySerializer.Create(options);
     }
 }

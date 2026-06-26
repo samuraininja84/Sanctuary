@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7efd0e04cac60140956155167e1b2fe, type: 3}
   m_Name: BinarySerializerConfiguration
   m_EditorClassIdentifier: Sanctuary::Sanctuary.Configuration.BinarySerializerConfiguration
-  serializationOptions: 0
+  serializationOptions: 5
   overrideExtension: 
