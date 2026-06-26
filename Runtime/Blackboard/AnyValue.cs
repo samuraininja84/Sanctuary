@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Sanctuary.Blackboard
 {
@@ -15,6 +16,7 @@ namespace Sanctuary.Blackboard
         public bool boolValue;
         public string stringValue;
         public Vector3 vector3Value;
+        public Object objectValue;
 
         // Implicit conversion operators to convert AnyValue to different types
         public static implicit operator int(AnyValue value) => value.ConvertValue<int>();
@@ -22,12 +24,14 @@ namespace Sanctuary.Blackboard
         public static implicit operator bool(AnyValue value) => value.ConvertValue<bool>();
         public static implicit operator string(AnyValue value) => value.ConvertValue<string>();
         public static implicit operator Vector3(AnyValue value) => value.ConvertValue<Vector3>();
+        public static implicit operator Object(AnyValue value) => value.ConvertValue<Object>();
 
         // Helper methods for safe type conversions of the value types without the cost of boxing
         private readonly T AsBool<T>(bool value) => typeof(T) == typeof(bool) && value is T correctType ? correctType : default;
         private readonly T AsInt<T>(int value) => typeof(T) == typeof(int) && value is T correctType ? correctType : default;
         private readonly T AsFloat<T>(float value) => typeof(T) == typeof(float) && value is T correctType ? correctType : default;
         private readonly T AsVector3<T>(Vector3 value) => typeof(T) == typeof(Vector3) && value is T correctType ? correctType : default;
+        private readonly T AsObject<T>(Object value) => typeof(T) == typeof(Object) && value is T correctType ? correctType : default;
 
         private readonly T ConvertValue<T>()
         {
@@ -40,6 +44,7 @@ namespace Sanctuary.Blackboard
                 ValueType.Bool => AsBool<T>(boolValue),
                 ValueType.String => (T)(object)stringValue,
                 ValueType.Vector3 => AsVector3<T>(vector3Value),
+                ValueType.Object => AsObject<T>(objectValue),
 
                 // Handle unsupported types
                 _ => throw new NotSupportedException($"Not supported value type: {typeof(T)}")
@@ -52,7 +57,8 @@ namespace Sanctuary.Blackboard
             Float, 
             Bool, 
             String, 
-            Vector3 
+            Vector3,
+            Object
         }
     }
 }

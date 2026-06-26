@@ -3,7 +3,7 @@ using Sanctuary.Serialization;
 
 namespace Sanctuary.Configuration
 {
-    [CreateAssetMenu(fileName = "BinarySerializerConfiguration", menuName = "Sanctuary/Configuration/Serializers/Binary Serializer", order = 1)]
+    [CreateAssetMenu(fileName = "BinarySerializerConfiguration", menuName = "Sanctuary/Configuration/Serializers/Binary Serializer Configuration", order = 1)]
     public class BinarySerializerConfiguration : SerializerConfiguration
     {
         /// <summary>

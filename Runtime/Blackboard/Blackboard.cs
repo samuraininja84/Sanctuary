@@ -11,6 +11,8 @@ namespace Sanctuary.Blackboard
 
         public List<Action> PassedActions { get; } = new();
 
+        public object this[BlackboardKey key] => entries.TryGetValue(key, out var entry) ? entry : null;
+
         public void RegisterAction(Action action)
         {
             // Validate that the action is not null before adding it to the PassedActions list.
@@ -71,7 +73,7 @@ namespace Sanctuary.Blackboard
             return key;
         }
 
-        public bool ContainsKey(BlackboardKey key) => entries.ContainsKey(key);
+        public bool Contains(BlackboardKey key) => entries.ContainsKey(key);
 
         public void Remove(BlackboardKey key) => entries.Remove(key);
 
