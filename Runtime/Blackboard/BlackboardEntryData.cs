@@ -20,6 +20,7 @@ namespace Sanctuary.Blackboard
             { ValueType.Bool, (blackboard, key, anyValue) => blackboard.SetValue<bool>(key, anyValue) },
             { ValueType.String, (blackboard, key, anyValue) => blackboard.SetValue<string>(key, anyValue) },
             { ValueType.Vector3, (blackboard, key, anyValue) => blackboard.SetValue<Vector3>(key, anyValue) },
+            { ValueType.Object, (blackboard, key, anyValue) => blackboard.SetValue<UnityEngine.Object>(key, anyValue) }
         };
 
         public void SetValueOnBlackboard(Blackboard blackboard) => setValueDispatchTable[value.type](blackboard, blackboard.GetOrAddKey(keyName), value);

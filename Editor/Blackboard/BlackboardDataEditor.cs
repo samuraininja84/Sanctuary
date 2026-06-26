@@ -13,31 +13,39 @@ namespace Sanctuary.Editor
 
         void OnEnable()
         {
+            // Gap between fields
+            float gap = 2;
+
             entryList = new ReorderableList(serializedObject, serializedObject.FindProperty("entries"), true, true, true, true)
             {
                 drawHeaderCallback = rect => 
                 {
-                    EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight), "Key");
-                    EditorGUI.LabelField(new Rect(rect.x + rect.width * 0.3f + 10, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight), "Type");
-                    EditorGUI.LabelField(new Rect(rect.x + rect.width * 0.6f + 5, rect.y, rect.width * 0.4f, EditorGUIUtility.singleLineHeight), "Value");
+                    EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width * 0.2f, EditorGUIUtility.singleLineHeight), "Type");
+                    EditorGUI.LabelField(new Rect(rect.x + rect.width * 0.2f + 10 + gap, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight), "Key");
+                    EditorGUI.LabelField(new Rect(rect.x + rect.width * 0.5f + 5 + gap, rect.y, (rect.width * 0.5f), EditorGUIUtility.singleLineHeight), "Value");
                 }
             };
 
             entryList.drawElementCallback = (rect, index, isActive, isFocused) => 
             {
+                // Get the element at the current index
                 var element = entryList.serializedProperty.GetArrayElementAtIndex(index);
 
+                // Adjust the rect for better spacing
                 rect.y += 2;
-                var keyName = element.FindPropertyRelative("keyName");
+
+                // Get the properties of the element
                 var valueType = element.FindPropertyRelative("valueType");
+                var keyName = element.FindPropertyRelative("keyName");
                 var value = element.FindPropertyRelative("value");
 
-                var keyNameRect = new Rect(rect.x, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight);
-                var valueTypeRect = new Rect(rect.x + rect.width * 0.3f, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight);
-                var valueRect = new Rect(rect.x + rect.width * 0.6f, rect.y, rect.width * 0.4f, EditorGUIUtility.singleLineHeight);
+                // Draw the properties
+                var valueTypeRect = new Rect(rect.x, rect.y, rect.width * 0.2f, EditorGUIUtility.singleLineHeight);
+                var keyNameRect = new Rect(rect.x + rect.width * 0.2f + gap, rect.y, rect.width * 0.3f, EditorGUIUtility.singleLineHeight);
+                var valueRect = new Rect(rect.x + rect.width * 0.5f + gap * 2, rect.y, (rect.width * 0.5f) - gap, EditorGUIUtility.singleLineHeight);
 
-                EditorGUI.PropertyField(keyNameRect, keyName, GUIContent.none);
                 EditorGUI.PropertyField(valueTypeRect, valueType, GUIContent.none);
+                EditorGUI.PropertyField(keyNameRect, keyName, GUIContent.none);
 
                 switch ((AnyValue.ValueType)valueType.enumValueIndex)
                 {
