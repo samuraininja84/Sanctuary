@@ -1,17 +1,24 @@
-﻿using Sanctuary.Extensions;
-using Sanctuary.Loaders;
-using Sanctuary.Serialization;
+﻿using System.Linq;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Sanctuary.Loaders;
+using Sanctuary.Extensions;
+using Sanctuary.Configuration;
+using Sanctuary.Serialization;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif 
 
 namespace Sanctuary
 {
     public class SaveProvider : MonoBehaviour
     {
+        [Header("Serializer Configuration")]
+        [Tooltip("The serializer configuration to use for saving and loading data.")]
+        [SerializeField] protected SerializerConfiguration serializer;
+
         /// <summary>
         /// The controller responsible for managing save operations.
         /// </summary>
@@ -78,6 +85,13 @@ namespace Sanctuary
         private static string SceneSaveProviderName(string sceneName) => $"SaveProvider [{sceneName}]";
 
         /// <summary>
+        /// Retrieves the serializer to be used for saving and loading data.
+        /// </summary>
+        /// <remarks>If a custom serializer is provided, it will be used; otherwise, the default binary serializer will be returned.</remarks>
+        /// <returns>The serializer to be used for saving and loading data.</returns>
+        private ISerializer GetSerializer() => serializer != null ? serializer.GetSerializer() : BinarySerializer.Default;
+
+        /// <summary>
         /// Sets up this SaveProvider as the absolute instance by marking as absolute and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is true.</param>
@@ -103,7 +117,7 @@ namespace Sanctuary
                 absolute = this;
 
                 // Initialize absolute save controller if needed
-                controller ??= SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, BinarySerializer.Default).Build(), SaveScope.Absolute);
+                controller ??= SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), SaveScope.Absolute);
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -149,7 +163,7 @@ namespace Sanctuary
                 global = this;
 
                 // Initialize global save controller if needed
-                controller ??= SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, BinarySerializer.Default).Build(), SaveScope.Global);
+                controller ??= SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), SaveScope.Global);
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -185,7 +199,7 @@ namespace Sanctuary
                 temporary = this;
 
                 // Initialize temporary save controller if needed
-                controller ??= SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, BinarySerializer.Default).Build(), SaveScope.Temporary);
+                controller ??= SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), SaveScope.Temporary);
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -224,7 +238,7 @@ namespace Sanctuary
                 profile.SetFileName(scene);
 
                 // Create a default FileSaveLoader for scene saves
-                controller = SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, BinarySerializer.Default).Build(), SaveScope.Scene);
+                controller = SaveControllerBase.Create(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), SaveScope.Scene);
             }
 
             // Register this container for the scene
