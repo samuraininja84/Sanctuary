@@ -19,11 +19,11 @@ MonoBehaviour:
   exportFolder: C:/Users/aaron/Documents/GitHub/UnityPackages/Custom
   packageContent:
   - fileMode: 0
-    fileObject: {fileID: 102900000, guid: 5203b7c3a668d5f4abbb94873bb64ddb, type: 3}
-    folderPath: C:/Users/aaron/Documents/GitHub/Dwalm/Assets/Plugins/Artisan/Sanctuary/Runtime
-  - fileMode: 0
     fileObject: {fileID: 102900000, guid: acdf681ff25487742ba4ae6edd608a35, type: 3}
     folderPath: C:/Users/aaron/Documents/GitHub/Dwalm/Assets/Plugins/Artisan/Sanctuary/Editor
+  - fileMode: 0
+    fileObject: {fileID: 102900000, guid: 5203b7c3a668d5f4abbb94873bb64ddb, type: 3}
+    folderPath: C:/Users/aaron/Documents/GitHub/Dwalm/Assets/Plugins/Artisan/Sanctuary/Runtime
   - fileMode: 0
     fileObject: {fileID: 102900000, guid: 9df8d5071aedf764f8ea6a18ab41f73d, type: 3}
     folderPath: C:/Users/aaron/Documents/GitHub/Dwalm/Assets/Plugins/Artisan/Sanctuary/Samples
