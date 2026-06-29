@@ -5,7 +5,7 @@ using Sanctuary.Serialization;
 
 namespace Sanctuary.Configuration
 {
-    [CreateAssetMenu(fileName = "MemoryStreamConfiguration", menuName = "Sanctuary/Configuration/Streams/Memory Stream Configuration")]
+    [CreateAssetMenu(fileName = "MemoryStreamConfiguration", menuName = "Sanctuary/Configuration/Streams/New Memory Stream Configuration")]
     public class MemoryStreamConfiguration : StreamConfiguration
     {
         [Header("Memory Stream Settings")]

@@ -6,7 +6,7 @@ using Array = System.Array;
 
 namespace Sanctuary.Configuration
 {
-    [CreateAssetMenu(fileName = "FileStreamConfiguration", menuName = "Sanctuary/Configuration/Streams/File Stream Configuration")]
+    [CreateAssetMenu(fileName = "FileStreamConfiguration", menuName = "Sanctuary/Configuration/Streams/New File Stream Configuration")]
     public class FileStreamConfiguration : StreamConfiguration
     {
         /// <summary>
