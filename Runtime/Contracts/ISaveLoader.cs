@@ -28,24 +28,24 @@ namespace Sanctuary.Loaders
         Task<ISaveData> Create();
 
         /// <summary>
-        /// Save the data to the specified <see cref="StreamConfiguration"/>.
+        /// Save the data to the specified <see cref="IStreamConfiguration"/>.
         /// </summary>
-        /// <param name="config">The <see cref="StreamConfiguration"/> to use for saving the data.</param>
+        /// <param name="config">The <see cref="IStreamConfiguration"/> to use for saving the data.</param>
         /// <param name="data">The data to save as an <see cref="ISaveData"/> object.</param>
         /// <returns>A task representing the asynchronous save operation.</returns>
-        Task Save(StreamConfiguration config, ISaveData data);
+        Task Save(IStreamConfiguration config, ISaveData data);
 
         /// <summary>
-        /// Load the data from the specified <see cref="StreamConfiguration"/>.
+        /// Load the data from the specified <see cref="IStreamConfiguration"/>.
         /// </summary>
-        /// <param name="config">The <see cref="StreamConfiguration"/> to load the data from.</param>
+        /// <param name="config">The <see cref="IStreamConfiguration"/> to load the data from.</param>
         /// <returns>The <see cref="LoadResult{T}"/> representing the result of the load operation.</returns>
-        Task<LoadResult<ISaveData>> Load(StreamConfiguration config) => Task.FromResult(LoadResult<ISaveData>.Fail(LoadStatus.ProviderError, "Load operation not implemented"));
+        Task<LoadResult<ISaveData>> Load(IStreamConfiguration config) => Task.FromResult(LoadResult<ISaveData>.Fail(LoadStatus.ProviderError, "Load operation not implemented"));
 
         /// <summary>
-        /// Load all saves from the specified <see cref="StreamConfiguration"/>.
+        /// Load all saves from the specified <see cref="IStreamConfiguration"/>.
         /// </summary>
-        /// <param name="config">The <see cref="StreamConfiguration"/> to use for loading the data.</param>
+        /// <param name="config">The <see cref="IStreamConfiguration"/> to use for loading the data.</param>
         /// <returns>A list of all loaded saves as <see cref="LoadResult{T}"/> objects.</returns>
         virtual Task<LoadResult<ISaveData>[]> LoadAll(StreamConfiguration config) => Task.FromResult(Array.Empty<LoadResult<ISaveData>>());
 

@@ -6,7 +6,6 @@ using UnityEngine;
 using Sanctuary.Utility;
 using Sanctuary.Configuration;
 using Sanctuary.Serialization;
-using StreamType = Sanctuary.Configuration.StreamConfiguration.StreamType;
 
 namespace Sanctuary.Loaders
 {
@@ -116,7 +115,7 @@ namespace Sanctuary.Loaders
         /// After all chunks have been written, a boolean value is written to indicate the end of the data.
         /// <param name="data">The data to save.</param>
         /// <returns>A task that represents the asynchronous save operation.</returns>
-        public async Task Save(StreamConfiguration config, ISaveData data) 
+        public async Task Save(IStreamConfiguration config, ISaveData data) 
         {
             // Acquire the lock.
             await _lock.WaitAsync();
@@ -145,7 +144,7 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <param name="config">The <see cref="StreamConfiguration"/> to load the data from.</param>
         /// <returns>A task that represents the asynchronous load operation. The task result contains the <see cref="LoadResult"/>.</returns>
-        public async Task<LoadResult<ISaveData>> Load(StreamConfiguration config)
+        public async Task<LoadResult<ISaveData>> Load(IStreamConfiguration config)
         {
             // Acquire the lock.
             await _lock.WaitAsync();

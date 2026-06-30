@@ -1,4 +1,8 @@
-﻿namespace Sanctuary.Configuration
+﻿using System.IO;
+using System.Threading.Tasks;
+using Sanctuary.Serialization;
+
+namespace Sanctuary.Configuration
 {
     /// <summary>
     /// Plain-C# default <see cref="IStreamConfiguration"/>. Used when no adapter or consumer
@@ -15,6 +19,19 @@
         {
             RootPath = rootPath;
             CurrentSchemaVersion = currentSchemaVersion;
+        }
+
+        public async Task<Stream> GetStream(StreamType streamType, string filePath = null)
+        {
+            return streamType switch
+            {
+                StreamType.Serialization => SerializationExtensions.CreateFileSerializationStream(filePath),
+                StreamType.Deserialization => await SerializationExtensions.CreateFileDeserializationStream(filePath),
+                StreamType.Backup => await SerializationExtensions.CreateFileBackupStream(filePath, SerializationExtensions.DefaultBackupExtension),
+
+                // Should never reach this point because all enum values are handled above, but this is a safeguard in case of future changes to the enum.
+                _ => throw new System.ArgumentOutOfRangeException(nameof(streamType), streamType, null)
+            };
         }
     }
 }

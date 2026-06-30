@@ -39,29 +39,5 @@ namespace Sanctuary.Configuration
         /// <param name="folderName">The name of the folder to get streams from. If null or empty, the default save folder is used.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains an array of streams from the specified folder.</returns>
         public virtual Task<Stream[]> GetStreams(string folderName = null) => Task.FromResult(Array.Empty<Stream>());
-
-        /// <summary>
-        /// Defines the types of streams that can be created by the StreamConfiguration.
-        /// </summary>
-        public enum StreamType
-        {
-            /// <summary>
-            /// Indicates that the stream is intended for serialization purposes.
-            /// </summary>
-            /// <remarks>This type of stream is used to write data to a destination, such as a file or network, in a format that can be later read and reconstructed.</remarks>
-            Serialization,
-
-            /// <summary>
-            /// Indicates that the stream is intended for deserialization purposes.
-            /// </summary>
-            /// <remarks>This type of stream is used to read data from a source, such as a file or network, and convert it into usable objects or data structures.</remarks>
-            Deserialization,
-
-            /// <summary>
-            /// Indicates that the stream is intended for backup purposes.
-            /// </summary>
-            /// <remarks>This type of stream is used to create a backup of data, ensuring that a copy is available for recovery in case of data loss or corruption.</remarks>
-            Backup
-        }
     }
 }
