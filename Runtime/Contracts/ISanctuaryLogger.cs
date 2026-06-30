@@ -1,6 +1,6 @@
 namespace Sanctuary
 {
-    public interface ILogger
+    public interface ISanctuaryLogger
     {
         void Info(string message);
         void Warn(string message);

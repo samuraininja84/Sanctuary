@@ -12,13 +12,13 @@ namespace Sanctuary
         private readonly ISaveDataProvider m_Provider;
         private readonly ISaveSerializer m_Serializer;
         private readonly ISaveIntegrityValidator m_Validator;
-        private readonly ILogger m_Logger;
+        private readonly ISanctuaryLogger m_Logger;
         private readonly SaveSlotRegistry m_SlotRegistry;
         private readonly SaveMigrationPipeline m_MigrationPipeline;
 
         private bool m_SaveInProgress;
 
-        public SanctuaryService(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ILogger logger)
+        public SanctuaryService(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger)
         {
             m_Provider = provider;
             m_Serializer = serializer;

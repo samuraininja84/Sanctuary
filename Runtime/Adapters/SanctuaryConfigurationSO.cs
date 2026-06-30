@@ -8,7 +8,7 @@ namespace Sanctuary.Adapters
     /// directory at <c>Application.persistentDataPath</c>. Drop one of these into a
     /// <c>SanctuaryApplicationLoader</c> to override the core package's default configuration.
     /// </summary>
-    [CreateAssetMenu(fileName = "Sanctuary Configuration", menuName = "Sanctuary/Configuration")]
+    [CreateAssetMenu(fileName = "Sanctuary Configuration", menuName = "Sanctuary/Sanctuary Configuration")]
     public sealed class SanctuaryConfigurationSO : ScriptableObject, ISanctuaryConfiguration
     {
         [Tooltip("Subdirectory under Application.persistentDataPath where save files live.")]
