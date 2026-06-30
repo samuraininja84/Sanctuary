@@ -9,7 +9,7 @@ namespace Sanctuary
 
         public string RootPath => m_RootPath;
 
-        public FileSaveDataProvider(ISanctuaryConfiguration configuration) => m_RootPath = configuration.RootPath;
+        public FileSaveDataProvider(IStreamConfiguration configuration) => m_RootPath = configuration.RootPath;
 
         public async Task<bool> WriteAsync(string relativePath, byte[] data)
         {

@@ -10,7 +10,7 @@ namespace Sanctuary
 
         public int CurrentSchemaVersion => m_CurrentSchemaVersion;
 
-        public JsonSaveSerializer(ISanctuaryConfiguration configuration) => m_CurrentSchemaVersion = configuration.CurrentSchemaVersion;
+        public JsonSaveSerializer(IStreamConfiguration configuration) => m_CurrentSchemaVersion = configuration.CurrentSchemaVersion;
 
         public byte[] Serialize<T>(T data) where T : class
         {

@@ -9,12 +9,21 @@ namespace Sanctuary.Configuration
     /// <summary>
     /// Represents a configuration for creating streams used in serialization and deserialization processes.
     /// </summary>
-    public abstract class StreamConfiguration : ScriptableObject
+    public abstract class StreamConfiguration : ScriptableObject, IStreamConfiguration
     {
         [Header("Stream Configuration")]
-        [Tooltip("The folder where saves are stored. Not applicable for all stream types.")]
-        [SerializeField] protected string saveFolder = SerializationExtensions.DefaultFolderName;
+        [Tooltip("Subdirectory under Application.persistentDataPath where saves are stored. Not applicable for all stream types.")]
+        [SerializeField] protected string folderName = SerializationExtensions.DefaultFolderName;
+        [Tooltip("The file extension used for serialization streams.")]
+        [SerializeField] protected string extension = SerializationExtensions.DefaultFileExtension;
+        [Tooltip("The file extension used for backup streams.")]
         [SerializeField] protected string backupExtension = SerializationExtensions.DefaultBackupExtension;
+        [Tooltip("Schema version stamped onto new save envelopes. Bump when your save format changes; pair with an ISaveMigrationStep for the upgrade.")]
+        [SerializeField] private int currentSchemaVersion = 1;
+
+        public virtual string RootPath => Path.Combine(Application.persistentDataPath, folderName);
+
+        public int CurrentSchemaVersion => currentSchemaVersion;
 
         /// <summary>
         /// Gets a stream based on the specified stream type and optional file path.
@@ -32,19 +41,10 @@ namespace Sanctuary.Configuration
         public virtual Task<Stream[]> GetStreams(string folderName = null) => Task.FromResult(Array.Empty<Stream>());
 
         /// <summary>
-        /// Constructs a file path by combining the persistent data path, specified folder path, file name, and extension.
-        /// </summary>
-        /// <param name="folderPath">The folder path where the file is located.</param>
-        /// <param name="fileName">The name of the file.</param>
-        /// <param name="extension">The file extension.</param>
-        /// <returns>The constructed file path.</returns>
-        public virtual string ConstructPath(string folderPath, string fileName, string extension) => Path.Combine(Application.persistentDataPath, folderPath, fileName + extension);
-
-        /// <summary>
         /// Gets the name of the folder where saves are stored.
         /// </summary>
         /// <returns>The name of the save folder.</returns>
-        public string GetSaveFolderName() => saveFolder;
+        public string GetSaveFolderName() => folderName;
 
         /// <summary>
         /// Defines the types of streams that can be created by the StreamConfiguration.

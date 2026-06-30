@@ -7,7 +7,7 @@ using Array = System.Array;
 namespace Sanctuary.Configuration
 {
     [CreateAssetMenu(fileName = "FileStreamConfiguration", menuName = "Sanctuary/Configuration/Streams/New File Stream Configuration")]
-    public class FileStreamConfiguration : StreamConfiguration
+    public sealed class FileStreamConfiguration : StreamConfiguration
     {
         /// <summary>
         /// Gets a stream based on the specified stream type and file path.
@@ -37,7 +37,7 @@ namespace Sanctuary.Configuration
         public override async Task<Stream[]> GetStreams(string folderName = null)
         {
             // If a specific directory path is provided, use it instead of the default save directory.
-            string folder = string.IsNullOrEmpty(folderName) ? saveFolder : folderName;
+            string folder = string.IsNullOrEmpty(folderName) ? base.folderName : folderName;
 
             // Construct the path to the existing saves directory.
             string path = Path.Combine(Application.persistentDataPath, folder);

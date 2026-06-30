@@ -1,6 +1,6 @@
 namespace Sanctuary
 {
-    public interface ISanctuaryConfiguration
+    public interface IStreamConfiguration
     {
         /// <summary>
         /// Filesystem root the file provider writes save files under.
