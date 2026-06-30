@@ -145,7 +145,7 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <param name="config">The <see cref="StreamConfiguration"/> to load the data from.</param>
         /// <returns>A task that represents the asynchronous load operation. The task result contains the <see cref="LoadResult"/>.</returns>
-        public async Task<SaveLoadResult<ISaveData>> Load(StreamConfiguration config)
+        public async Task<LoadResult<ISaveData>> Load(StreamConfiguration config)
         {
             // Acquire the lock.
             await _lock.WaitAsync();
@@ -168,22 +168,22 @@ namespace Sanctuary.Loaders
         /// </summary>
         /// <remarks>This method loads all existing save data files for the current profile's scope.</remarks>
         /// <returns>An array of loaded save data objects.</returns>
-        public async Task<SaveLoadResult<ISaveData>[]> LoadAll(StreamConfiguration config) 
+        public async Task<LoadResult<ISaveData>[]> LoadAll(StreamConfiguration config) 
         {
             // Return early if the scope is not Global or Scene
-            if (!(_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)) return Array.Empty<SaveLoadResult<ISaveData>>();
+            if (!(_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)) return Array.Empty<LoadResult<ISaveData>>();
 
             // Get the existing saves for the current profile's scope using the provided stream configuration.
             var streams = await config.GetStreams();
 
             // If there are no existing IDs, return an empty array.
-            if (streams.Length == 0) return Array.Empty<SaveLoadResult<ISaveData>>();
+            if (streams.Length == 0) return Array.Empty<LoadResult<ISaveData>>();
 
             // Create a list to hold the results of the load operations.
-            var results = new System.Collections.Generic.List<SaveLoadResult<ISaveData>>();
+            var results = new System.Collections.Generic.List<LoadResult<ISaveData>>();
 
             // Define a local function to load a single save data object from a stream.
-            async Task<SaveLoadResult<ISaveData>> Load(Stream stream)
+            async Task<LoadResult<ISaveData>> Load(Stream stream)
             {
                 // Acquire the lock.
                 await _lock.WaitAsync();

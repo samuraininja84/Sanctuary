@@ -296,7 +296,6 @@ namespace Sanctuary.Tests
 
         #endregion
 
-
         [System.Serializable]
         public struct TestSaveData
         {

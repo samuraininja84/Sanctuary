@@ -74,13 +74,13 @@ namespace Sanctuary
             }
         }
 
-        public async Task<SaveLoadResult<T>> LoadAsync<T>(string slotId) where T : class
+        public async Task<LoadResult<T>> LoadAsync<T>(string slotId) where T : class
         {
             // Retrieve the slot information for the given slot ID from the slot registry
             var slotInfo = m_SlotRegistry.GetSlot(slotId);
 
             // If no slot information is found for the given slot ID, return a failure result indicating that no valid save slot was found
-            if (slotInfo == null) return SaveLoadResult<T>.Fail(LoadStatus.NoValidSave, $"No save slot '{slotId}' found");
+            if (slotInfo == null) return LoadResult<T>.Fail(LoadStatus.NoValidSave, $"No save slot '{slotId}' found");
 
             // Try current file
             var result = await TryLoadFileAsync<T>(slotInfo.CurrentFile, slotInfo);
@@ -102,13 +102,13 @@ namespace Sanctuary
                 {
                     // If the backup load is successful, return a result indicating that the data was loaded from the backup
                     return result.Status == LoadStatus.SuccessMigrated
-                        ? SaveLoadResult<T>.MigratedFromBackup(result.Data, slotInfo)
-                        : SaveLoadResult<T>.FromBackup(result.Data, slotInfo);
+                        ? LoadResult<T>.MigratedFromBackup(result.Data, slotInfo)
+                        : LoadResult<T>.FromBackup(result.Data, slotInfo);
                 }
             }
 
             // If both current and backup are invalid, return a failure result indicating that no valid save was found
-            return SaveLoadResult<T>.Fail(LoadStatus.NoValidSave, $"Both primary and backup saves for '{slotId}' are invalid");
+            return LoadResult<T>.Fail(LoadStatus.NoValidSave, $"Both primary and backup saves for '{slotId}' are invalid");
         }
 
         public async Task<bool> DeleteSlotAsync(string slotId)
@@ -204,10 +204,10 @@ namespace Sanctuary
             return SaveResult.Succeed(tempFile);
         }
 
-        private async Task<SaveLoadResult<T>> TryLoadFileAsync<T>(string filePath, SaveSlotInfo slotInfo) where T : class
+        private async Task<LoadResult<T>> TryLoadFileAsync<T>(string filePath, SaveSlotInfo slotInfo) where T : class
         {
             // If the file path is null or empty, return a failure result indicating that there is no valid save
-            if (string.IsNullOrEmpty(filePath)) return SaveLoadResult<T>.Fail(LoadStatus.NoValidSave, "File path is empty");
+            if (string.IsNullOrEmpty(filePath)) return LoadResult<T>.Fail(LoadStatus.NoValidSave, "File path is empty");
 
             // Attempt to read the raw data from the specified file path using the save data provider
             byte[] rawData;
@@ -221,17 +221,17 @@ namespace Sanctuary
             catch (Exception ex)
             {
                 // If an exception occurs during the read operation, return a failure result indicating that there was a provider error
-                return SaveLoadResult<T>.Fail(LoadStatus.ProviderError, ex.Message);
+                return LoadResult<T>.Fail(LoadStatus.ProviderError, ex.Message);
             }
 
             // If the raw data is null, it means that the file was not found or could not be read, so return a failure result indicating that there is no valid save
-            if (rawData == null) return SaveLoadResult<T>.Fail(LoadStatus.NoValidSave, $"File not found: {filePath}");
+            if (rawData == null) return LoadResult<T>.Fail(LoadStatus.NoValidSave, $"File not found: {filePath}");
 
             // Validate integrity
             var integrity = m_Validator.Validate(rawData);
 
             // If the integrity check fails, return a failure result indicating that there is no valid save due to integrity check failure
-            if (!integrity.IsValid) return SaveLoadResult<T>.Fail(LoadStatus.NoValidSave, $"Integrity check failed: {integrity.Reason}");
+            if (!integrity.IsValid) return LoadResult<T>.Fail(LoadStatus.NoValidSave, $"Integrity check failed: {integrity.Reason}");
 
             // Deserialize the raw data into the target type T using the save serializer
             var deserialized = m_Serializer.Deserialize<T>(rawData);
@@ -247,10 +247,10 @@ namespace Sanctuary
             }
 
             // If deserialization is successful and no migration is needed, return a success result with the deserialized data and slot information
-            return SaveLoadResult<T>.Succeed(deserialized.Data, slotInfo);
+            return LoadResult<T>.Succeed(deserialized.Data, slotInfo);
         }
 
-        private Task<SaveLoadResult<T>> TryMigrateAndDeserializeAsync<T>(byte[] rawData, SaveSlotInfo slotInfo) where T : class
+        private Task<LoadResult<T>> TryMigrateAndDeserializeAsync<T>(byte[] rawData, SaveSlotInfo slotInfo) where T : class
         {
             try
             {
@@ -264,7 +264,7 @@ namespace Sanctuary
                 if (envelope == null)
                 {
                     // If the envelope cannot be deserialized, return a failure result indicating that the migration failed
-                    return Task.FromResult(SaveLoadResult<T>.Fail(LoadStatus.MigrationFailed, "Cannot read save envelope for migration"));
+                    return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, "Cannot read save envelope for migration"));
                 }
 
                 // Create a migration pipeline and attempt to migrate the data from the old schema version to the current schema version
@@ -274,7 +274,7 @@ namespace Sanctuary
                 if (!migration.Success)
                 {
                     // If migration fails, return a failure result indicating that the migration failed
-                    return Task.FromResult(SaveLoadResult<T>.Fail(LoadStatus.MigrationFailed, migration.ErrorMessage));
+                    return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, migration.ErrorMessage));
                 }
 
                 // Deserialize the migrated JSON into the target type T
@@ -284,16 +284,16 @@ namespace Sanctuary
                 if (data == null)
                 {
                     // If deserialization fails after migration, return a failure result indicating that the migration failed
-                    return Task.FromResult(SaveLoadResult<T>.Fail(LoadStatus.MigrationFailed, "Deserialization failed after migration"));
+                    return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, "Deserialization failed after migration"));
                 }
 
                 // If migration and deserialization are successful, return a result indicating that the data was migrated
-                return Task.FromResult(SaveLoadResult<T>.Migrated(data, slotInfo));
+                return Task.FromResult(LoadResult<T>.Migrated(data, slotInfo));
             }
             catch (Exception ex)
             {
                 // Return a failure result indicating that the migration process failed due to an exception
-                return Task.FromResult(SaveLoadResult<T>.Fail(LoadStatus.MigrationFailed, $"Migration error: {ex.Message}"));
+                return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, $"Migration error: {ex.Message}"));
             }
         }
 

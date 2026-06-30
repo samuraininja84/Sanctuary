@@ -39,15 +39,15 @@ namespace Sanctuary.Loaders
         /// Load the data from the specified <see cref="StreamConfiguration"/>.
         /// </summary>
         /// <param name="config">The <see cref="StreamConfiguration"/> to load the data from.</param>
-        /// <returns>The <see cref="SaveLoadResult{T}"/> representing the result of the load operation.</returns>
-        Task<SaveLoadResult<ISaveData>> Load(StreamConfiguration config) => Task.FromResult(SaveLoadResult<ISaveData>.Fail(LoadStatus.ProviderError, "Load operation not implemented"));
+        /// <returns>The <see cref="LoadResult{T}"/> representing the result of the load operation.</returns>
+        Task<LoadResult<ISaveData>> Load(StreamConfiguration config) => Task.FromResult(LoadResult<ISaveData>.Fail(LoadStatus.ProviderError, "Load operation not implemented"));
 
         /// <summary>
         /// Load all saves from the specified <see cref="StreamConfiguration"/>.
         /// </summary>
         /// <param name="config">The <see cref="StreamConfiguration"/> to use for loading the data.</param>
-        /// <returns>A list of all loaded saves as <see cref="SaveLoadResult{T}"/> objects.</returns>
-        virtual Task<SaveLoadResult<ISaveData>[]> LoadAll(StreamConfiguration config) => Task.FromResult(Array.Empty<SaveLoadResult<ISaveData>>());
+        /// <returns>A list of all loaded saves as <see cref="LoadResult{T}"/> objects.</returns>
+        virtual Task<LoadResult<ISaveData>[]> LoadAll(StreamConfiguration config) => Task.FromResult(Array.Empty<LoadResult<ISaveData>>());
 
         /// <summary>
         /// Remove this save from the persistent storage.

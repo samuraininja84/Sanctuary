@@ -6,7 +6,7 @@ namespace Sanctuary
     {
         Task<SaveResult> SaveAsync<T>(string slotId, T data) where T : class;
 
-        Task<SaveLoadResult<T>> LoadAsync<T>(string slotId) where T : class;
+        Task<LoadResult<T>> LoadAsync<T>(string slotId) where T : class;
 
         SaveSlotInfo[] GetAvailableSlots();
 
