@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace Sanctuary
+namespace Sanctuary.Serialization
 {
     public sealed class JsonSaveSerializer : ISaveSerializer
     {

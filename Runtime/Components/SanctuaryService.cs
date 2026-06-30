@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Sanctuary.Serialization;
 
 namespace Sanctuary
 {
@@ -28,7 +29,7 @@ namespace Sanctuary
             m_MigrationPipeline = new SaveMigrationPipeline();
         }
 
-        public static SanctuaryService Create(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger = null) => new(provider, serializer, validator, logger);
+        public static SanctuaryService Create(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger) => new(provider, serializer, validator, logger);
 
         public async Task LoadRegistryAsync()
         {
