@@ -18,7 +18,7 @@ namespace Sanctuary
 
         private bool m_SaveInProgress;
 
-        public SanctuaryService(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger)
+        SanctuaryService(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger)
         {
             m_Provider = provider;
             m_Serializer = serializer;
@@ -27,6 +27,8 @@ namespace Sanctuary
             m_SlotRegistry = new SaveSlotRegistry();
             m_MigrationPipeline = new SaveMigrationPipeline();
         }
+
+        public static SanctuaryService Create(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger = null) => new(provider, serializer, validator, logger);
 
         public async Task LoadRegistryAsync()
         {
@@ -111,7 +113,7 @@ namespace Sanctuary
             return LoadResult<T>.Fail(LoadStatus.NoValidSave, $"Both primary and backup saves for '{slotId}' are invalid");
         }
 
-        public async Task<bool> DeleteSlotAsync(string slotId)
+        public async Task<bool> DeleteAsync(string slotId)
         {
             // Retrieve the slot information for the given slot ID from the slot registry
             var slotInfo = m_SlotRegistry.GetSlot(slotId);
@@ -133,6 +135,22 @@ namespace Sanctuary
 
             // Return true to indicate that the slot was successfully deleted
             return true;
+        }
+
+        public async Task<bool> ExistsAsync(string slotId)
+        {
+            // Retrieve the slot information for the given slot ID from the slot registry
+            var slotInfo = m_SlotRegistry.GetSlot(slotId);
+
+            // If the slot does not exist, return false to indicate that there is no valid save for the given slot ID
+            if (slotInfo == null) return false;
+
+            // Check if either the current file or backup file exists in the save data provider
+            var currentExists = !string.IsNullOrEmpty(slotInfo.CurrentFile) && await m_Provider.ExistsAsync(slotInfo.CurrentFile);
+            var backupExists = !string.IsNullOrEmpty(slotInfo.BackupFile) && await m_Provider.ExistsAsync(slotInfo.BackupFile);
+
+            // Return true if either the current file or backup file exists, indicating that there is a valid save for the given slot ID
+            return currentExists || backupExists;
         }
 
         private async Task<SaveResult> SaveInternalAsync<T>(string slotId, T data) where T : class
