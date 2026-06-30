@@ -293,11 +293,26 @@ namespace Sanctuary
                 // Handle the result of the load operation
                 switch (result.Status)
                 {
-                    case LoadResult.LoadStatus.Success:
+                    case LoadStatus.Success:
                         Data = result.Data;
                         break;
-                    case LoadResult.LoadStatus.Failure:
-                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage. The save may not exist or may be corrupted.");
+                    case LoadStatus.SuccessFromBackup:
+                        Data = result.Data;
+                        break;
+                    case LoadStatus.SuccessMigrated:
+                        Data = result.Data;
+                        break;
+                    case LoadStatus.SuccessMigratedFromBackup:
+                        Data = result.Data;
+                        break;
+                    case LoadStatus.NoValidSave:
+                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage. {result.Message}");
+                        break;
+                    case LoadStatus.ProviderError:
+                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage due to a provider error. {result.Message}");
+                        break;
+                    case LoadStatus.MigrationFailed:
+                        Debug.LogWarning($"[Sanctuary]: Failed to migrate save '{Name}' from persistent storage. {result.Message}");
                         break;
                     default: 
                         throw new ArgumentOutOfRangeException();

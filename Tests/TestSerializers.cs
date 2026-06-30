@@ -1,6 +1,6 @@
+using NUnit.Framework;
 using System.IO;
 using System.Threading.Tasks;
-using NUnit.Framework;
 using UnityEngine;
 using Sanctuary.Serialization;
 using CancellationToken = System.Threading.CancellationToken;
@@ -214,19 +214,37 @@ namespace Sanctuary.Tests
             // Try to read the test data from the save data
             try
             {
+                // Try to read the test data from the save data using the specified location
+                var data = result.Data.Read<TestSaveData>(location);
+
+                // Log the result status for debugging purposes
                 switch (result.Status)
                 {
-                    case LoadResult.LoadStatus.Success:
-                        var data = result.Data.Read<TestSaveData>(location);
-                        if (debug) Debug.Log($"[Sanctuary]: Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
+                    case LoadStatus.Success:
+                        if (debug) Debug.Log("[Sanctuary]: Deserialized Test Data");
                         break;
-                    case LoadResult.LoadStatus.Failure:
-                        if (debug) Debug.LogError("[Sanctuary]: Failed to read test data from deserialized save data.");
+                    case LoadStatus.SuccessFromBackup:
+                        if (debug) Debug.Log("[Sanctuary]: Deserialized Test Data From Backup");
                         break;
-                    default:
-                        if (debug) Debug.LogError("[Sanctuary]: Unknown deserialization result.");
+                    case LoadStatus.SuccessMigrated:
+                        if (debug) Debug.Log("[Sanctuary]: Deserialized Test Data From Migrated Save");
+                        break;
+                    case LoadStatus.SuccessMigratedFromBackup:
+                        if (debug) Debug.Log("[Sanctuary]: Deserialized Test Data From Migrated Backup");
+                        break;
+                    case LoadStatus.NoValidSave:
+                        if (debug) Debug.LogWarning($"[Sanctuary]: Failed to load save from persistent storage. {result.Message}");
+                        break;
+                    case LoadStatus.ProviderError:
+                        if (debug) Debug.LogWarning($"[Sanctuary]: Failed to load save from persistent storage due to a provider error. {result.Message}");
+                        break;
+                    case LoadStatus.MigrationFailed:
+                        if (debug) Debug.LogWarning($"[Sanctuary]: Failed to migrate save from persistent storage. {result.Message}");
                         break;
                 }
+
+                // Log the test data for debugging purposes
+                if (debug) Debug.Log($"[Sanctuary]: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
             }
             catch (System.Exception ex)
             {

@@ -12,7 +12,7 @@ namespace Sanctuary.Extensions
         /// <param name="results">The collection of save data chunks to read from.</param>
         /// <param name="location">The location to read from.</param>
         /// <returns>A dictionary of all loaded target objects, indexed by their order in the results.</returns>
-        public static SerializableDictionary<int, T> ReadAllTo<T>(this SerializableDictionary<int, T> targets, IEnumerable<LoadResult> results, SaveLocation location) where T : new()
+        public static SerializableDictionary<int, T> ReadAllTo<T>(this SerializableDictionary<int, T> targets, IEnumerable<SaveLoadResult<ISaveData>> results, SaveLocation location) where T : new()
         {
             // Clear existing data
             targets.Clear();
@@ -21,14 +21,13 @@ namespace Sanctuary.Extensions
             int index = -1;
 
             // Iterate through each loaded chunk
-            foreach (LoadResult result in results)
+            foreach (var result in results)
             {
                 // Increment the index regardless of success or failure, to maintain the correct order of chunks
                 index++;
 
                 // Skip any failed load results
-                if (!result.IsSuccess) continue;
-
+                if (!result.Success) continue;
 
                 // Try to read each chunk into a data instance, and add it to the dictionary if successful
                 if (result.Data.TryRead(location, out T data)) targets.Add(index, data);
@@ -46,16 +45,16 @@ namespace Sanctuary.Extensions
         /// <param name="results">The collection of save data chunks to read from.</param>
         /// <param name="location">The location to read from.</param>
         /// <returns>A collection of all loaded target objects.</returns>
-        public static IEnumerable<T> ReadAllTo<T>(this List<T> targets, IEnumerable<LoadResult> results, SaveLocation location) where T : new()
+        public static IEnumerable<T> ReadAllTo<T>(this List<T> targets, IEnumerable<SaveLoadResult<ISaveData>> results, SaveLocation location) where T : new()
         {
             // Clear existing data
             targets.Clear();
 
             // Iterate through each loaded chunk
-            foreach (LoadResult result in results)
+            foreach (var result in results)
             {
                 // Skip any failed load results
-                if (!result.IsSuccess) continue;
+                if (!result.Success) continue;
 
                 // Try to read each chunk into a data instance, and add it to the list if successful
                 if (result.Data.TryRead(location, out T data)) targets.Add(data);

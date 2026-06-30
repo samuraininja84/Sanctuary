@@ -87,7 +87,7 @@ namespace Sanctuary.Serialization
         // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
         // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
 
-        public async Task<LoadResult> Deserialize(Stream stream)
+        public async Task<SaveLoadResult<ISaveData>> Deserialize(Stream stream)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
             var options = this.options;
@@ -102,7 +102,7 @@ namespace Sanctuary.Serialization
             var data = new NewtonsoftJsonSerializer().Deserialize<SaveData>(jsonReader);
 
             // Return a LoadResult indicating success or failure based on whether saveData is null.
-            return data != null ? LoadResult.Success(data) : LoadResult.Failure();
+            return data != null ? SaveLoadResult<ISaveData>.Succeed(data, null) : SaveLoadResult<ISaveData>.Fail(LoadStatus.NoValidSave, "No valid save data found in the stream.");
         }
 
         public readonly string GetFileExtension() => fileExtension;
