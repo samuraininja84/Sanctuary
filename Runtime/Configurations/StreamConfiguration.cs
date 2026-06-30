@@ -41,12 +41,6 @@ namespace Sanctuary.Configuration
         public virtual Task<Stream[]> GetStreams(string folderName = null) => Task.FromResult(Array.Empty<Stream>());
 
         /// <summary>
-        /// Gets the name of the folder where saves are stored.
-        /// </summary>
-        /// <returns>The name of the save folder.</returns>
-        public string GetSaveFolderName() => folderName;
-
-        /// <summary>
         /// Defines the types of streams that can be created by the StreamConfiguration.
         /// </summary>
         public enum StreamType
