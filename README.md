@@ -54,7 +54,7 @@ stateDiagram-v2
     - [ ] Merge SaveControllerBase & Save Scope Based Classes
     - [ ] Offload Some FileSaveLoader Methods To Extension Methods
 - [ ] Reimplement Editor Creation / Loading
-- [ ] Add Stress Tests For Error Handling & Benchmarking
+- [x] Add Stress Tests For Error Handling & Benchmarking
 - [ ] Editor Tab For Locating Registered Scripts
 
 # Inspired By
