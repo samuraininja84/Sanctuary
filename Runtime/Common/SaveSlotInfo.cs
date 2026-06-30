@@ -1,4 +1,4 @@
-namespace Sanctuary.Common
+namespace Sanctuary
 {
     [System.Serializable]
     public sealed class SaveSlotInfo
