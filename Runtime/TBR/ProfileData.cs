@@ -228,6 +228,6 @@ namespace Sanctuary
         /// Returns a string representation of the profile data, including the file name, ID, and scope.
         /// </summary>
         /// <returns>A string containing the profile data in the format: "Profile Data: {fileName} (ID: {id}, Scope: {scope})".</returns>
-        public override string ToString() => $"Profile Data: {fileName} (ID: {Id}, Scope: {scope})";
+        public override readonly string ToString() => $"Profile Data: {fileName} (ID: {Id}, Scope: {scope})";
     }
 }
