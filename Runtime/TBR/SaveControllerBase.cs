@@ -291,12 +291,12 @@ namespace Sanctuary
                 var result = await _loader.Load(_configuration);
 
                 // Handle the result of the load operation
-                switch (result.Output)
+                switch (result.Status)
                 {
-                    case LoadResult.Result.Success:
+                    case LoadResult.LoadStatus.Success:
                         Data = result.Data;
                         break;
-                    case LoadResult.Result.Failure:
+                    case LoadResult.LoadStatus.Failure:
                         Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage. The save may not exist or may be corrupted.");
                         break;
                     default: 

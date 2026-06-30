@@ -214,13 +214,13 @@ namespace Sanctuary.Tests
             // Try to read the test data from the save data
             try
             {
-                switch (result.Output)
+                switch (result.Status)
                 {
-                    case LoadResult.Result.Success:
+                    case LoadResult.LoadStatus.Success:
                         var data = result.Data.Read<TestSaveData>(location);
                         if (debug) Debug.Log($"[Sanctuary]: Deserialized Test Data: Name={data.Name}, Age={data.Age}, Height={data.Height}, Hobbies={string.Join(", ", data.Hobbies)}");
                         break;
-                    case LoadResult.Result.Failure:
+                    case LoadResult.LoadStatus.Failure:
                         if (debug) Debug.LogError("[Sanctuary]: Failed to read test data from deserialized save data.");
                         break;
                     default:
