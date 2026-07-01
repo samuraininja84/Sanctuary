@@ -13,16 +13,18 @@ namespace Sanctuary.Configuration
     {
         private readonly string m_RootPath;
         private readonly int m_CurrentSchemaVersion;
+        private readonly SerializationOptions m_Options;
 
         public readonly string RootPath => m_RootPath;
 
         public readonly int CurrentSchemaVersion => m_CurrentSchemaVersion;
 
-        public SerializationOptions Options => SerializationOptions.Compressed;
+        public SerializationOptions Options => m_Options;
 
-        public DefaultStreamConfiguration(string rootPath = "Save Data", int currentSchemaVersion = 1)
+        public DefaultStreamConfiguration(string rootPath = "Save Data", SerializationOptions options = SerializationOptions.None, int currentSchemaVersion = 1)
         {
             m_RootPath = rootPath;
+            m_Options = options;
             m_CurrentSchemaVersion = currentSchemaVersion;
         }
 
