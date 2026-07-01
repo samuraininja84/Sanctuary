@@ -20,7 +20,7 @@ namespace Sanctuary.Configuration
 
         public SerializationOptions Options => SerializationOptions.Compressed;
 
-        public DefaultStreamConfiguration(string rootPath = "Saves", int currentSchemaVersion = 1)
+        public DefaultStreamConfiguration(string rootPath = "Save Data", int currentSchemaVersion = 1)
         {
             m_RootPath = rootPath;
             m_CurrentSchemaVersion = currentSchemaVersion;
