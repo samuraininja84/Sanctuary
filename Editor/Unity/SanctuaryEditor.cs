@@ -146,6 +146,12 @@ namespace Sanctuary.Editor
             ClearCache();
         }
 
+        private void OnInspectorUpdate()
+        {
+            // If the application is not running, clear the data caches to avoid stale data
+            if (!Application.isPlaying && saves != null) ClearCache();
+        }
+
         private void OnGUI()
         {
             // Ensure styles are initialized
@@ -313,7 +319,7 @@ namespace Sanctuary.Editor
             if (saves.Length == 0)
             {
                 // Define a style for the empty state message
-                GUIStyle emptyStateStyle = new GUIStyle(GUI.skin.label)
+                var emptyStateStyle = new GUIStyle(GUI.skin.label)
                 {
                     alignment = TextAnchor.MiddleCenter,
                     stretchHeight = true
@@ -343,7 +349,7 @@ namespace Sanctuary.Editor
             }
 
             // Get the composite save data
-            ISaveData composite = ISaveDataExtensions.Combine(SaveData.Empty, saves.Select(s => s.Data));
+            ISaveData composite = ISaveDataExtensions.Combine(new SaveData(), saves.Select(s => s.Data));
 
             // Determine the save data to display based on filtering
             ISaveData data = FilterFiles ? currentSave.Data : composite;
@@ -1534,14 +1540,17 @@ namespace Sanctuary.Editor
             // Clear existing saves in all save controllers
             SaveControllerBase.ExistingSaves.Clear();
 
+            // Clear the existing saves in the editor
+            saves = null;
+
+            // Clear the current save reference
+            currentSave = null;
+
             // Clear the formatted data cache
             _formattedData.Clear();
 
             // Clear the chunk names cache
             _chunkNames.Clear();
-
-            // Clear the current save reference
-            currentSave = null;
         }
 
         #endregion

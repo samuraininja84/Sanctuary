@@ -458,32 +458,6 @@ namespace Sanctuary
             };
         }
 
-        // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Bootstrap()
-        {
-            //// Check if there is already a SaveProvider in the scene
-            //container = Object.FindAnyObjectByType<SaveProvider>();
-
-            //// If not, create a new GameObject and add the SaveProvider component
-            //if (container == null)
-            //{
-            //    // Create a new GameObject to hold the SaveProvider
-            //    var saveProviderObject = new GameObject("SaveProvider");
-
-            //    // Add the SaveProvider component to the new GameObject
-            //    container = saveProviderObject.AddComponent<SaveProvider>();
-
-            //    // Make the GameObject persistent across scenes
-            //    Object.DontDestroyOnLoad(saveProviderObject);
-            //}
-
-            //// Configure the SaveProvider as Absolute with the specified profile data
-            //container.ConfigureAsAbsolute(ProfileData, true);
-
-            //// Load data on boot if specified
-            //if (LoadOnBoot) Load();
-        }
-
         /// <summary>
         /// Prepares static fields for a fresh runtime session.
         /// </summary>
