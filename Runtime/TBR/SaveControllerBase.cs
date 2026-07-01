@@ -334,46 +334,6 @@ namespace Sanctuary
         }
 
         /// <summary>
-        /// Load all data chunks associated with this save.
-        /// </summary>
-        /// <remarks>Loads all chunks regardless of the <see cref="SaveMode"/>.</remarks>
-        /// <returns>A task that represents the asynchronous operation. The task result contains an array of all loaded <see cref="ISaveData"/> chunks.</returns>
-        public async Task<bool> TryLoadAll<T>(SaveLocation location, SerializableDictionary<int, T> targets) where T : struct
-        {
-            // Load all data chunks from persistent storage
-            var results = await _loader.LoadAll(_configuration);
-
-            // If no data chunks were loaded, return false
-            if (results.Length == 0) return false;
-
-            // Try to read each chunk into the corresponding target
-            targets.ReadAllTo(results, location);
-
-            // Return true indicating success
-            return true;
-        }
-
-        /// <summary>
-        /// Load all data chunks associated with this save.
-        /// </summary>
-        /// <remarks>Loads all chunks regardless of the <see cref="SaveMode"/>.</remarks>
-        /// <returns>A task that represents the asynchronous operation. The task result contains an array of all loaded <see cref="ISaveData"/> chunks.</returns>
-        public async Task<bool> TryLoadAll<T>(SaveLocation location, List<T> targets) where T : struct
-        {
-            // Load all data chunks from persistent storage
-            var results = await _loader.LoadAll(_configuration);
-
-            // If no data chunks were loaded, return false
-            if (results.Length == 0) return false;
-
-            // Try to read each chunk into the corresponding target
-            targets.ReadAllTo(results, location);
-
-            // Return true indicating success
-            return true;
-        }
-
-        /// <summary>
         /// Delete the save.
         /// </summary>
         public async Task Delete()
