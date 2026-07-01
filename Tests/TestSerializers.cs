@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
+using Sanctuary.Configuration;
 using Sanctuary.Serialization;
 using CancellationToken = System.Threading.CancellationToken;
 
@@ -9,10 +10,12 @@ namespace Sanctuary.Tests
 {
     public class TestSerializers
     {
-        public const string TestFolderName = "Save Data_Tests";
+        public const string TestFolderName = "Save_Data_Tests";
         public const string TestChunkId = "Tests";
         public const string TestObjectId = "5561391260475779002";
         public const int BenchmarkIterations = 100;
+
+        #region Old Serializer Tests
 
         #region Binary Serializer Tests
 
@@ -296,6 +299,72 @@ namespace Sanctuary.Tests
 
         #endregion
 
+        #endregion
+
+        #region New Serializer Tests
+
+        [Test]
+        public async Task TestNewSerializer()
+        {
+            // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
+            var config = new DefaultStreamConfiguration(Application.persistentDataPath + "/TestFolder");
+
+            // Create a new instance of the SanctuaryService with the specified configuration and components
+            var service = SanctuaryService.Create
+            (
+                new FileSaveDataProvider(config),
+                new JsonSaveSerializer(config),
+                new Sha256IntegrityValidator(),
+                new UnityDebugLogger()
+            );
+
+            // Define a slot ID for the test save data
+            string slotId = "TestSlot";
+
+            // Save the test data to the specified save slot
+            await Save(service, slotId);
+
+            // Load the test data from the specified save slot
+            await Load(service, slotId);
+
+            // Delete the test data from the specified save slot
+            await Delete(service, slotId);
+        }
+
+        public async Task Save(ISanctuaryService service, string slotId)
+        {
+            TestSaveDataClass save = new("John Doe", 30, 5.9f, new string[] { "Reading", "Gaming", "Hiking" });
+            var result = await service.SaveAsync(slotId, save);
+            Debug.Log(result.Success ? $"[Three Saves] Saved {save.Name} → {slotId} ({result.FilePath})." : $"[Three Saves] Save failed: {result.Reason}`.");
+        }
+
+        public async Task Load(ISanctuaryService service, string slotId)
+        {
+            // Attempt to load the save slot with the specified slotId
+            var result = await service.LoadAsync<TestSaveDataClass>(slotId);
+
+            // Log the result of the load operation
+            if (result.Success)
+            {
+                Debug.Log($"[Three Saves] Loaded {result.Data.Name} · age {result.Data.Age} · height {result.Data.Height} · hobbies {string.Join(", ", result.Data.Hobbies)} (status: {result.Status}).");
+            }
+            else
+            {
+                Debug.Log($"[Three Saves] Load failed: {result.Status} — {result.Message}.");
+            }
+        }
+
+        public async Task Delete(ISanctuaryService service, string slotId)
+        {
+            // Attempt to delete the save slot with the specified slotId
+            var deleted = await service.DeleteAsync(slotId);
+
+            // Log the result of the delete operation
+            Debug.Log($"[Three Forks] Delete {slotId}: {deleted}.");
+        }
+
+        #endregion
+
         [System.Serializable]
         public struct TestSaveData
         {
@@ -305,6 +374,23 @@ namespace Sanctuary.Tests
             public string[] Hobbies;
 
             public TestSaveData(string name, int age, float height, string[] hobbies)
+            {
+                Name = name;
+                Age = age;
+                Height = height;
+                Hobbies = hobbies;
+            }
+        }
+
+        [System.Serializable]
+        public class TestSaveDataClass
+        {
+            public string Name;
+            public int Age;
+            public float Height;
+            public string[] Hobbies;
+
+            public TestSaveDataClass(string name, int age, float height, string[] hobbies)
             {
                 Name = name;
                 Age = age;
