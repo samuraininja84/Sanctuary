@@ -124,7 +124,7 @@ namespace Sanctuary
         /// <param name="location">The location of the object to read.</param>
         /// <param name="target">The object to overwrite with the data read from the save data.</param>
         /// <returns>A boolean indicating whether the read was successful.</returns>
-        public bool TryRead<T>(SaveLocation location, out T target) where T : new()
+        public bool TryRead<T>(SaveLocation location, out T target) where T : struct
         {
             // Use the default chunk if no chunk ID is provided
             var realChunkId = location.ChunkId ?? _defaultChunkId;
@@ -154,7 +154,7 @@ namespace Sanctuary
         /// <param name="location">The location of the object to read.</param>
         /// <param name="target">The object to overwrite with the data read from the save data.</param>
         /// <returns>A boolean indicating whether the read was successful.</returns>
-        public bool TryReadToObject<T>(SaveLocation location, T target) where T : Object
+        public bool TryRead<T>(SaveLocation location, T target) where T : class
         {
             // Use the default chunk if no chunk ID is provided
             var realChunkId = location.ChunkId ?? _defaultChunkId;

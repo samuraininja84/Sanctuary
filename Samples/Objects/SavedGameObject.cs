@@ -71,7 +71,7 @@ namespace Sanctaury.Samples
             targetObject.SetActive(data.isActive);
         }
 
-        private class GameObjectData
+        private struct GameObjectData
         {
             public Vector3 position;
             public Quaternion rotation;

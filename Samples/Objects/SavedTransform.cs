@@ -65,7 +65,7 @@ namespace Sanctaury.Samples
             }
         }
 
-        private class TransformData
+        private struct TransformData
         {
             public Vector3 position;
             public Quaternion rotation;

@@ -12,7 +12,7 @@ namespace Sanctuary.Extensions
         /// <param name="results">The collection of save data chunks to read from.</param>
         /// <param name="location">The location to read from.</param>
         /// <returns>A dictionary of all loaded target objects, indexed by their order in the results.</returns>
-        public static SerializableDictionary<int, T> ReadAllTo<T>(this SerializableDictionary<int, T> targets, IEnumerable<LoadResult<ISaveData>> results, SaveLocation location) where T : new()
+        public static SerializableDictionary<int, T> ReadAllTo<T>(this SerializableDictionary<int, T> targets, IEnumerable<LoadResult<ISaveData>> results, SaveLocation location) where T : struct
         {
             // Clear existing data
             targets.Clear();
@@ -45,7 +45,7 @@ namespace Sanctuary.Extensions
         /// <param name="results">The collection of save data chunks to read from.</param>
         /// <param name="location">The location to read from.</param>
         /// <returns>A collection of all loaded target objects.</returns>
-        public static IEnumerable<T> ReadAllTo<T>(this List<T> targets, IEnumerable<LoadResult<ISaveData>> results, SaveLocation location) where T : new()
+        public static IEnumerable<T> ReadAllTo<T>(this List<T> targets, IEnumerable<LoadResult<ISaveData>> results, SaveLocation location) where T : struct
         {
             // Clear existing data
             targets.Clear();

@@ -19,6 +19,6 @@ namespace Sanctuary.Samples
 
         public virtual void OnSave(SaveControllerBase save) => save.Data.SetChunkName(_location, name).Write(_location, this);
 
-        public virtual void OnLoad(SaveControllerBase save) => save.Data.SetChunkName(_location, name).TryReadToObject(_location, this);
+        public virtual void OnLoad(SaveControllerBase save) => save.Data.SetChunkName(_location, name).TryRead(_location, this);
     }
 }

@@ -338,7 +338,7 @@ namespace Sanctuary
         /// </summary>
         /// <remarks>Loads all chunks regardless of the <see cref="SaveMode"/>.</remarks>
         /// <returns>A task that represents the asynchronous operation. The task result contains an array of all loaded <see cref="ISaveData"/> chunks.</returns>
-        public async Task<bool> TryLoadAll<T>(SaveLocation location, SerializableDictionary<int, T> targets) where T : new()
+        public async Task<bool> TryLoadAll<T>(SaveLocation location, SerializableDictionary<int, T> targets) where T : struct
         {
             // Load all data chunks from persistent storage
             var results = await _loader.LoadAll(_configuration);
@@ -358,7 +358,7 @@ namespace Sanctuary
         /// </summary>
         /// <remarks>Loads all chunks regardless of the <see cref="SaveMode"/>.</remarks>
         /// <returns>A task that represents the asynchronous operation. The task result contains an array of all loaded <see cref="ISaveData"/> chunks.</returns>
-        public async Task<bool> TryLoadAll<T>(SaveLocation location, List<T> targets) where T : new()
+        public async Task<bool> TryLoadAll<T>(SaveLocation location, List<T> targets) where T : struct
         {
             // Load all data chunks from persistent storage
             var results = await _loader.LoadAll(_configuration);
