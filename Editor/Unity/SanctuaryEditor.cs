@@ -146,6 +146,12 @@ namespace Sanctuary.Editor
             ClearCache();
         }
 
+        private void OnInspectorUpdate()
+        {
+            // If the application is not running, clear the data caches to avoid stale data
+            if (!Application.isPlaying && saves != null) ClearCache();
+        }
+
         private void OnGUI()
         {
             // Ensure styles are initialized
@@ -1534,14 +1540,17 @@ namespace Sanctuary.Editor
             // Clear existing saves in all save controllers
             SaveControllerBase.ExistingSaves.Clear();
 
+            // Clear the existing saves in the editor
+            saves = null;
+
+            // Clear the current save reference
+            currentSave = null;
+
             // Clear the formatted data cache
             _formattedData.Clear();
 
             // Clear the chunk names cache
             _chunkNames.Clear();
-
-            // Clear the current save reference
-            currentSave = null;
         }
 
         #endregion
