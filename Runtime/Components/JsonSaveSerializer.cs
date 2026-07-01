@@ -4,11 +4,11 @@ using Newtonsoft.Json;
 
 namespace Sanctuary.Serialization
 {
-    public sealed class JsonSaveSerializer : ISaveSerializer
+    public readonly struct JsonSaveSerializer : ISaveSerializer
     {
         private readonly int m_CurrentSchemaVersion;
 
-        public int CurrentSchemaVersion => m_CurrentSchemaVersion;
+        public readonly int CurrentSchemaVersion => m_CurrentSchemaVersion;
 
         public JsonSaveSerializer(IStreamConfiguration configuration) => m_CurrentSchemaVersion = configuration.CurrentSchemaVersion;
 
