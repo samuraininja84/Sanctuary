@@ -4,32 +4,26 @@ using Newtonsoft.Json;
 
 namespace Sanctuary.Serialization
 {
-    public sealed class JsonSaveSerializer : ISaveSerializer
+    public readonly struct JsonSaveSerializer : ISaveSerializer
     {
         private readonly int m_CurrentSchemaVersion;
 
-        public int CurrentSchemaVersion => m_CurrentSchemaVersion;
+        public readonly int CurrentSchemaVersion => m_CurrentSchemaVersion;
 
         public JsonSaveSerializer(IStreamConfiguration configuration) => m_CurrentSchemaVersion = configuration.CurrentSchemaVersion;
 
         public byte[] Serialize<T>(T data) where T : class
         {
-            // Serialize the input data to a JSON string using Newtonsoft.Json
-            var dataJson = JsonConvert.SerializeObject(data);
-
             // Create a SaveEnvelope object with the current schema version, timestamp, and serialized data
             var envelope = new SaveEnvelope
             {
                 SchemaVersion = m_CurrentSchemaVersion,
                 Timestamp = DateTime.UtcNow.ToString("o"),
-                DataJson = dataJson
+                DataJson = JsonConvert.SerializeObject(data)
             };
 
-            // Serialize the SaveEnvelope object to a JSON string
-            var envelopeJson = JsonConvert.SerializeObject(envelope);
-
             // Convert the envelope JSON string to a byte array using UTF-8 encoding and return it
-            return Encoding.UTF8.GetBytes(envelopeJson);
+            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(envelope));
         }
 
         public SaveDeserializeResult<T> Deserialize<T>(byte[] data) where T : class

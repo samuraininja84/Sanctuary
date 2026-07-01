@@ -7,12 +7,6 @@ namespace Sanctuary.Configuration
     public class BinarySerializerConfiguration : SerializerConfiguration
     {
         /// <summary>
-        /// Gets the <see cref="BinarySerializer"/> instance based on the configuration.
-        /// </summary>
-        /// <returns>The configured <see cref="BinarySerializer"/> instance.</returns>
-        public override ISerializer GetSerializer() => BinarySerializer.Create(serializationOptions, overrideExtension);
-
-        /// <summary>
         /// Gets the <see cref="BinarySerializer"/> instance based on the provided serialization options and an optional override extension.
         /// </summary>
         /// <param name="options">The serialization options to use for this serializer.</param>

@@ -10,6 +10,11 @@
     public interface ISaveStore 
     {
         /// <summary>
+        /// The Unity object that is associated with this store. This can be used to identify the store in the Unity Editor or to access its properties and methods.
+        /// </summary>
+        public UnityEngine.Object Source { get; }
+
+        /// <summary>
         /// Invoked when the store is created for the first time. This happens only once during the lifetime of the save, and only if the store is registered before the first save.
         /// </summary>
         /// <param name="save">The save controller that provides context or state required for the load operation. Cannot be null.</param>

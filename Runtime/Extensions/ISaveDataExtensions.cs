@@ -5,66 +5,6 @@ namespace Sanctuary.Extensions
     public static class ISaveDataExtensions
     {
         /// <summary>
-        /// Reads all save data chunks into a dictionary of target objects, using an index as the key.
-        /// </summary>
-        /// <typeparam name="T">The type of target objects to read into.</typeparam>
-        /// <param name="targets">The dictionary to populate with loaded data.</param>
-        /// <param name="results">The collection of save data chunks to read from.</param>
-        /// <param name="location">The location to read from.</param>
-        /// <returns>A dictionary of all loaded target objects, indexed by their order in the results.</returns>
-        public static SerializableDictionary<int, T> ReadAllTo<T>(this SerializableDictionary<int, T> targets, IEnumerable<LoadResult<ISaveData>> results, SaveLocation location) where T : new()
-        {
-            // Clear existing data
-            targets.Clear();
-
-            // Update the location to include the chunk ID placeholder
-            int index = -1;
-
-            // Iterate through each loaded chunk
-            foreach (var result in results)
-            {
-                // Increment the index regardless of success or failure, to maintain the correct order of chunks
-                index++;
-
-                // Skip any failed load results
-                if (!result.Success) continue;
-
-                // Try to read each chunk into a data instance, and add it to the dictionary if successful
-                if (result.Data.TryRead(location, out T data)) targets.Add(index, data);
-            }
-
-            // Return the dictionary of all loaded data
-            return targets;
-        }
-
-        /// <summary>
-        /// Reads all save data chunks into a list of target objects.
-        /// </summary>
-        /// <typeparam name="T">The type of target objects to read into.</typeparam>
-        /// <param name="targets">The list to populate with loaded data.</param>
-        /// <param name="results">The collection of save data chunks to read from.</param>
-        /// <param name="location">The location to read from.</param>
-        /// <returns>A collection of all loaded target objects.</returns>
-        public static IEnumerable<T> ReadAllTo<T>(this List<T> targets, IEnumerable<LoadResult<ISaveData>> results, SaveLocation location) where T : new()
-        {
-            // Clear existing data
-            targets.Clear();
-
-            // Iterate through each loaded chunk
-            foreach (var result in results)
-            {
-                // Skip any failed load results
-                if (!result.Success) continue;
-
-                // Try to read each chunk into a data instance, and add it to the list if successful
-                if (result.Data.TryRead(location, out T data)) targets.Add(data);
-            }
-
-            // Return the list of all loaded data
-            return targets;
-        }
-
-        /// <summary>
         /// Combines multiple ISaveData instances into a single composite ISaveData.
         /// </summary>
         /// <param name="composite">The composite ISaveData to combine into.</param>

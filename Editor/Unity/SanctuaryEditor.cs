@@ -674,184 +674,6 @@ namespace Sanctuary.Editor
 
         #endregion
 
-        #region ID Methods
-
-        private void SetProfileID(int currentId)
-        {
-            // Clamp the current id to 0 minimum
-            currentId = Mathf.Max(-1, currentId);
-
-            // Update the existing save IDs for the current save
-            foreach (var save in saves)
-            {
-                // Update the static profile id
-                ProfileData.Id = currentId;
-
-                // Update the existing save IDs
-                save.SetID(ProfileData.Id);
-            }
-        }
-
-        private void RefreshExistingSaveIDs()
-        {
-            // Clear the existing save IDs list
-            existingSaves.Clear();
-
-            // Check if the saves directory exists
-            if (!Directory.Exists(ExistingSavesPath)) return;
-
-            // Get all folders in the saves directory
-            DirectoryInfo savesDirectory = new DirectoryInfo(ExistingSavesPath);
-
-            // Loop through all folders in the saves directory
-            foreach (var dir in savesDirectory.GetDirectories())
-            {
-                // Try to parse the folder name as an integer
-                if (int.TryParse(dir.Name, out int id))
-                {
-                    // Get the save file data
-                    string startedAt = GetSaveSlotStartedAt(id.ToString());
-                    string lastModified = GetSaveSlotLastModified(id.ToString());
-                    string fileSize = GetSaveSlotFolderSize(id.ToString());
-                    string combinedData = startedAt + " - "  +  lastModified + " - " + fileSize;
-
-                    // Add the parsed id to the existing save IDs list
-                    existingSaves.Add(id, combinedData);
-                }
-                else
-                {
-                    // This is likely to be the 'Absolute' save folder, so add it with an id of -1
-                    string startedAt = GetSaveSlotStartedAt(dir.Name);
-                    string lastModified = GetSaveSlotLastModified(dir.Name);
-                    string fileSize = GetSaveSlotFolderSize(dir.Name);
-                    string combinedData = startedAt + " - "  +  lastModified + " - " + fileSize;
-
-                    // Add the parsed id to the existing save IDs list
-                    existingSaves.Add(-1, combinedData);
-                }
-            }
-        }
-
-        private string GetSaveSlotStartedAt(string subDirectory)
-        {
-            // Get the path to the save slot directory
-            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
-
-            // If the directory doesn't exist, return "Started At: N/A"
-            if (!Directory.Exists(saveSlotPath)) return "Started At: N/A";
-
-            // Create a DirectoryInfo object for the save slot directory
-            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
-
-            // Get all files in the directory and its subdirectories
-            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-
-            // If there are no files, return DateTime.MinValue
-            if (files.Length == 0) return "Started At: N/A";
-
-            // Find the earliest creation time among all files
-            DateTime startedAt = files.Min(file => file.CreationTime);
-
-            // Return the earliest creation time
-            return "Started At: " + startedAt.ToString("g");
-        }
-
-        private string GetSaveSlotLastModified(string subDirectory)
-        {
-            // Get the path to the save slot directory
-            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
-
-            // If the directory doesn't exist, return "Last Modified: N/A"
-            if (!Directory.Exists(saveSlotPath)) return "Last Modified: N/A";
-
-            // Create a DirectoryInfo object for the save slot directory
-            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
-
-            // Get all files in the directory and its subdirectories
-            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-
-            // If there are no files, return DateTime.MinValue
-            if (files.Length == 0) return "Last Modified: N/A";
-
-            // Find the most recent last write time among all files
-            DateTime lastModified = files.Max(file => file.LastWriteTime);
-
-            // Return the most recent last write time
-            return "Last Modified: " + lastModified.ToString("g");
-        }
-
-        private string GetSaveSlotFolderSize(string subDirectory)
-        {
-            // Get the path to the save slot directory
-            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
-
-            // If the directory doesn't exist, return "N/A"
-            if (!Directory.Exists(saveSlotPath)) return "File Size: N/A";
-
-            // Create a DirectoryInfo object for the save slot directory
-            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
-
-            // Get all files in the directory and its subdirectories
-            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-
-            // If there are no files, return "N/A"
-            if (files.Length == 0) return "File Size: N/A";
-
-            // Calculate the total size of all files in bytes
-            long totalSize = files.Sum(file => file.Length);
-
-            // Convert the size to a double for easier calculations
-            double size = totalSize;
-
-            // Initialize the unit index
-            int unitIndex = 0;
-
-            // Convert the size to the appropriate unit
-            while (size >= 1024 && unitIndex < sizeUnits.Length - 1)
-            {
-                // Divide the size by 1024 to convert to the next unit
-                size /= 1024;
-
-                // Increment the unit index
-                unitIndex++;
-            }
-
-            // Return the formatted size string
-            return $"File Size: {size:F2} {sizeUnits[unitIndex]}";
-        }
-
-        private int GetHighestSaveId()
-        {
-            // Initialize the highest as -1
-            int highestId = -1;
-
-            // If the list is empty, return -1
-            if (existingSaves != null && existingSaves.Count > 0)
-            {
-                // Loop through the list and find the greatest value
-                foreach (var value in existingSaves)
-                {
-                    // If the value is greater than the highest value, set the highest value to the value
-                    if (value.Key > highestId) highestId = value.Key;
-                }
-            }
-
-            // If the highest id is less than the minimum save slots, set it to always show the minimum save slots (-1, 0, 1), accounting for negative indexing
-            if (highestId < minimumSaveSlots) highestId = minimumSaveSlots - 1;
-
-            // Increment the highest id by 1 to account for negative indexing
-            highestId += 1;
-
-            // Return the highest id found
-            return highestId;
-        }
-
-        private bool HasMinimumSaveSlots() => ValidSave(HighestSaveId - 1);
-
-        private bool ValidSave(int id) => existingSaves != null && existingSaves.ContainsKey(id);
-
-        #endregion
-
         #region Save Data Section Methods
 
         private void DrawInformationHeader()
@@ -1457,6 +1279,184 @@ namespace Sanctuary.Editor
             // End the horizontal toolbar layout
             GUILayout.EndHorizontal();
         }
+
+        #endregion
+
+        #region ID Helper Methods
+
+        private void SetProfileID(int currentId)
+        {
+            // Clamp the current id to 0 minimum
+            currentId = Mathf.Max(-1, currentId);
+
+            // Update the existing save IDs for the current save
+            foreach (var save in saves)
+            {
+                // Update the static profile id
+                ProfileData.Id = currentId;
+
+                // Update the existing save IDs
+                save.SetID(ProfileData.Id);
+            }
+        }
+
+        private void RefreshExistingSaveIDs()
+        {
+            // Clear the existing save IDs list
+            existingSaves.Clear();
+
+            // Check if the saves directory exists
+            if (!Directory.Exists(ExistingSavesPath)) return;
+
+            // Get all folders in the saves directory
+            DirectoryInfo savesDirectory = new DirectoryInfo(ExistingSavesPath);
+
+            // Loop through all folders in the saves directory
+            foreach (var dir in savesDirectory.GetDirectories())
+            {
+                // Try to parse the folder name as an integer
+                if (int.TryParse(dir.Name, out int id))
+                {
+                    // Get the save file data
+                    string startedAt = GetSaveSlotStartedAt(id.ToString());
+                    string lastModified = GetSaveSlotLastModified(id.ToString());
+                    string fileSize = GetSaveSlotFolderSize(id.ToString());
+                    string combinedData = startedAt + " - "  +  lastModified + " - " + fileSize;
+
+                    // Add the parsed id to the existing save IDs list
+                    existingSaves.Add(id, combinedData);
+                }
+                else
+                {
+                    // This is likely to be the 'Absolute' save folder, so add it with an id of -1
+                    string startedAt = GetSaveSlotStartedAt(dir.Name);
+                    string lastModified = GetSaveSlotLastModified(dir.Name);
+                    string fileSize = GetSaveSlotFolderSize(dir.Name);
+                    string combinedData = startedAt + " - "  +  lastModified + " - " + fileSize;
+
+                    // Add the parsed id to the existing save IDs list
+                    existingSaves.Add(-1, combinedData);
+                }
+            }
+        }
+
+        private string GetSaveSlotStartedAt(string subDirectory)
+        {
+            // Get the path to the save slot directory
+            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
+
+            // If the directory doesn't exist, return "Started At: N/A"
+            if (!Directory.Exists(saveSlotPath)) return "Started At: N/A";
+
+            // Create a DirectoryInfo object for the save slot directory
+            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
+
+            // Get all files in the directory and its subdirectories
+            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
+
+            // If there are no files, return DateTime.MinValue
+            if (files.Length == 0) return "Started At: N/A";
+
+            // Find the earliest creation time among all files
+            DateTime startedAt = files.Min(file => file.CreationTime);
+
+            // Return the earliest creation time
+            return "Started At: " + startedAt.ToString("g");
+        }
+
+        private string GetSaveSlotLastModified(string subDirectory)
+        {
+            // Get the path to the save slot directory
+            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
+
+            // If the directory doesn't exist, return "Last Modified: N/A"
+            if (!Directory.Exists(saveSlotPath)) return "Last Modified: N/A";
+
+            // Create a DirectoryInfo object for the save slot directory
+            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
+
+            // Get all files in the directory and its subdirectories
+            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
+
+            // If there are no files, return DateTime.MinValue
+            if (files.Length == 0) return "Last Modified: N/A";
+
+            // Find the most recent last write time among all files
+            DateTime lastModified = files.Max(file => file.LastWriteTime);
+
+            // Return the most recent last write time
+            return "Last Modified: " + lastModified.ToString("g");
+        }
+
+        private string GetSaveSlotFolderSize(string subDirectory)
+        {
+            // Get the path to the save slot directory
+            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
+
+            // If the directory doesn't exist, return "N/A"
+            if (!Directory.Exists(saveSlotPath)) return "File Size: N/A";
+
+            // Create a DirectoryInfo object for the save slot directory
+            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
+
+            // Get all files in the directory and its subdirectories
+            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
+
+            // If there are no files, return "N/A"
+            if (files.Length == 0) return "File Size: N/A";
+
+            // Calculate the total size of all files in bytes
+            long totalSize = files.Sum(file => file.Length);
+
+            // Convert the size to a double for easier calculations
+            double size = totalSize;
+
+            // Initialize the unit index
+            int unitIndex = 0;
+
+            // Convert the size to the appropriate unit
+            while (size >= 1024 && unitIndex < sizeUnits.Length - 1)
+            {
+                // Divide the size by 1024 to convert to the next unit
+                size /= 1024;
+
+                // Increment the unit index
+                unitIndex++;
+            }
+
+            // Return the formatted size string
+            return $"File Size: {size:F2} {sizeUnits[unitIndex]}";
+        }
+
+        private int GetHighestSaveId()
+        {
+            // Initialize the highest as -1
+            int highestId = -1;
+
+            // If the list is empty, return -1
+            if (existingSaves != null && existingSaves.Count > 0)
+            {
+                // Loop through the list and find the greatest value
+                foreach (var value in existingSaves)
+                {
+                    // If the value is greater than the highest value, set the highest value to the value
+                    if (value.Key > highestId) highestId = value.Key;
+                }
+            }
+
+            // If the highest id is less than the minimum save slots, set it to always show the minimum save slots (-1, 0, 1), accounting for negative indexing
+            if (highestId < minimumSaveSlots) highestId = minimumSaveSlots - 1;
+
+            // Increment the highest id by 1 to account for negative indexing
+            highestId += 1;
+
+            // Return the highest id found
+            return highestId;
+        }
+
+        private bool HasMinimumSaveSlots() => ValidSave(HighestSaveId - 1);
+
+        private bool ValidSave(int id) => existingSaves != null && existingSaves.ContainsKey(id);
 
         #endregion
 

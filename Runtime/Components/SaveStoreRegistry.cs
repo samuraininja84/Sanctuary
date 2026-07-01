@@ -17,7 +17,23 @@ namespace Sanctuary.Stores
         /// </summary>
         private static readonly Dictionary<ISaveStore, SaveControllerBase> _storeLookup = new();
 
+        /// <summary>
+        /// An event that is invoked when a store is registered. It takes the registered store and its associated save controller as parameters.
+        /// </summary>
+        public static event System.Action<ISaveStore, SaveControllerBase> OnStoreRegistered = delegate { };
+
+        /// <summary>
+        /// An event that is invoked when a store is unregistered. It takes the unregistered store as a parameter.
+        /// </summary>
+        public static event System.Action<ISaveStore> OnStoreUnregistered = delegate { };
+
         #region Registration & Unregistration
+
+        /// <summary>
+        /// Gets a copy of the currently registered stores and their associated save controllers.
+        /// </summary>
+        /// <returns>A dictionary containing the registered stores and their associated save controllers.</returns>
+        public static Dictionary<ISaveStore, SaveControllerBase> GetRegisteredStores() => new(_storeLookup);
 
         /// <summary>
         /// Register a store.
@@ -31,6 +47,9 @@ namespace Sanctuary.Stores
 
             // Add the store and its associated save controller to the lookup dictionary, if provided.
             if (save != null) _storeLookup.Add(store, save);
+
+            // Invoke the store registered event.
+            OnStoreRegistered?.Invoke(store, save);
         }
 
         /// <summary>
@@ -47,6 +66,9 @@ namespace Sanctuary.Stores
 
             // Remove the store from the lookup dictionary.
             _storeLookup.Remove(store);
+
+            // Invoke the store unregistered event.
+            OnStoreUnregistered?.Invoke(store);
         }
 
         /// <summary>
@@ -55,6 +77,9 @@ namespace Sanctuary.Stores
         /// <returns><see langword="true"/> if any stores were removed; otherwise, <see langword="false"/>.</returns>
         public static bool Clear()
         {
+            // Invoke the store unregistered event for each store before clearing.
+            foreach (var store in _stores) OnStoreUnregistered?.Invoke(store);
+
             // Clear the linked list.
             _stores.Clear();
 

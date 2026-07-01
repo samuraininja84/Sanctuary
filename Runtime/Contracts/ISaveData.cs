@@ -50,7 +50,7 @@ namespace Sanctuary
         /// <param name="location">The location to read from.</param>
         /// <param name="target">The target to read into.</param>
         /// <returns>Whether the data was read.</returns>
-        bool TryRead<T>(SaveLocation location, out T target) where T : new();
+        bool TryRead<T>(SaveLocation location, out T target) where T : struct;
 
         /// <summary>
         /// Tries to read the save data from the given location into the given target.
@@ -59,7 +59,7 @@ namespace Sanctuary
         /// <param name="target">The target to read into.</param>
         /// <typeparam name="T">The type of the data.</typeparam>
         /// <returns>Whether the data was read.</returns>
-        bool TryReadToObject<T>(SaveLocation location, T target) where T : Object;
+        bool TryRead<T>(SaveLocation location, T target) where T : class;
 
         /// <summary>
         /// Tries to delete the chunk at the given location.

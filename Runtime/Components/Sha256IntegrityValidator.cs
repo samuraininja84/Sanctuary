@@ -9,7 +9,7 @@ namespace Sanctuary
     /// <summary>
     /// Represents a validator that checks the integrity of save files using SHA-256 checksums.
     /// </summary>
-    public sealed class Sha256IntegrityValidator : ISaveIntegrityValidator 
+    public readonly struct Sha256IntegrityValidator : ISaveIntegrityValidator 
     {
         /// <summary>
         /// Generates a SHA-256 checksum for the given byte array.

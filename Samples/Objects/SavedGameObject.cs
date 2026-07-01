@@ -25,6 +25,8 @@ namespace Sanctaury.Samples
 
         private Rigidbody RB => rb ??= targetObject.GetComponent<Rigidbody>();
 
+        public Object Source => targetObject;
+
         public void OnEnable() => SaveStoreRegistry.Register(this, SaveProvider.Global);
 
         public void OnDisable() => SaveStoreRegistry.Unregister(this);
@@ -69,7 +71,7 @@ namespace Sanctaury.Samples
             targetObject.SetActive(data.isActive);
         }
 
-        private class GameObjectData
+        private struct GameObjectData
         {
             public Vector3 position;
             public Quaternion rotation;
@@ -87,5 +89,7 @@ namespace Sanctaury.Samples
                 if (rb != null) velocity = rb.linearVelocity;
             }
         }
+
+        private void Reset() => targetObject = gameObject;
     }
 }

@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using UnityEngine;
 using Array = System.Array;
-using SerializationExtensions = Sanctuary.Serialization.SerializationExtensions;
+using Sanctuary.Serialization;
 
 namespace Sanctuary.Configuration
 {
@@ -20,10 +20,14 @@ namespace Sanctuary.Configuration
         [SerializeField] protected string backupExtension = SerializationExtensions.DefaultBackupExtension;
         [Tooltip("Schema version stamped onto new save envelopes. Bump when your save format changes; pair with an ISaveMigrationStep for the upgrade.")]
         [SerializeField] private int currentSchemaVersion = 1;
+        [Tooltip("Options for serialization, such as compression, encryption, and backup.")]
+        [SerializeField] private SerializationOptions options = SerializationOptions.Compressed;
 
         public virtual string RootPath => Path.Combine(Application.persistentDataPath, folderName);
 
         public int CurrentSchemaVersion => currentSchemaVersion;
+
+        public SerializationOptions Options => options;
 
         /// <summary>
         /// Gets a stream based on the specified stream type and optional file path.
