@@ -53,13 +53,6 @@ namespace Sanctuary.Tests
         [Test]
         public async Task TestBinaryAll() => await TestSerializer(BinarySerializer.All, "BinaryAll", false, true);
 
-        #region Other Binary Serializer Tests
-
-        [Test]
-        public async Task TestBinary() => await TestSerializer(BinarySerializer.CreateAsBinary(SerializationOptions.None), "Binary", false, true);
-
-        #endregion
-
         #endregion
 
         #region Json Serializer Tests
@@ -99,19 +92,6 @@ namespace Sanctuary.Tests
 
         [Test]
         public async Task TestJsonAll() => await TestSerializer(JsonSerializer.All, "JsonAll", false, true);
-
-        #region Other Json Serializer Tests
-
-        [Test]
-        public async Task TestJson() => await TestSerializer(JsonSerializer.CreateAsJson(SerializationOptions.None), "Json", false, true);
-
-        [Test]
-        public async Task TestMarkdown() => await TestSerializer(JsonSerializer.CreateAsMarkDown(SerializationOptions.None), "Markdown", false, true);
-
-        [Test]
-        public async Task TestText() => await TestSerializer(JsonSerializer.CreateAsText(SerializationOptions.None), "Text", false, true);
-
-        #endregion
 
 #endif
 
@@ -307,12 +287,12 @@ namespace Sanctuary.Tests
         public async Task TestNewSerializer()
         {
             // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
-            var config = new DefaultStreamConfiguration(Application.persistentDataPath + "/TestFolder");
+            var config = new DefaultStreamConfiguration(Application.persistentDataPath + TestFolderName);
 
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create
             (
-                new FileSaveDataProvider(config),
+                new StreamSaveDataProvider(config),
                 new JsonSaveSerializer(config),
                 new Sha256IntegrityValidator(),
                 new UnityDebugLogger()

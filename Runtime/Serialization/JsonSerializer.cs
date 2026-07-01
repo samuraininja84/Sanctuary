@@ -45,12 +45,6 @@ namespace Sanctuary.Serialization
 
         public static JsonSerializer Create(SerializationOptions options, string fileExtension = SerializationExtensions.DefaultFileExtension) => new(options, fileExtension);
 
-        public static JsonSerializer CreateAsJson(SerializationOptions options) => new(options, ".json");
-
-        public static JsonSerializer CreateAsMarkDown(SerializationOptions options) => new(options, ".md");
-
-        public static JsonSerializer CreateAsText(SerializationOptions options) => new(options, ".txt");
-
         public async Task Serialize(ISaveData data, Stream source)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
@@ -87,13 +81,13 @@ namespace Sanctuary.Serialization
         // This would allow files to be deserialized even in the case that the options do not include the Encrypted flag,
         // so that it doesn't break backwards compatibility with different versions of the game that may have used different serialization options.
 
-        public async Task<LoadResult<ISaveData>> Deserialize(Stream stream)
+        public async Task<LoadResult<ISaveData>> Deserialize(Stream source)
         {
             // Capture the options in a local variable to avoid closure issues in the async task.
             var options = this.options;
 
             // Create a stream reader to read from the file with optional decompression.
-            using var reader = SerializationExtensions.CreateStreamReader(options, stream);
+            using var reader = SerializationExtensions.CreateStreamReader(options, source);
 
             // Create a JSON text reader to read the JSON data from the stream.
             using var jsonReader = new JsonTextReader(reader);
