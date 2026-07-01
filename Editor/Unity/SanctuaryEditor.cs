@@ -313,7 +313,7 @@ namespace Sanctuary.Editor
             if (saves.Length == 0)
             {
                 // Define a style for the empty state message
-                GUIStyle emptyStateStyle = new GUIStyle(GUI.skin.label)
+                var emptyStateStyle = new GUIStyle(GUI.skin.label)
                 {
                     alignment = TextAnchor.MiddleCenter,
                     stretchHeight = true
@@ -343,7 +343,7 @@ namespace Sanctuary.Editor
             }
 
             // Get the composite save data
-            ISaveData composite = ISaveDataExtensions.Combine(SaveData.Empty, saves.Select(s => s.Data));
+            ISaveData composite = ISaveDataExtensions.Combine(new SaveData(), saves.Select(s => s.Data));
 
             // Determine the save data to display based on filtering
             ISaveData data = FilterFiles ? currentSave.Data : composite;
