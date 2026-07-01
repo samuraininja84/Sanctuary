@@ -370,7 +370,7 @@ namespace Sanctuary.Tests
                 await Delete(service, slotId);
             }
         }
-      
+
         public async Task Save(ISanctuaryService service, string slotId)
         {
             TestSaveDataClass save = new("John Doe", 30, 5.9f, new string[] { "Reading", "Gaming", "Hiking" });
