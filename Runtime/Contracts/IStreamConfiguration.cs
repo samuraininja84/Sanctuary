@@ -1,6 +1,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Sanctuary.Configuration;
+using Sanctuary.Serialization;
 
 namespace Sanctuary
 {
@@ -15,6 +16,11 @@ namespace Sanctuary
         /// Schema version stamped onto new save envelopes. Bump when your save format changes.
         /// </summary>
         int CurrentSchemaVersion { get; }
+
+        /// <summary>
+        /// Gets the serialization options used for stream creation and management.
+        /// </summary>
+        SerializationOptions Options { get; }
 
         /// <summary>
         /// Gets a stream based on the specified stream type and optional file path.

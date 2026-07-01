@@ -18,6 +18,8 @@ namespace Sanctuary.Configuration
 
         public readonly int CurrentSchemaVersion => m_CurrentSchemaVersion;
 
+        public SerializationOptions Options => SerializationOptions.Compressed;
+
         public DefaultStreamConfiguration(string rootPath = "Saves", int currentSchemaVersion = 1)
         {
             m_RootPath = rootPath;

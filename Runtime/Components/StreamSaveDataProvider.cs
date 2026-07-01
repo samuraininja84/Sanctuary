@@ -12,18 +12,17 @@ namespace Sanctuary
 
         public readonly string RootPath => m_Configuration.RootPath;
 
+        public readonly SerializationOptions Options => m_Configuration.Options;
+
         public StreamSaveDataProvider(IStreamConfiguration configuration) => m_Configuration = configuration;
 
         public async Task<bool> WriteAsync(string relativePath, byte[] data)
         {
-            // Initialize serialization options.
-            var options = SerializationOptions.Compressed;
-
             // Create a file serialization stream to write to the file with optional compression.
             using var source = await m_Configuration.GetStream(Configuration.StreamType.Serialization, GetFullPath(relativePath));
 
             // Create a stream writer to write to the file with optional compression.
-            using var writer = SerializationExtensions.CreateStreamWriter(options, source);
+            using var writer = SerializationExtensions.CreateStreamWriter(Options, source);
 
             // Serialize the save data to a JSON string using Newtonsoft.Json
             writer.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
@@ -34,14 +33,11 @@ namespace Sanctuary
 
         public async Task<byte[]> ReadAsync(string relativePath)
         {
-            // Initialize serialization options.
-            var options = SerializationOptions.Compressed;
-
             // Create a file deserialization stream to read from the file with optional decompression.
             using var source = await m_Configuration.GetStream(Configuration.StreamType.Deserialization, GetFullPath(relativePath));
 
             // Create a stream reader to read from the file with optional decompression.
-            using var reader = SerializationExtensions.CreateStreamReader(options, source);
+            using var reader = SerializationExtensions.CreateStreamReader(Options, source);
 
             // Create a JSON text reader to read the JSON data from the stream.
             using var jsonReader = new JsonTextReader(reader);
@@ -69,5 +65,4 @@ namespace Sanctuary
 
         private string GetFullPath(string relativePath) => Path.Combine(RootPath, relativePath);
     }
-
 }

@@ -327,7 +327,7 @@ namespace Sanctuary.Tests
             );
 
             // Define a slot ID for the test save data
-            string slotId = "TestSlot/1";
+            string slotId = "TestSlot";
 
             // Save the test data to the specified save slot
             await Save(service, slotId);

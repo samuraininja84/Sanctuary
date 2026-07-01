@@ -9,12 +9,6 @@ namespace Sanctuary.Configuration
     public class JsonSerializerConfiguration : SerializerConfiguration
     {
         /// <summary>
-        /// Gets the <see cref="JsonSerializer"/> instance based on the configuration.
-        /// </summary>
-        /// <returns>The configured <see cref="JsonSerializer"/> instance.</returns>
-        public override ISerializer GetSerializer() => JsonSerializer.Create(serializationOptions, overrideExtension);
-
-        /// <summary>
         /// Gets the <see cref="JsonSerializer"/> instance based on the provided serialization options and an optional override extension.
         /// </summary>
         /// <param name="options">The serialization options to use for this serializer.</param>

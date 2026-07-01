@@ -91,7 +91,7 @@ namespace Sanctuary
         /// </summary>
         /// <remarks>If a custom serializer is provided, it will be used; otherwise, the default binary serializer will be returned.</remarks>
         /// <returns>The serializer to be used for saving and loading data.</returns>
-        private ISerializer GetSerializer() => serializer != null ? serializer.GetSerializer() : BinarySerializer.Default;
+        private ISerializer GetSerializer() => serializer != null ? serializer.GetSerializer(GetStream().Options) : BinarySerializer.Default;
 
         /// <summary>
         /// Retrieves the stream configuration to be used for saving and loading data.
