@@ -17,8 +17,11 @@ namespace Sanctaury.Samples
 
         [Header("Options")]
         [SerializeField] private SaveScope scope = SaveScope.Global;
+        [SerializeField] private GameObject targetObject = null;
         [SerializeField] private bool resetVelocityOnLoad = true;
         private TransformData data = new();
+
+        public Object Source => targetObject;
 
         public void OnEnable() => SaveStoreRegistry.Register(this, SaveProvider.ByScope(scope));
 
@@ -27,11 +30,11 @@ namespace Sanctaury.Samples
         public void OnSave(SaveControllerBase save)
         {
             // Update the stored data
-            data.position = transform.position;
-            data.rotation = transform.rotation;
+            data.position = targetObject.transform.position;
+            data.rotation = targetObject.transform.rotation;
 
             // Save the data to the save controller
-            save.Data.SetChunkName(_location, gameObject.name).Write(_location, data);
+            save.Data.SetChunkName(_location, targetObject.name).Write(_location, data);
         }
 
         public void OnLoad(SaveControllerBase save)
@@ -40,14 +43,13 @@ namespace Sanctaury.Samples
             if (save.Data.TryRead(_location, out data))
             {
                 // Apply the loaded data to the transform
-                transform.position = data.position; 
-                transform.rotation = data.rotation;
+                targetObject.transform.SetPositionAndRotation(data.position, data.rotation);
 
                 // Optionally reset velocity
                 if (resetVelocityOnLoad) ResetVelocity();
 
                 // Optionally, you could also set the name
-                save.Data.SetChunkName(_location, gameObject.name);
+                save.Data.SetChunkName(_location, targetObject.name);
             }
         }
 
@@ -68,5 +70,7 @@ namespace Sanctaury.Samples
             public Vector3 position;
             public Quaternion rotation;
         }
+
+        private void Reset() => targetObject = gameObject;
     }
 }

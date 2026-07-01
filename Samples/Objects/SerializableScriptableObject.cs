@@ -11,6 +11,8 @@ namespace Sanctuary.Samples
         [Header("Scope Options")]
         [SerializeField] private SaveScope scope = SaveScope.Global;
 
+        public Object Source => this;
+
         public void Initialize() => SaveStoreRegistry.Register(this, SaveProvider.ByScope(scope));
 
         public void Dispose() => SaveStoreRegistry.Unregister(this);
