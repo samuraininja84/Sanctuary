@@ -311,6 +311,38 @@ namespace Sanctuary.Tests
             await Delete(service, slotId);
         }
 
+        [Test]
+        public async Task TestNewSerializers()
+        {
+            // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
+            var config = new DefaultStreamConfiguration(Application.persistentDataPath + TestFolderName);
+
+            // Create a new instance of the SanctuaryService with the specified configuration and components
+            var service = SanctuaryService.Create
+            (
+                new StreamSaveDataProvider(config),
+                new JsonSaveSerializer(config),
+                new Sha256IntegrityValidator(),
+                new UnityDebugLogger()
+            );
+
+            // Benchmark the save, load, and delete operations for the specified number of iterations
+            for (int i = 0; i < BenchmarkIterations; i++)
+            {
+                // Define a slot ID for the test save data
+                string slotId = "TestSlot_" + i;
+
+                // Save the test data to the specified save slot
+                await Save(service, slotId);
+
+                // Load the test data from the specified save slot
+                await Load(service, slotId);
+
+                // Delete the test data from the specified save slot
+                await Delete(service, slotId);
+            }
+        }
+
         public async Task Save(ISanctuaryService service, string slotId)
         {
             TestSaveDataClass save = new("John Doe", 30, 5.9f, new string[] { "Reading", "Gaming", "Hiking" });

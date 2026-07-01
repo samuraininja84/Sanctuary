@@ -69,4 +69,5 @@ namespace Sanctuary
 
         private string GetFullPath(string relativePath) => Path.Combine(RootPath, relativePath);
     }
+
 }
