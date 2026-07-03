@@ -65,6 +65,126 @@ namespace Sanctuary
         /// The temporary list used for storing root GameObjects in a scene during lookup.
         /// </summary>
         private static List<GameObject> tmpSceneGameObjects = new();
+        
+        /// <summary>
+        /// Retrieves the <see cref="AbsoluteSaveProvider"/>'s <see cref="SaveControllerBase"/> instance, creating one if it does not already exist.
+        /// </summary>
+        /// <remarks>
+        /// This property checks for an existing <see cref="AbsoluteSaveProvider"/> instance. If none is found, it searches the scene for a <see cref="AbsoluteSaveProvider"/> component.
+        /// If found, it bootstraps that instance. If no <see cref="AbsoluteSaveProvider"/> exists in the scene, a new GameObject is created with a <see cref="AbsoluteSaveProvider"/> component, and it is bootstrapped.
+        /// </remarks>
+        /// <returns>The <see cref="AbsoluteSaveProvider"/>'s <see cref="SaveControllerBase"/>  instance.</returns>
+        public static SaveControllerBase Absolute
+        {
+            get
+            {
+                // Return existing absolute instance if available
+                if (absolute != null) return absolute.Controller;
+
+                // Try to find an existing AbsoluteSaveProvider in the scene
+                if (FindFirstObjectByType<AbsoluteSaveProvider>() is { } found)
+                {
+                    // Bootstrap the found global instance
+                    found.BootstrapOnDemand();
+
+                    // Return the absolute instance after bootstrapping
+                    return absolute.Controller;
+                }
+
+                // Create a new GameObject to hold the absolute SaveProvider
+                var container = new GameObject(k_absoluteSaveProviderName, typeof(SaveProvider));
+
+                // Bootstrap the new absolute instance
+                container.AddComponent<AbsoluteSaveProvider>().BootstrapOnDemand();
+
+                // Return the newly created absolute instance
+                return absolute.Controller;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the <see cref="GlobalSaveProvider"/>'s <see cref="SaveControllerBase"/> instance, creating one if it does not already exist.
+        /// </summary>
+        /// <remarks>
+        /// This property checks for an existing <see cref="GlobalSaveProvider"/> instance. If none is found, it searches the scene for a <see cref="GlobalSaveProvider"/> component.
+        /// If found, it bootstraps that instance. If no <see cref="GlobalSaveProvider"/> exists in the scene, a new GameObject is created with a <see cref="GlobalSaveProvider"/> component, and it is bootstrapped.
+        /// </remarks>
+        /// <returns>The <see cref="GlobalSaveProvider"/>'s <see cref="SaveControllerBase"/>  instance.</returns>
+        public static SaveControllerBase Global
+        {
+            get
+            {
+                // Return existing global instance if available
+                if (global != null) return global.Controller;
+
+                // Try to find an existing GlobalSaveProvider in the scene
+                if (FindFirstObjectByType<GlobalSaveProvider>() is { } found)
+                {
+                    // Bootstrap the found global instance
+                    found.BootstrapOnDemand();
+
+                    // Return the global instance after bootstrapping
+                    return global.Controller;
+                }
+
+                // Create a new GameObject to hold the global SaveProvider
+                var container = new GameObject(k_globalSaveProviderName, typeof(SaveProvider));
+
+                // Bootstrap the new global instance
+                container.AddComponent<GlobalSaveProvider>().BootstrapOnDemand();
+
+                // Return the newly created global instance
+                return global.Controller;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the <see cref="TemporarySaveProvider"/>'s <see cref="SaveControllerBase"/> instance, creating one if it does not already exist.
+        /// </summary>
+        /// <remarks>
+        /// This property checks for an existing <see cref="TemporarySaveProvider"/> instance. If none is found, it searches the scene for a <see cref="TemporarySaveProvider"/> component.
+        /// If found, it bootstraps that instance. If no <see cref="TemporarySaveProvider"/> exists in the scene, a new GameObject is created with a <see cref="TemporarySaveProvider"/> component, and it is bootstrapped.
+        /// </remarks>
+        /// <returns>The <see cref="TemporarySaveProvider"/>'s <see cref="SaveControllerBase"/>  instance.</returns>
+        public static SaveControllerBase Temporary
+        {
+            get
+            {
+                // Return existing temporary instance if available
+                if (temporary != null) return temporary.Controller;
+
+                // Try to find an existing TemporarySaveProvider in the scene
+                if (FindFirstObjectByType<TemporarySaveProvider>() is { } found)
+                {
+                    // Bootstrap the found temporary instance
+                    found.BootstrapOnDemand();
+
+                    // Return the temporary instance after bootstrapping
+                    return temporary.Controller;
+                }
+
+                // Create a new GameObject to hold the temporary SaveProvider
+                var container = new GameObject(k_TemporarySaveProviderName, typeof(SaveProvider));
+
+                // Bootstrap the new temporary instance
+                container.AddComponent<TemporarySaveProvider>().BootstrapOnDemand();
+
+                // Return the newly created temporary instance
+                return temporary.Controller;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the <see cref="SceneSaveProvider"/>'s <see cref="SaveControllerBase"/> instance associated with the currently active scene.
+        /// </summary>
+        /// <remarks>
+        /// This method first checks if a <see cref="SceneSaveProvider"/> is already registered for the active scene. 
+        /// If no <see cref="SceneSaveProvider"/> is found, it searches the root GameObjects of the active scene for a <see cref="SceneSaveProvider"/> component. 
+        /// If one is found, it initializes the associated <see cref="SceneSaveProvider"/> and returns it. 
+        /// If no <see cref="SceneSaveProvider"/> exists, a new one is created, initialized, and returned.
+        /// </remarks>
+        /// <returns>The <see cref="SaveControllerBase"/>'s <see cref="SaveControllerBase"/> instance associated with the active scene.</returns>
+        public static SaveControllerBase ActiveScene => ForScene(SceneManager.GetActiveScene());
 
         /// <summary>
         /// The name used for Absolute SaveProvider GameObjects.
@@ -259,126 +379,6 @@ namespace Sanctuary
             // Set the isBootstrapped flag to true to indicate that this SaveProvider has been configured
             isBootstrapped = true;
         }
-
-        /// <summary>
-        /// Retrieves the <see cref="AbsoluteSaveProvider"/>'s <see cref="SaveControllerBase"/> instance, creating one if it does not already exist.
-        /// </summary>
-        /// <remarks>
-        /// This property checks for an existing <see cref="AbsoluteSaveProvider"/> instance. If none is found, it searches the scene for a <see cref="AbsoluteSaveProvider"/> component.
-        /// If found, it bootstraps that instance. If no <see cref="AbsoluteSaveProvider"/> exists in the scene, a new GameObject is created with a <see cref="AbsoluteSaveProvider"/> component, and it is bootstrapped.
-        /// </remarks>
-        /// <returns>The <see cref="AbsoluteSaveProvider"/>'s <see cref="SaveControllerBase"/>  instance.</returns>
-        public static SaveControllerBase Absolute
-        {
-            get
-            {
-                // Return existing absolute instance if available
-                if (absolute != null) return absolute.Controller;
-
-                // Try to find an existing AbsoluteSaveProvider in the scene
-                if (FindFirstObjectByType<AbsoluteSaveProvider>() is { } found)
-                {
-                    // Bootstrap the found global instance
-                    found.BootstrapOnDemand();
-
-                    // Return the absolute instance after bootstrapping
-                    return absolute.Controller;
-                }
-
-                // Create a new GameObject to hold the absolute SaveProvider
-                var container = new GameObject(k_absoluteSaveProviderName, typeof(SaveProvider));
-
-                // Bootstrap the new absolute instance
-                container.AddComponent<AbsoluteSaveProvider>().BootstrapOnDemand();
-
-                // Return the newly created absolute instance
-                return absolute.Controller;
-            }
-        }
-
-        /// <summary>
-        /// Retrieves the <see cref="GlobalSaveProvider"/>'s <see cref="SaveControllerBase"/> instance, creating one if it does not already exist.
-        /// </summary>
-        /// <remarks>
-        /// This property checks for an existing <see cref="GlobalSaveProvider"/> instance. If none is found, it searches the scene for a <see cref="GlobalSaveProvider"/> component.
-        /// If found, it bootstraps that instance. If no <see cref="GlobalSaveProvider"/> exists in the scene, a new GameObject is created with a <see cref="GlobalSaveProvider"/> component, and it is bootstrapped.
-        /// </remarks>
-        /// <returns>The <see cref="GlobalSaveProvider"/>'s <see cref="SaveControllerBase"/>  instance.</returns>
-        public static SaveControllerBase Global
-        {
-            get
-            {
-                // Return existing global instance if available
-                if (global != null) return global.Controller;
-
-                // Try to find an existing GlobalSaveProvider in the scene
-                if (FindFirstObjectByType<GlobalSaveProvider>() is { } found)
-                {
-                    // Bootstrap the found global instance
-                    found.BootstrapOnDemand();
-
-                    // Return the global instance after bootstrapping
-                    return global.Controller;
-                }
-
-                // Create a new GameObject to hold the global SaveProvider
-                var container = new GameObject(k_globalSaveProviderName, typeof(SaveProvider));
-
-                // Bootstrap the new global instance
-                container.AddComponent<GlobalSaveProvider>().BootstrapOnDemand();
-
-                // Return the newly created global instance
-                return global.Controller;
-            }
-        }
-
-        /// <summary>
-        /// Retrieves the <see cref="TemporarySaveProvider"/>'s <see cref="SaveControllerBase"/> instance, creating one if it does not already exist.
-        /// </summary>
-        /// <remarks>
-        /// This property checks for an existing <see cref="TemporarySaveProvider"/> instance. If none is found, it searches the scene for a <see cref="TemporarySaveProvider"/> component.
-        /// If found, it bootstraps that instance. If no <see cref="TemporarySaveProvider"/> exists in the scene, a new GameObject is created with a <see cref="TemporarySaveProvider"/> component, and it is bootstrapped.
-        /// </remarks>
-        /// <returns>The <see cref="TemporarySaveProvider"/>'s <see cref="SaveControllerBase"/>  instance.</returns>
-        public static SaveControllerBase Temporary
-        {
-            get
-            {
-                // Return existing temporary instance if available
-                if (temporary != null) return temporary.Controller;
-
-                // Try to find an existing TemporarySaveProvider in the scene
-                if (FindFirstObjectByType<TemporarySaveProvider>() is { } found)
-                {
-                    // Bootstrap the found temporary instance
-                    found.BootstrapOnDemand();
-
-                    // Return the temporary instance after bootstrapping
-                    return temporary.Controller;
-                }
-
-                // Create a new GameObject to hold the temporary SaveProvider
-                var container = new GameObject(k_TemporarySaveProviderName, typeof(SaveProvider));
-
-                // Bootstrap the new temporary instance
-                container.AddComponent<TemporarySaveProvider>().BootstrapOnDemand();
-
-                // Return the newly created temporary instance
-                return temporary.Controller;
-            }
-        }
-
-        /// <summary>
-        /// Retrieves the <see cref="SceneSaveProvider"/>'s <see cref="SaveControllerBase"/> instance associated with the currently active scene.
-        /// </summary>
-        /// <remarks>
-        /// This method first checks if a <see cref="SceneSaveProvider"/> is already registered for the active scene. 
-        /// If no <see cref="SceneSaveProvider"/> is found, it searches the root GameObjects of the active scene for a <see cref="SceneSaveProvider"/> component. 
-        /// If one is found, it initializes the associated <see cref="SceneSaveProvider"/> and returns it. 
-        /// If no <see cref="SceneSaveProvider"/> exists, a new one is created, initialized, and returned.
-        /// </remarks>
-        /// <returns>The <see cref="SaveControllerBase"/>'s <see cref="SaveControllerBase"/> instance associated with the active scene.</returns>
-        public static SaveControllerBase ActiveScene => ForScene(SceneManager.GetActiveScene());
 
         /// <summary>
         /// Gets the <see cref="SaveControllerBase"/> configured for the specified scene.
