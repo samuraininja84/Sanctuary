@@ -219,9 +219,10 @@ namespace Sanctuary
         #region Save Operations
 
         /// <summary>
-        /// Create the save if it doesn't exist.
+        /// Save the game state. 
         /// </summary>
-        public async Task Create()
+        /// <remarks>Saves based on the <see cref="SaveMode"/> provided.</remarks>
+        public async Task Save(SaveMode mode = SaveMode.MemoryOnly)
         {
             // Lock the semaphore to prevent other operations
             await Lock();
@@ -235,25 +236,9 @@ namespace Sanctuary
                 // Create a new save data to avoid null reference exceptions
                 Data = await _loader.Create();
 
-                // Notify all registered stores to create their data
-                SaveStoreRegistry.CreateWith(this);
-
                 // Invoke the OnLoad method for custom load logic
                 OnLoad();
             }
-
-            // Unlock the semaphore and invoke the Saved event
-            Unlock();
-        }
-
-        /// <summary>
-        /// Save the game state. 
-        /// </summary>
-        /// <remarks>Saves based on the <see cref="SaveMode"/> provided.</remarks>
-        public async Task Save(SaveMode mode = SaveMode.MemoryOnly)
-        {
-            // Lock the semaphore to prevent other operations
-            await Lock();
 
             // Notify stores and invoke OnSave if needed
             if (mode != SaveMode.PersistentOnly)

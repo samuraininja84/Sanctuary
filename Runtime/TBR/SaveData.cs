@@ -248,6 +248,21 @@ namespace Sanctuary
         }
 
         /// <summary>
+        /// Gets the name of a chunk by its ID.
+        /// </summary>
+        /// <remarks>If no name is set for the chunk, a default name is returned.</remarks>
+        /// <param name="chunkId">The ID of the chunk.</param>
+        /// <returns>The name of the chunk.</returns>
+        public string GetChunkName(string chunkId)
+        {
+            // Try to get the name from the chunk information
+            if (_chunkInformation.TryGetValue(chunkId, out var name)) return name;
+
+            // Fallback to a default name if no name is set
+            return _defaultChunkId;
+        }
+
+        /// <summary>
         /// Gets the IDs of all existing chunks.
         /// </summary>
         /// <returns>The IDs of the existing chunks.</returns>
@@ -285,21 +300,6 @@ namespace Sanctuary
 
             // Return the save data for chaining
             return this;
-        }
-
-        /// <summary>
-        /// Gets the name of a chunk by its ID.
-        /// </summary>
-        /// <remarks>If no name is set for the chunk, a default name is returned.</remarks>
-        /// <param name="chunkId">The ID of the chunk.</param>
-        /// <returns>The name of the chunk.</returns>
-        public string GetChunkName(string chunkId)
-        {
-            // Try to get the name from the chunk information
-            if (_chunkInformation.TryGetValue(chunkId, out var name)) return name;
-
-            // Fallback to a default name if no name is set
-            return _defaultChunkId;
         }
 
         /// <summary>

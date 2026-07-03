@@ -255,14 +255,7 @@ namespace Sanctuary
                 isBootstrapped = true;
 
                 // If an absolute save doesn't already exist, create one
-                if (!controller.Exists)
-                {
-                    // Create the absolute save file if it doesn't already exist
-                    await controller.Create();
-
-                    // Save immediately to ensure the save file is created on disk
-                    await controller.Save(SaveMode.Full);
-                }
+                if (!controller.Exists) await controller.Save(SaveMode.Full);
             }
         }
 
