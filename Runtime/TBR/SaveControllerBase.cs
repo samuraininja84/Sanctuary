@@ -20,74 +20,18 @@ namespace Sanctuary
     /// </remarks>
     public class SaveControllerBase
     {
-        #region Instance Accessors
-
-        /// <summary>
-        /// The name of the save.
-        /// </summary>
         public string Name;
-
-        /// <summary>
-        /// Boolean indicating whether the save has been initialized.
-        /// </summary>
         protected bool _isInitialized = false;
-
-        /// <summary>
-        /// The scope of the save.
-        /// </summary>
-        protected SaveScope _scope = SaveScope.Global;
-
-        /// <summary>
-        /// The loader used to load and save the data.
-        /// </summary>
-        protected ISaveLoader _loader;
+        protected readonly SaveScope _scope = SaveScope.Global;
+        protected readonly ISaveLoader _loader;
+        protected readonly IStreamConfiguration _configuration;
+        protected ISaveData _data = SaveData.Empty;
 
         /// <summary>
         /// A semaphore used to ensure that only one operation is performed at a time.
         /// </summary>
         private readonly SemaphoreSlim _lock = new(1);
 
-        #endregion
-
-        #region Public Accessors
-
-        /// <summary>
-        /// Combined boolean indicating whether the save is initialized and exists.
-        /// </summary>
-        public bool IsInitialized => _isInitialized && Exists;
-
-        /// <summary>
-        /// Whether the save is currently being loaded.
-        /// </summary>
-        public bool IsLoading => _lock.CurrentCount == 0 || !_isInitialized;
-
-        /// <summary>
-        /// Whether the save exists.
-        /// </summary>
-        public bool Exists { get; private set; }
-
-        /// <summary>
-        /// The configuration for the save controller.
-        /// </summary>
-        protected StreamConfiguration _configuration;
-
-        /// <summary>
-        /// Provides the scope of the save.
-        /// </summary>
-        public SaveScope Scope => _scope;
-
-        /// <summary>
-        /// A protected reference to the save data.
-        /// </summary>
-        protected ISaveData _data = SaveData.Empty;
-
-        /// <summary>
-        /// The save data.
-        /// </summary>
-        /// <remarks>
-        /// The data can only be accessed after the save has been loaded for the
-        /// first time. Otherwise it returns an empty <see cref="SaveData"/>.
-        /// </remarks>
         public ISaveData Data
         {
             get
@@ -110,17 +54,13 @@ namespace Sanctuary
             private set => _data = value;
         }
 
-        /// <summary>
-        /// An event invoked before the save is saved.
-        /// </summary>
+        public bool Initialized => _isInitialized && Exists;
+
+        public bool Exists { get; private set; }
+
         public event Action Saving = delegate { };
 
-        /// <summary>
-        /// An event invoked after the save is saved.
-        /// </summary>
         public event Action Saved = delegate { };
-
-        #endregion
 
         #region Static Accessors
 
@@ -142,7 +82,7 @@ namespace Sanctuary
         /// </summary>
         /// <param name="loader">The save loader used to handle loading and saving operations. This parameter cannot be <see langword="null"/>.</param>
         /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
-        protected SaveControllerBase(StreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global)
+        protected SaveControllerBase(IStreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global)
         {
             // Set the configuration
             _configuration = configuration;
@@ -163,7 +103,7 @@ namespace Sanctuary
         /// <param name="loader">The loader to use for loading and saving the data.</param>
         /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
         /// <returns>A new instance of the save controller.</returns>
-        public static SaveControllerBase Create(StreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global) 
+        public static SaveControllerBase Create(IStreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global) 
         {
             // Create a new save controller with the provided loader
             var save = new SaveControllerBase(configuration, loader, scope);
@@ -377,15 +317,15 @@ namespace Sanctuary
             Saved?.Invoke();
         }
 
+        #endregion
+
+        #region Protected Save Callbacks
+
         /// <summary>
         /// Sets the ID of save loader.
         /// </summary>
         /// <param name="id">The ID to set.</param>
-        public void SetID(int id) => _loader.WithID(id);
-
-        #endregion
-
-        #region Protected Save Callbacks
+        public virtual void SetID(int id) => _loader.WithID(id);
 
         /// <summary>
         /// Invoked when the save is being saved to the memory.
