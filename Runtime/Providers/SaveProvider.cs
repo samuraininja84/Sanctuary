@@ -303,7 +303,7 @@ namespace Sanctuary
         /// </summary>
         /// <param name="behaviour">The MonoBehaviour to find the <see cref="SaveControllerBase"/> for.</param>
         /// <returns>The closest <see cref="SaveControllerBase"/> instance, or the scene/global instance if none found in hierarchy.</returns>
-        public static SaveControllerBase For(this MonoBehaviour behaviour) => behaviour.GetComponentInParent<SaveControllerBase>().OrNull() ?? ForSceneOf(behaviour) ?? SaveProvider.Global;
+        public static SaveControllerBase For(this MonoBehaviour behaviour) => behaviour.GetComponentInParent<SaveControllerBase>().OrNull() ?? ForSceneOf(behaviour) ?? Global;
 
         /// <summary>
         /// Gets the <see cref="SaveControllerBase"/> configured for the specified scene.
@@ -368,7 +368,7 @@ namespace Sanctuary
         /// Falls back to the global instance if no scene-specific SaveProvider is found.
         /// </remarks>
         /// <returns>The <see cref="SaveControllerBase"/> for the scene of the provided MonoBehaviour, or the global instance if none found.</returns>
-        public static SaveControllerBase ForSceneOf(this MonoBehaviour behaviour) => SaveProvider.ForScene(behaviour.gameObject.scene);
+        public static SaveControllerBase ForSceneOf(this MonoBehaviour behaviour) => ForScene(behaviour.gameObject.scene);
 
         /// <summary>
         /// Gets the appropriate SaveController based on the provided SaveScope.
