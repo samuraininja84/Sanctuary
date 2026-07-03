@@ -31,31 +31,7 @@ namespace Sanctuary
 
         public static SanctuaryService Create(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger) => new(provider, serializer, validator, logger);
 
-        public async Task LoadRegistryAsync()
-        {
-            // Attempt to read the registry file from the provider
-            var data = await m_Provider.ReadAsync(RegistryFile);
-
-            // If the registry file exists and has data, load it into the slot registry
-            if (data != null && data.Length > 0)
-            {
-                // Deserialize the registry data
-                var loaded = SaveSlotRegistry.FromBytes(data);
-
-                // Register all loaded slots in the current registry
-                foreach (var slot in loaded.GetAllSlots())
-                {
-                    // Register each slot in the current registry
-                    m_SlotRegistry.RegisterSlot(slot.SlotId, slot);
-                }
-            }
-        }
-
         public void RegisterMigrationStep(ISaveMigrationStep step) => m_MigrationPipeline.RegisterStep(step);
-
-        public SaveSlotInfo[] GetAvailableSlots() => m_SlotRegistry.GetAllSlots();
-
-        public SaveSlotInfo GetSlot(string slotId) => m_SlotRegistry.GetSlot(slotId);
 
         public async Task<SaveResult> SaveAsync<T>(string slotId, T data) where T : class
         {
@@ -153,6 +129,10 @@ namespace Sanctuary
             // Return true if either the current file or backup file exists, indicating that there is a valid save for the given slot ID
             return currentExists || backupExists;
         }
+
+        public SaveSlotInfo GetSlot(string slotId) => m_SlotRegistry.GetSlot(slotId);
+
+        public SaveSlotInfo[] GetAvailableSlots() => m_SlotRegistry.GetAllSlots();
 
         private async Task<SaveResult> SaveInternalAsync<T>(string slotId, T data) where T : class
         {
@@ -337,6 +317,26 @@ namespace Sanctuary
         {
             var registryData = m_SlotRegistry.ToBytes();
             await m_Provider.WriteAsync(RegistryFile, registryData);
+        }
+
+        public async Task LoadRegistryAsync()
+        {
+            // Attempt to read the registry file from the provider
+            var data = await m_Provider.ReadAsync(RegistryFile);
+
+            // If the registry file exists and has data, load it into the slot registry
+            if (data != null && data.Length > 0)
+            {
+                // Deserialize the registry data
+                var loaded = SaveSlotRegistry.FromBytes(data);
+
+                // Register all loaded slots in the current registry
+                foreach (var slot in loaded.GetAllSlots())
+                {
+                    // Register each slot in the current registry
+                    m_SlotRegistry.RegisterSlot(slot.SlotId, slot);
+                }
+            }
         }
     }
 }

@@ -695,7 +695,7 @@ namespace Sanctuary.Editor
             if (FilterFiles)
             {
                 // Dropdown to select the save controller
-                _currentIndex = EditorGUILayout.Popup(_currentIndex, saves.Select(save => save.Name).ToArray());
+                _currentIndex = EditorGUILayout.Popup(_currentIndex, saves.Select(save => save.name).ToArray());
             }
             else
             {
@@ -1462,23 +1462,11 @@ namespace Sanctuary.Editor
 
         #region Static Helper Methods
 
-        public void CreateAbsolute() => SaveStoreRegistry.CreateByScope(SaveScope.Absolute);
-
         public void SaveAbsolute() => SaveStoreRegistry.SaveByScope(SaveScope.Absolute, saveMode);
 
         public void LoadAbsolute() => SaveStoreRegistry.LoadByScope(SaveScope.Absolute, saveMode);
 
         public void DeleteAbsolute() => SaveStoreRegistry.DeleteByScope(SaveScope.Absolute);
-
-        public void CreateIndexed()
-        {
-            // Create all of the indexed saves (Global and Scene)
-            if (SaveToGlobal) SaveStoreRegistry.CreateByScope(SaveScope.Global);
-            if (SaveToScene) SaveStoreRegistry.CreateByScope(SaveScope.Scene);
-
-            // Include Temporary saves as well, for simplicity
-            if (SaveToTemporary) SaveStoreRegistry.CreateByScope(SaveScope.Temporary);
-        }
 
         public void SaveIndexed()
         {

@@ -46,6 +46,24 @@ namespace Sanctuary.Serialization
         Backup = 1 << 2,
 
         /// <summary>
+        /// Indicates that the serializer should use both backup and compression during serialization.
+        /// </summary>
+        [Tooltip("Indicates that the serializer should use both backup and compression during serialization.")]
+        CompressedBackup = Compressed | Backup,
+
+        /// <summary>
+        /// Indicates that the serializer should use both backup and encryption during serialization.
+        /// </summary>
+        [Tooltip("Indicates that the serializer should use both backup and encryption during serialization.")]
+        EncryptedBackup = Encrypted | Backup,
+
+        /// <summary>
+        /// Indicates that the serializer should use both compression and encryption during serialization.
+        /// </summary>
+        [Tooltip("Indicates that the serializer should use both compression and encryption during serialization.")]
+        CompressedEncrypted = Compressed | Encrypted,
+
+        /// <summary>
         /// Indicates that the serializer should use all available settings (compressed, encrypted, and backup).
         /// </summary>
         [Tooltip("Indicates that the serializer should use all available settings (compressed, encrypted, and backup).")]

@@ -95,20 +95,6 @@ namespace Sanctuary.Stores
         #region Save/Load/Delete For Save Controller
 
         /// <summary>
-        /// Find all stores associated with the given save controller and invoke their create operation.
-        /// </summary>
-        /// <param name="save">The save controller to match.</param>
-        internal static void CreateWith(this SaveControllerBase save)
-        {
-            // Find all stores associated with the given save controller.
-            foreach (var kvp in _storeLookup)
-            {
-                // If the store's associated save controller matches the given one, call OnCreate on it.
-                if (kvp.Value == save) kvp.Key.OnCreate(kvp.Value);
-            }
-        }
-
-        /// <summary>
         /// Find all stores associated with the given save controller and invoke their save operation.
         /// </summary>
         /// <param name="save">The save controller to match.</param>
@@ -184,22 +170,6 @@ namespace Sanctuary.Stores
         #region Create/Save/Load/Delete All
 
         /// <summary>
-        /// Creates all registered data stores for each supported save scope.
-        /// </summary>
-        /// <remarks>
-        /// This method initializes data stores associated with the Absolute, Global, Scene, and Temporary save scopes. 
-        /// It should be called before attempting to access or manipulate data in any of these stores to ensure they are properly set up.<
-        /// /remarks>
-        public static void CreateAll()
-        {
-            // Create all of the registered stores with their associated save controllers.
-            CreateByScope(SaveScope.Absolute);
-            CreateByScope(SaveScope.Global);
-            CreateByScope(SaveScope.Scene);
-            CreateByScope(SaveScope.Temporary);
-        }
-
-        /// <summary>
         /// Simultaneously saves all registered stores.
         /// </summary>
         public static void SaveAll(SaveMode mode = SaveMode.Full)
@@ -237,73 +207,7 @@ namespace Sanctuary.Stores
 
         #endregion
 
-        #region Create/Save/Load/Delete Indexed
-
-        /// <summary>
-        /// Initializes all indexed save data for both global and scene scopes.
-        /// </summary>
-        /// <remarks>
-        /// Call this method to ensure that all required indexed save data structures are created and ready for use. 
-        /// This is typically necessary during application startup or when resetting save data.
-        /// </remarks>
-        public static void CreateIndexed()
-        {
-            // Create all of the indexed saves (Global and Scene)
-            CreateByScope(SaveScope.Global);
-            CreateByScope(SaveScope.Scene);
-        }
-
-        /// <summary>
-        /// Simultaneously saves all registered stores that are associated with a save controller of scope <see cref="SaveScope.Global"/> or <see cref="SaveScope.Scene"/>.
-        /// </summary>
-        /// <param name="mode">The mode in which to save the stores. Defaults to <see cref="SaveMode.Full"/>.</param>
-        public static void SaveIndexed(SaveMode mode = SaveMode.Full)
-        {
-            // Save all of the indexed saves (Global and Scene)
-            SaveByScope(SaveScope.Global, mode);
-            SaveByScope(SaveScope.Scene, mode);
-        }
-
-        /// <summary>
-        /// Loads all indexed saves from both global and scene scopes using the specified save mode.
-        /// </summary>
-        /// <remarks>This method retrieves saves from both global and scene contexts, allowing for flexible save management based on the provided save mode.</remarks>
-        /// <param name="mode">Specifies the save mode to use when loading indexed saves. Determines the extent of the loading operation.
-        /// The default is <see cref="SaveMode.Full"/>.</param>
-        public static void LoadIndexed(SaveMode mode = SaveMode.Full)
-        {
-            // Load all of the indexed saves (Global and Scene)
-            LoadByScope(SaveScope.Global, mode);
-            LoadByScope(SaveScope.Scene, mode);
-        }
-
-        /// <summary>
-        /// Deletes all indexed saves, including both global and scene-specific data.
-        /// </summary>
-        /// <remarks>
-        /// This method removes all saves that have been indexed, regardless of their scope. 
-        /// Use with caution, as this operation cannot be undone and will result in the loss of all indexed save data.
-        /// </remarks>
-        public static void DeleteIndexed()
-        {
-            // Delete all of the indexed saves (Global and Scene)
-            DeleteByScope(SaveScope.Global);
-            DeleteByScope(SaveScope.Scene);
-        }
-
-        #endregion
-
         #region Create/Save/Load/Delete By Scope
-
-        /// <summary>
-        /// Creates all stores that are associated with the specified save scope.
-        /// </summary>
-        /// <remarks>This method initiates the creation process for all stores matching the provided scope. 
-        /// The operation is asynchronous but returns immediately; any exceptions thrown during store creation will be unobserved unless handled elsewhere. 
-        /// Consider using an asynchronous return type to await completion and handle errors appropriately.
-        /// </remarks>
-        /// <param name="scope">The save scope used to identify which stores to create.</param>
-        public static async void CreateByScope(this SaveScope scope) => await SaveProvider.ByScope(scope).Create();
 
         /// <summary>
         /// Invokes the save operation on all stores that match the specified scope.

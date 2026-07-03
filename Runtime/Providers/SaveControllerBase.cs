@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sanctuary.Stores;
 using Sanctuary.Loaders;
-using Sanctuary.Extensions;
-using Sanctuary.Configuration;
 
 namespace Sanctuary
 {
@@ -18,76 +16,15 @@ namespace Sanctuary
     /// Any class implementing <see cref="ISaveStore"/> can register to be notified for save and load events.
     /// This class uses an <see cref="ISaveLoader"/> to handle the actual loading and saving of data regardless of type.
     /// </remarks>
-    public class SaveControllerBase
+    public abstract class SaveControllerBase : MonoBehaviour, ISaveController
     {
-        #region Instance Accessors
-
-        /// <summary>
-        /// The name of the save.
-        /// </summary>
-        public string Name;
-
-        /// <summary>
-        /// Boolean indicating whether the save has been initialized.
-        /// </summary>
-        protected bool _isInitialized = false;
-
-        /// <summary>
-        /// The scope of the save.
-        /// </summary>
-        protected SaveScope _scope = SaveScope.Global;
-
-        /// <summary>
-        /// The loader used to load and save the data.
-        /// </summary>
         protected ISaveLoader _loader;
+        protected IStreamConfiguration _configuration;
+        protected ISaveData _data;
 
         /// <summary>
-        /// A semaphore used to ensure that only one operation is performed at a time.
+        /// Gets the save data. If the data is accessed before being loaded, a warning is logged and an empty data is returned as a placeholder.
         /// </summary>
-        private readonly SemaphoreSlim _lock = new(1);
-
-        #endregion
-
-        #region Public Accessors
-
-        /// <summary>
-        /// Combined boolean indicating whether the save is initialized and exists.
-        /// </summary>
-        public bool IsInitialized => _isInitialized && Exists;
-
-        /// <summary>
-        /// Whether the save is currently being loaded.
-        /// </summary>
-        public bool IsLoading => _lock.CurrentCount == 0 || !_isInitialized;
-
-        /// <summary>
-        /// Whether the save exists.
-        /// </summary>
-        public bool Exists { get; private set; }
-
-        /// <summary>
-        /// The configuration for the save controller.
-        /// </summary>
-        protected StreamConfiguration _configuration;
-
-        /// <summary>
-        /// Provides the scope of the save.
-        /// </summary>
-        public SaveScope Scope => _scope;
-
-        /// <summary>
-        /// A protected reference to the save data.
-        /// </summary>
-        protected ISaveData _data = SaveData.Empty;
-
-        /// <summary>
-        /// The save data.
-        /// </summary>
-        /// <remarks>
-        /// The data can only be accessed after the save has been loaded for the
-        /// first time. Otherwise it returns an empty <see cref="SaveData"/>.
-        /// </remarks>
         public ISaveData Data
         {
             get
@@ -99,7 +36,7 @@ namespace Sanctuary
                     Debug.LogWarning("[Sanctuary]: Tried to access the data before the save was loaded.\n Make sure to call `save.Load(SaveMode.Full)` before accessing the data. Returning empty data as a placeholder.");
 
                     // Return an empty data to avoid null reference exceptions
-                    _data = SaveData.Empty;
+                    _data = new SaveData();
                 }
 
                 // Return the data
@@ -110,17 +47,19 @@ namespace Sanctuary
             private set => _data = value;
         }
 
-        /// <summary>
-        /// An event invoked before the save is saved.
-        /// </summary>
+        public string Name { get; protected set; }
+
+        public bool Exists { get; protected set; }
+
         public event Action Saving = delegate { };
 
-        /// <summary>
-        /// An event invoked after the save is saved.
-        /// </summary>
         public event Action Saved = delegate { };
 
-        #endregion
+        public virtual bool Initialized => _isInitialized && Exists;
+
+        protected bool _isInitialized = false;
+
+        protected SemaphoreSlim _lock = new(1);
 
         #region Static Accessors
 
@@ -138,41 +77,15 @@ namespace Sanctuary
         #region Configuration
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SaveControllerBase"/> class with the specified save loader.
+        /// Configures the save controller with the provided save loader and stream configuration.
         /// </summary>
-        /// <param name="loader">The save loader used to handle loading and saving operations. This parameter cannot be <see langword="null"/>.</param>
-        /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
-        protected SaveControllerBase(StreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global)
+        /// <param name="loader">The save loader to use for loading and saving data.</param>
+        /// <param name="configuration">The stream configuration to use for saving and loading data.</param>
+        /// <exception cref="ArgumentNullException">Thrown if the loader or configuration is null.</exception>
+        public void Configure(ISaveLoader loader, IStreamConfiguration configuration)
         {
-            // Set the configuration
-            _configuration = configuration;
-
-            // Set the loader
-            _loader = loader;
-
-            // Set the scope
-            _scope = scope;
-
-            // Set the lock
-            _lock = new SemaphoreSlim(1);
-        }
-
-        /// <summary>
-        /// Create a new save controller with the given loader and scope, then initialize it.
-        /// </summary>
-        /// <param name="loader">The loader to use for loading and saving the data.</param>
-        /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
-        /// <returns>A new instance of the save controller.</returns>
-        public static SaveControllerBase Create(StreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global) 
-        {
-            // Create a new save controller with the provided loader
-            var save = new SaveControllerBase(configuration, loader, scope);
-
-            // Initialize the save controller
-            save.Initialize();
-
-            // Return the newly created save controller
-            return save;
+            _loader = loader ?? throw new ArgumentNullException(nameof(loader), "SaveControllerBase.Configure: The save loader cannot be null.");
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "SaveControllerBase.Configure: The stream configuration cannot be null.");
         }
 
         /// <summary>
@@ -191,6 +104,9 @@ namespace Sanctuary
             // Intialize the save controller
             _isInitialized = true;
 
+            // Invoke the PrepareInit method for any pre-initialization logic
+            PreInit();
+
             #if UNITY_EDITOR
 
             // Remove dead references
@@ -207,21 +123,21 @@ namespace Sanctuary
             // Check if the save exists
             Exists = await _loader.Exists();
 
-            // Load the name of the save
+            // Get the name of the save
             Name = await _loader.GetName();
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
+
+            // Invoke the OnInit method for custom initialization logic
+            PostInit();
         }
 
-        #endregion
-
-        #region Save Operations
-
         /// <summary>
-        /// Create the save if it doesn't exist.
+        /// Save the game state. 
         /// </summary>
-        public async Task Create()
+        /// <remarks>Saves based on the <see cref="SaveMode"/> provided.</remarks>
+        public async Task Save(SaveMode mode = SaveMode.MemoryOnly)
         {
             // Lock the semaphore to prevent other operations
             await Lock();
@@ -235,25 +151,9 @@ namespace Sanctuary
                 // Create a new save data to avoid null reference exceptions
                 Data = await _loader.Create();
 
-                // Notify all registered stores to create their data
-                SaveStoreRegistry.CreateWith(this);
-
                 // Invoke the OnLoad method for custom load logic
                 OnLoad();
             }
-
-            // Unlock the semaphore and invoke the Saved event
-            Unlock();
-        }
-
-        /// <summary>
-        /// Save the game state. 
-        /// </summary>
-        /// <remarks>Saves based on the <see cref="SaveMode"/> provided.</remarks>
-        public async Task Save(SaveMode mode = SaveMode.MemoryOnly)
-        {
-            // Lock the semaphore to prevent other operations
-            await Lock();
 
             // Notify stores and invoke OnSave if needed
             if (mode != SaveMode.PersistentOnly)
@@ -306,13 +206,13 @@ namespace Sanctuary
                         Data = result.Data;
                         break;
                     case LoadStatus.NoValidSave:
-                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage. {result.Message}");
+                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage. {result.Message}");
                         break;
                     case LoadStatus.ProviderError:
-                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage due to a provider error. {result.Message}");
+                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage due to a provider error. {result.Message}");
                         break;
                     case LoadStatus.MigrationFailed:
-                        Debug.LogWarning($"[Sanctuary]: Failed to migrate save '{Name}' from persistent storage. {result.Message}");
+                        Debug.LogWarning($"[Sanctuary]: Failed to migrate save '{name}' from persistent storage. {result.Message}");
                         break;
                     default: 
                         throw new ArgumentOutOfRangeException();
@@ -392,15 +292,26 @@ namespace Sanctuary
             Saved?.Invoke();
         }
 
+        #endregion
+
+        #region Protected Save Callbacks
+
         /// <summary>
         /// Sets the ID of save loader.
         /// </summary>
         /// <param name="id">The ID to set.</param>
-        public void SetID(int id) => _loader.WithID(id);
+        [Obsolete("SetID will be removed in future versions. To be replaced with a string-based identifier system.")]
+        public virtual void SetID(int id) => _loader.WithID(id);
 
-        #endregion
+        /// <summary>
+        /// Invoked before the save controller is initialized.
+        /// </summary>
+        protected virtual void PreInit() { }
 
-        #region Protected Save Callbacks
+        /// <summary>
+        /// Invoked when the save controller is initialized.
+        /// </summary>
+        protected virtual void PostInit() { }
 
         /// <summary>
         /// Invoked when the save is being saved to the memory.
@@ -427,5 +338,20 @@ namespace Sanctuary
         protected virtual void OnDelete() { }
 
         #endregion
+    }
+
+    public interface ISaveController
+    {
+        string Name { get; }
+
+        bool Initialized { get; }
+
+        bool Exists { get; }
+
+        ISaveData Data { get; }
+
+        Task Save(SaveMode mode = SaveMode.Full);
+        Task Load(SaveMode mode = SaveMode.Full);
+        Task Delete();
     }
 }
