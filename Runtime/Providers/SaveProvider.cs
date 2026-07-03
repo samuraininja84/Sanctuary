@@ -488,22 +488,27 @@ namespace Sanctuary
             if (this == absolute)
             {
                 // Clear absolute instance if this is the absolute container
+                absolute.controller = null;
                 absolute = null;
             }
             else if (this == global)
             {
                 // Clear global instance if this is the global container
+                global.controller = null;
                 global = null;
             }
             if (this == temporary)
             {
                 // Clear temporary instance if this is the temporary container
+                temporary.controller = null;
                 temporary = null;
             }
             else if (sceneContainers.ContainsValue(this))
             {
                 // Remove this container from the scene containers dictionary
-                sceneContainers.Remove(GetComponent<SceneSaveProvider>().TrackedScene.name);
+                var sceneName = GetComponent<SceneSaveProvider>().TrackedScene.name;
+                sceneContainers[sceneName].controller = null;
+                sceneContainers.Remove(sceneName);
             }
         }
 
