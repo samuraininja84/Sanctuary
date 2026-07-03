@@ -16,16 +16,6 @@ namespace Sanctuary
     public class SaveProvider : MonoBehaviour
     {
         /// <summary>
-        /// The controller responsible for managing save operations.
-        /// </summary>
-        protected SaveControllerBase controller = null;
-
-        /// <summary>
-        /// An accessor for the SaveController.
-        /// </summary>
-        public SaveControllerBase Controller => controller;
-
-        /// <summary>
         /// Indicates whether the bootstrap process has completed.
         /// </summary>
         protected bool isBootstrapped = false;
@@ -38,22 +28,22 @@ namespace Sanctuary
         /// <summary>
         /// The absolute SaveProvider instance.
         /// </summary>
-        protected static SaveProvider absolute;
+        protected static SaveControllerBase absolute;
 
         /// <summary>
         /// The global SaveProvider instance.
         /// </summary>
-        protected static SaveProvider global;
+        protected static SaveControllerBase global;
 
         /// <summary>
         /// The temporary SaveProvider instance.
         /// </summary>
-        protected static SaveProvider temporary;
+        protected static SaveControllerBase temporary;
 
         /// <summary>
         /// The dictionary mapping scenes to their respective SaveProvider instances.
         /// </summary>
-        public static Dictionary<string, SaveProvider> sceneContainers = new();
+        public static Dictionary<string, SaveControllerBase> sceneContainers = new();
 
         /// <summary>
         /// The temporary list used for storing root GameObjects in a scene during lookup.
@@ -73,7 +63,7 @@ namespace Sanctuary
             get
             {
                 // Return existing absolute instance if available
-                if (absolute != null) return absolute.Controller;
+                if (absolute != null) return absolute;
 
                 // Try to find an existing AbsoluteSaveProvider in the scene
                 if (FindFirstObjectByType<AbsoluteSaveProvider>() is { } found)
@@ -82,7 +72,7 @@ namespace Sanctuary
                     found.Initialize();
 
                     // Return the absolute instance after bootstrapping
-                    return absolute.Controller;
+                    return absolute;
                 }
 
                 // Create a new GameObject to hold the absolute SaveProvider
@@ -92,7 +82,7 @@ namespace Sanctuary
                 container.AddComponent<AbsoluteSaveProvider>().Initialize();
 
                 // Return the newly created absolute instance
-                return absolute.Controller;
+                return absolute;
             }
         }
 
@@ -109,7 +99,7 @@ namespace Sanctuary
             get
             {
                 // Return existing global instance if available
-                if (global != null) return global.Controller;
+                if (global != null) return global;
 
                 // Try to find an existing GlobalSaveProvider in the scene
                 if (FindFirstObjectByType<GlobalSaveProvider>() is { } found)
@@ -118,7 +108,7 @@ namespace Sanctuary
                     found.Initialize();
 
                     // Return the global instance after bootstrapping
-                    return global.Controller;
+                    return global;
                 }
 
                 // Create a new GameObject to hold the global SaveProvider
@@ -128,7 +118,7 @@ namespace Sanctuary
                 container.AddComponent<GlobalSaveProvider>().Initialize();
 
                 // Return the newly created global instance
-                return global.Controller;
+                return global;
             }
         }
 
@@ -145,7 +135,7 @@ namespace Sanctuary
             get
             {
                 // Return existing temporary instance if available
-                if (temporary != null) return temporary.Controller;
+                if (temporary != null) return temporary;
 
                 // Try to find an existing TemporarySaveProvider in the scene
                 if (FindFirstObjectByType<TemporarySaveProvider>() is { } found)
@@ -154,7 +144,7 @@ namespace Sanctuary
                     found.Initialize();
 
                     // Return the temporary instance after bootstrapping
-                    return temporary.Controller;
+                    return temporary;
                 }
 
                 // Create a new GameObject to hold the temporary SaveProvider
@@ -164,7 +154,7 @@ namespace Sanctuary
                 container.AddComponent<TemporarySaveProvider>().Initialize();
 
                 // Return the newly created temporary instance
-                return temporary.Controller;
+                return temporary;
             }
         }
 
@@ -204,7 +194,7 @@ namespace Sanctuary
         /// Sets up this SaveProvider as the absolute instance by marking as absolute and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is true.</param>
-        internal async void ConfigureAsAbsolute(ProfileData profile, bool loadOnBoot = true, bool dontDestroyOnLoad = true)
+        public async void ConfigureAsAbsolute(SaveControllerBase source, ProfileData profile, bool loadOnBoot = true, bool dontDestroyOnLoad = true)
         {
             // Check if already configured as absolute
             if (absolute == this)
@@ -223,7 +213,7 @@ namespace Sanctuary
             else
             {
                 // Configure as absolute
-                absolute = this;
+                absolute = source;
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -232,10 +222,10 @@ namespace Sanctuary
                 isBootstrapped = true;
 
                 // If an absolute save doesn't already exist, create one
-                if (!controller.Exists) await controller.Save(SaveMode.Full);
+                if (!source.Exists) await source.Save(SaveMode.Full);
 
                 // Load the absolute save if specified
-                if (loadOnBoot) await controller.Load(SaveMode.Full);
+                if (loadOnBoot) await source.Load(SaveMode.Full);
             }
         }
 
@@ -243,7 +233,7 @@ namespace Sanctuary
         /// Sets up this SaveProvider as the global instance by marking as global and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is true.</param>
-        internal void ConfigureAsGlobal(ProfileData profile, bool dontDestroyOnLoad = true)
+        public void ConfigureAsGlobal(SaveControllerBase source, ProfileData profile, bool dontDestroyOnLoad = true)
         {
             // Check if already configured as global
             if (global == this)
@@ -262,7 +252,7 @@ namespace Sanctuary
             else
             {
                 // Configure as global
-                global = this;
+                global = source;
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -276,7 +266,7 @@ namespace Sanctuary
         /// Sets up this SaveProvider as the temporary instance by marking as temporary and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is false.</param>
-        internal void ConfigureAsTemporary(ProfileData profile, bool dontDestroyOnLoad = false)
+        public void ConfigureAsTemporary(SaveControllerBase source, ProfileData profile, bool dontDestroyOnLoad = false)
         {
             // Check if already configured as temporary
             if (temporary == this)
@@ -295,7 +285,7 @@ namespace Sanctuary
             else
             {
                 // Configure as temporary
-                temporary = this;
+                temporary = source;
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -309,7 +299,7 @@ namespace Sanctuary
         /// Sets up this SaveProvider as the instance for its scene.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is false.</param>
-        internal void ConfigureForScene(ProfileData profile, bool dontDestroyOnLoad = false)
+        public void ConfigureForScene(SaveControllerBase source, ProfileData profile, bool dontDestroyOnLoad = false)
         {
             // Get the scene this GameObject belongs to
             string scene = gameObject.scene.name;
@@ -328,10 +318,10 @@ namespace Sanctuary
             }
 
             // Initialize scene save controller if needed
-            if (controller == null) profile.SetFileName(scene);
+            profile.SetFileName(scene);
 
             // Register this container for the scene
-            sceneContainers.Add(scene, this);
+            sceneContainers.Add(scene, source);
 
             // Make persistent across scenes if specified and in play mode
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -348,7 +338,7 @@ namespace Sanctuary
         public static SaveControllerBase ForScene(Scene scene)
         {
             // Check if a SaveProvider is already registered for the scene
-            if (sceneContainers.TryGetValue(scene.name, out SaveProvider found)) return found.Controller;
+            if (sceneContainers.TryGetValue(scene.name, out var found)) return found;
 
             // Clear temporary list of GameObjects
             tmpSceneGameObjects.Clear();
@@ -369,12 +359,12 @@ namespace Sanctuary
                     bootstrapper.SetName(scene.name);
 
                     // Return the scene's SaveProvider after bootstrapping
-                    return bootstrapper.Container.Controller;
+                    return bootstrapper;
                 }
             }
 
             // Try to create a new SceneSaveProvider if none found
-            GameObject obj = new GameObject(SceneSaveProviderName(scene.name), typeof(SaveProvider));
+            GameObject obj = new(SceneSaveProviderName(scene.name), typeof(SaveProvider));
 
             // Add SceneSaveProvider component to the new GameObject
             SceneSaveProvider container = obj.AddComponent<SceneSaveProvider>();
@@ -386,7 +376,7 @@ namespace Sanctuary
             container.SetName(scene.name);
 
             // Return the newly created scene's SaveProvider
-            return container.Container.Controller;
+            return container;
         }
 
         /// <summary>
@@ -437,7 +427,7 @@ namespace Sanctuary
             temporary = null;
 
             // Initialize scene containers dictionary
-            sceneContainers = new Dictionary<string, SaveProvider>();
+            sceneContainers = new();
 
             // Initialize temporary list for scene GameObjects
             tmpSceneGameObjects = new List<GameObject>();
@@ -455,28 +445,23 @@ namespace Sanctuary
             if (this == absolute)
             {
                 // Clear absolute instance if this is the absolute container
-                absolute.controller = null;
                 absolute = null;
             }
             else if (this == global)
             {
                 // Clear global instance if this is the global container
-                global.controller = null;
                 global = null;
             }
             if (this == temporary)
             {
                 // Clear temporary instance if this is the temporary container
-                temporary.controller = null;
                 temporary = null;
             }
-            else if (sceneContainers.ContainsValue(this))
-            {
-                // Remove this container from the scene containers dictionary
-                var sceneName = GetComponent<SceneSaveProvider>().TrackedScene.name;
-                sceneContainers[sceneName].controller = null;
-                sceneContainers.Remove(sceneName);
-            }
+            //else if (sceneContainers.ContainsValue(this))
+            //{
+            //    // Remove this container from the scene containers dictionary
+            //    sceneContainers.Remove(GetComponent<SceneSaveProvider>().TrackedScene.name);
+            //}
         }
 
 #if UNITY_EDITOR
@@ -525,7 +510,7 @@ namespace Sanctuary
         /// </summary>
         /// <param name="behaviour">The MonoBehaviour to find the <see cref="SaveControllerBase"/> for.</param>
         /// <returns>The closest <see cref="SaveControllerBase"/> instance, or the scene/global instance if none found in hierarchy.</returns>
-        public static SaveControllerBase For(this MonoBehaviour behaviour) => behaviour.GetComponentInParent<SaveProvider>().OrNull().Controller ?? ForSceneOf(behaviour) ?? SaveProvider.Global;
+        public static SaveControllerBase For(this MonoBehaviour behaviour) => behaviour.GetComponentInParent<SaveControllerBase>().OrNull() ?? ForSceneOf(behaviour) ?? SaveProvider.Global;
 
         /// <summary>
         /// Gets the <see cref="SaveControllerBase"/> configured for the specified scene name.

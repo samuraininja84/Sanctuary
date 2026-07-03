@@ -52,13 +52,8 @@ namespace Sanctuary
         /// <returns>The stream configuration to be used for saving and loading data.</returns>
         private StreamConfiguration GetStream() => stream != null ? stream : stream = ScriptableObject.CreateInstance<FileStreamConfiguration>();
 
-        protected async override void OnInit()
-        {
-            // Configure the serializer and stream for the SaveProvider
-            Configure(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), GetStream());
+        protected override void PreInit() => Configure(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), GetStream());
 
-            // Configure the SaveProvider as Absolute with the specified profile data
-            Container.ConfigureAsAbsolute(profile, loadOnBoot, dontDestroyOnLoad);
-        }
+        protected async override void PostInit() => Container.ConfigureAsAbsolute(this, profile, loadOnBoot, dontDestroyOnLoad);
     }
 }

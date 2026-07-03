@@ -104,6 +104,9 @@ namespace Sanctuary
             // Intialize the save controller
             _isInitialized = true;
 
+            // Invoke the PrepareInit method for any pre-initialization logic
+            PreInit();
+
             #if UNITY_EDITOR
 
             // Remove dead references
@@ -127,7 +130,7 @@ namespace Sanctuary
             Unlock();
 
             // Invoke the OnInit method for custom initialization logic
-            OnInit();
+            PostInit();
         }
 
         /// <summary>
@@ -301,9 +304,14 @@ namespace Sanctuary
         public virtual void SetID(int id) => _loader.WithID(id);
 
         /// <summary>
+        /// Invoked before the save controller is initialized.
+        /// </summary>
+        protected virtual void PreInit() { }
+
+        /// <summary>
         /// Invoked when the save controller is initialized.
         /// </summary>
-        protected virtual void OnInit() { }
+        protected virtual void PostInit() { }
 
         /// <summary>
         /// Invoked when the save is being saved to the memory.
