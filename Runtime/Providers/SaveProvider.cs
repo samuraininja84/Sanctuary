@@ -15,12 +15,6 @@ namespace Sanctuary
 {
     public class SaveProvider : MonoBehaviour
     {
-        [Header("Serializer Configuration")]
-        [Tooltip("The serializer configuration to use for saving and loading data.")]
-        [SerializeField] protected SerializerConfiguration serializer;
-        [Tooltip("The stream configuration to use for saving and loading data.")]
-        [SerializeField] protected StreamConfiguration stream;
-
         /// <summary>
         /// The controller responsible for managing save operations.
         /// </summary>
@@ -85,7 +79,7 @@ namespace Sanctuary
                 if (FindFirstObjectByType<AbsoluteSaveProvider>() is { } found)
                 {
                     // Bootstrap the found global instance
-                    found.BootstrapOnDemand();
+                    found.Initialize();
 
                     // Return the absolute instance after bootstrapping
                     return absolute.Controller;
@@ -95,7 +89,7 @@ namespace Sanctuary
                 var container = new GameObject(k_absoluteSaveProviderName, typeof(SaveProvider));
 
                 // Bootstrap the new absolute instance
-                container.AddComponent<AbsoluteSaveProvider>().BootstrapOnDemand();
+                container.AddComponent<AbsoluteSaveProvider>().Initialize();
 
                 // Return the newly created absolute instance
                 return absolute.Controller;
@@ -121,7 +115,7 @@ namespace Sanctuary
                 if (FindFirstObjectByType<GlobalSaveProvider>() is { } found)
                 {
                     // Bootstrap the found global instance
-                    found.BootstrapOnDemand();
+                    found.Initialize();
 
                     // Return the global instance after bootstrapping
                     return global.Controller;
@@ -131,7 +125,7 @@ namespace Sanctuary
                 var container = new GameObject(k_globalSaveProviderName, typeof(SaveProvider));
 
                 // Bootstrap the new global instance
-                container.AddComponent<GlobalSaveProvider>().BootstrapOnDemand();
+                container.AddComponent<GlobalSaveProvider>().Initialize();
 
                 // Return the newly created global instance
                 return global.Controller;
@@ -157,7 +151,7 @@ namespace Sanctuary
                 if (FindFirstObjectByType<TemporarySaveProvider>() is { } found)
                 {
                     // Bootstrap the found temporary instance
-                    found.BootstrapOnDemand();
+                    found.Initialize();
 
                     // Return the temporary instance after bootstrapping
                     return temporary.Controller;
@@ -167,7 +161,7 @@ namespace Sanctuary
                 var container = new GameObject(k_TemporarySaveProviderName, typeof(SaveProvider));
 
                 // Bootstrap the new temporary instance
-                container.AddComponent<TemporarySaveProvider>().BootstrapOnDemand();
+                container.AddComponent<TemporarySaveProvider>().Initialize();
 
                 // Return the newly created temporary instance
                 return temporary.Controller;
@@ -207,24 +201,10 @@ namespace Sanctuary
         private static string SceneSaveProviderName(string sceneName) => $"SaveProvider [{sceneName}]";
 
         /// <summary>
-        /// Retrieves the serializer to be used for saving and loading data.
-        /// </summary>
-        /// <remarks>If a custom serializer is provided, it will be used; otherwise, the default binary serializer will be returned.</remarks>
-        /// <returns>The serializer to be used for saving and loading data.</returns>
-        private ISerializer GetSerializer() => serializer != null ? serializer.GetSerializer(GetStream().Options) : BinarySerializer.Default;
-
-        /// <summary>
-        /// Retrieves the stream configuration to be used for saving and loading data.
-        /// </summary>
-        /// <remarks>If a custom stream configuration is provided, it will be used; otherwise, a new instance of FileStreamConfiguration will be created.</remarks>
-        /// <returns>The stream configuration to be used for saving and loading data.</returns>
-        private StreamConfiguration GetStream() => stream != null ? stream : stream = ScriptableObject.CreateInstance<FileStreamConfiguration>();
-
-        /// <summary>
         /// Sets up this SaveProvider as the absolute instance by marking as absolute and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is true.</param>
-        internal async void ConfigureAsAbsolute(ProfileData profile, bool dontDestroyOnLoad = true)
+        internal async void ConfigureAsAbsolute(ProfileData profile, bool loadOnBoot = true, bool dontDestroyOnLoad = true)
         {
             // Check if already configured as absolute
             if (absolute == this)
@@ -245,9 +225,6 @@ namespace Sanctuary
                 // Configure as absolute
                 absolute = this;
 
-                // Initialize absolute save controller if needed
-                controller ??= SaveControllerBase.Create(GetStream(), FileSaveLoader.Builder.Create(profile, GetSerializer()).Build());
-
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
 
@@ -256,6 +233,9 @@ namespace Sanctuary
 
                 // If an absolute save doesn't already exist, create one
                 if (!controller.Exists) await controller.Save(SaveMode.Full);
+
+                // Load the absolute save if specified
+                if (loadOnBoot) await controller.Load(SaveMode.Full);
             }
         }
 
@@ -283,9 +263,6 @@ namespace Sanctuary
             {
                 // Configure as global
                 global = this;
-
-                // Initialize global save controller if needed
-                controller ??= SaveControllerBase.Create(GetStream(), FileSaveLoader.Builder.Create(profile, GetSerializer()).Build());
 
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
@@ -320,9 +297,6 @@ namespace Sanctuary
                 // Configure as temporary
                 temporary = this;
 
-                // Initialize temporary save controller if needed
-                controller ??= SaveControllerBase.Create(GetStream(), FileSaveLoader.Builder.Create(profile, GetSerializer()).Build());
-
                 // Make persistent across scenes if specified and in play mode
                 if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(gameObject);
 
@@ -354,14 +328,7 @@ namespace Sanctuary
             }
 
             // Initialize scene save controller if needed
-            if (controller == null)
-            {
-                // Set the profile name to the scene name if not already set
-                profile.SetFileName(scene);
-
-                // Create a default FileSaveLoader for scene saves
-                controller = SaveControllerBase.Create(GetStream(), FileSaveLoader.Builder.Create(profile, GetSerializer()).Build());
-            }
+            if (controller == null) profile.SetFileName(scene);
 
             // Register this container for the scene
             sceneContainers.Add(scene, this);
@@ -396,7 +363,7 @@ namespace Sanctuary
                 if (go.TryGetComponent(out SceneSaveProvider bootstrapper))
                 {
                     // Bootstrap the scene's SaveProvider
-                    bootstrapper.BootstrapOnDemand();
+                    bootstrapper.Initialize();
 
                     // Set the scene name on the bootstrapper
                     bootstrapper.SetName(scene.name);
@@ -413,7 +380,7 @@ namespace Sanctuary
             SceneSaveProvider container = obj.AddComponent<SceneSaveProvider>();
 
             // Bootstrap the new scene's SaveProvider
-            container.BootstrapOnDemand();
+            container.Initialize();
 
             // Set the scene name on the locator
             container.SetName(scene.name);

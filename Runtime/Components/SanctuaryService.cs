@@ -33,10 +33,6 @@ namespace Sanctuary
 
         public void RegisterMigrationStep(ISaveMigrationStep step) => m_MigrationPipeline.RegisterStep(step);
 
-        // public void RegisterInternalData<T>(string key, T data) where T : class => m_InternalData.AddChunk(key, key, data);
-
-        public async Task<SaveResult> SaveAsync(string slotId) => await SaveAsync(slotId, new object());
-
         public async Task<SaveResult> SaveAsync<T>(string slotId, T data) where T : class
         {
             // Check if a save operation is already in progress, and if so, return a failure result indicating that a save is already in progress
