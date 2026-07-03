@@ -48,16 +48,4 @@ namespace Sanctuary.Serialization
         [System.Obsolete("This method is deprecated and will be removed in future versions. File extension handling will be managed by the designated SerializationConfiguration instead.")]
         string GetFileExtension();
     }
-
-    /// <summary>
-    /// Defines the interface for a serializer that can serialize and deserialize save data to and from byte arrays.
-    /// </summary>
-    public interface ISaveSerializer
-    {
-        byte[] Serialize<T>(T data) where T : class;
-
-        SaveDeserializeResult<T> Deserialize<T>(byte[] data) where T : class;
-
-        int CurrentSchemaVersion { get; }
-    }
 }

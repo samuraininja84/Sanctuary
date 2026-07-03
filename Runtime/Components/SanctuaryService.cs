@@ -14,7 +14,6 @@ namespace Sanctuary
         private readonly ISaveSerializer m_Serializer;
         private readonly ISaveIntegrityValidator m_Validator;
         private readonly ISanctuaryLogger m_Logger;
-        private readonly SaveData m_InternalData = new();
         private readonly SaveSlotRegistry m_SlotRegistry;
         private readonly SaveMigrationPipeline m_MigrationPipeline;
 
@@ -34,9 +33,9 @@ namespace Sanctuary
 
         public void RegisterMigrationStep(ISaveMigrationStep step) => m_MigrationPipeline.RegisterStep(step);
 
-        public void RegisterInternalData<T>(string key, T data) where T : class => m_InternalData.AddChunk(key, key, data);
+        // public void RegisterInternalData<T>(string key, T data) where T : class => m_InternalData.AddChunk(key, key, data);
 
-        public async Task<SaveResult> SaveAsync(string slotId) => await SaveAsync(slotId, m_InternalData);
+        public async Task<SaveResult> SaveAsync(string slotId) => await SaveAsync(slotId, new object());
 
         public async Task<SaveResult> SaveAsync<T>(string slotId, T data) where T : class
         {

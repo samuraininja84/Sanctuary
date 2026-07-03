@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sanctuary.Stores;
 using Sanctuary.Loaders;
-using Sanctuary.Extensions;
-using Sanctuary.Configuration;
 
 namespace Sanctuary
 {
@@ -20,18 +18,16 @@ namespace Sanctuary
     /// </remarks>
     public class SaveControllerBase
     {
-        public string Name;
+        public string name;
         protected bool _isInitialized = false;
-        protected readonly SaveScope _scope = SaveScope.Global;
         protected readonly ISaveLoader _loader;
         protected readonly IStreamConfiguration _configuration;
-        protected ISaveData _data = SaveData.Empty;
+        protected readonly SemaphoreSlim _lock = new(1);
+        protected ISaveData _data;
 
         /// <summary>
-        /// A semaphore used to ensure that only one operation is performed at a time.
+        /// Gets the save data. If the data is accessed before being loaded, a warning is logged and an empty data is returned as a placeholder.
         /// </summary>
-        private readonly SemaphoreSlim _lock = new(1);
-
         public ISaveData Data
         {
             get
@@ -43,7 +39,7 @@ namespace Sanctuary
                     Debug.LogWarning("[Sanctuary]: Tried to access the data before the save was loaded.\n Make sure to call `save.Load(SaveMode.Full)` before accessing the data. Returning empty data as a placeholder.");
 
                     // Return an empty data to avoid null reference exceptions
-                    _data = SaveData.Empty;
+                    _data = new SaveData();
                 }
 
                 // Return the data
@@ -82,16 +78,13 @@ namespace Sanctuary
         /// </summary>
         /// <param name="loader">The save loader used to handle loading and saving operations. This parameter cannot be <see langword="null"/>.</param>
         /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
-        protected SaveControllerBase(IStreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global)
+        protected SaveControllerBase(IStreamConfiguration configuration, ISaveLoader loader)
         {
             // Set the configuration
             _configuration = configuration;
 
             // Set the loader
             _loader = loader;
-
-            // Set the scope
-            _scope = scope;
 
             // Set the lock
             _lock = new SemaphoreSlim(1);
@@ -103,10 +96,10 @@ namespace Sanctuary
         /// <param name="loader">The loader to use for loading and saving the data.</param>
         /// <param name="scope">The scope of the save. Defaults to <see cref="SaveScope.Global"/>.</param>
         /// <returns>A new instance of the save controller.</returns>
-        public static SaveControllerBase Create(IStreamConfiguration configuration, ISaveLoader loader, SaveScope scope = SaveScope.Global) 
+        public static SaveControllerBase Create(IStreamConfiguration configuration, ISaveLoader loader) 
         {
             // Create a new save controller with the provided loader
-            var save = new SaveControllerBase(configuration, loader, scope);
+            var save = new SaveControllerBase(configuration, loader);
 
             // Initialize the save controller
             save.Initialize();
@@ -147,8 +140,8 @@ namespace Sanctuary
             // Check if the save exists
             Exists = await _loader.Exists();
 
-            // Load the name of the save
-            Name = await _loader.GetName();
+            // Get the name of the save
+            name = await _loader.GetName();
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
@@ -231,13 +224,13 @@ namespace Sanctuary
                         Data = result.Data;
                         break;
                     case LoadStatus.NoValidSave:
-                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage. {result.Message}");
+                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage. {result.Message}");
                         break;
                     case LoadStatus.ProviderError:
-                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{Name}' from persistent storage due to a provider error. {result.Message}");
+                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage due to a provider error. {result.Message}");
                         break;
                     case LoadStatus.MigrationFailed:
-                        Debug.LogWarning($"[Sanctuary]: Failed to migrate save '{Name}' from persistent storage. {result.Message}");
+                        Debug.LogWarning($"[Sanctuary]: Failed to migrate save '{name}' from persistent storage. {result.Message}");
                         break;
                     default: 
                         throw new ArgumentOutOfRangeException();
@@ -325,6 +318,7 @@ namespace Sanctuary
         /// Sets the ID of save loader.
         /// </summary>
         /// <param name="id">The ID to set.</param>
+        [Obsolete("SetID will be removed in future versions. To be replaced with a string-based identifier system.")]
         public virtual void SetID(int id) => _loader.WithID(id);
 
         /// <summary>

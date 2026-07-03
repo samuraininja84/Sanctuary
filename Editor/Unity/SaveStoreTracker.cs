@@ -146,7 +146,7 @@ namespace Sanctuary.Editor
                 var stores = kvp.Value;
 
                 // Display the name of the controller associated with the save store
-                if (controller != null) EditorGUILayout.LabelField($"{controller.Name}");
+                if (controller != null) EditorGUILayout.LabelField($"{controller.name}");
 
                 // Iterate through the list of save stores for the current controller
                 for (var i = 0; i < stores.Count; i++)

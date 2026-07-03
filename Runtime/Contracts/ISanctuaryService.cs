@@ -11,14 +11,6 @@ namespace Sanctuary
         void RegisterMigrationStep(ISaveMigrationStep step);
 
         /// <summary>
-        /// Saves an internal collection of data to the specified save slot. If the slot already exists, it will be overwritten.
-        /// </summary>
-        /// <remarks>Intended for use in saving information in bulk.</remarks>
-        /// <param name="slotId">The ID of the save slot.</param>
-        /// <returns>A task that represents the asynchronous save operation. The task result contains the result of the save operation.</returns>
-        Task<SaveResult> SaveAsync(string slotId);
-
-        /// <summary>
         /// Saves the specified data to the specified save slot. If the slot already exists, it will be overwritten.
         /// </summary>
         /// <typeparam name="T">The type of the data to save.</typeparam>

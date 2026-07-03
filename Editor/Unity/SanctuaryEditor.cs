@@ -695,7 +695,7 @@ namespace Sanctuary.Editor
             if (FilterFiles)
             {
                 // Dropdown to select the save controller
-                _currentIndex = EditorGUILayout.Popup(_currentIndex, saves.Select(save => save.Name).ToArray());
+                _currentIndex = EditorGUILayout.Popup(_currentIndex, saves.Select(save => save.name).ToArray());
             }
             else
             {
