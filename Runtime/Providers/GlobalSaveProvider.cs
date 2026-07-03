@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Sanctuary.Extensions;
 using Sanctuary.Configuration;
 using Sanctuary.Serialization;
 using Sanctuary.Loaders;
@@ -8,7 +7,6 @@ namespace Sanctuary
 {
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-1000)]
-    [RequireComponent(typeof(SaveProvider))]
     [AddComponentMenu("Sanctuary/Global Save Provider")]
     public sealed class GlobalSaveProvider : SaveControllerBase
     {
@@ -27,16 +25,6 @@ namespace Sanctuary
         [SerializeField] private bool dontDestroyOnLoad = true;
 
         /// <summary>
-        /// A reference to the SaveProvider instance managed by this Bootstrapper.
-        /// </summary>
-        private SaveProvider container;
-
-        /// <summary>
-        /// The SaveProvider instance managed by this Bootstrapper.
-        /// </summary>
-        internal SaveProvider Container => container != null ? container : (container = gameObject.GetOrAdd<SaveProvider>());
-
-        /// <summary>
         /// Retrieves the serializer to be used for saving and loading data.
         /// </summary>
         /// <remarks>If a custom serializer is provided, it will be used; otherwise, the default binary serializer will be returned.</remarks>
@@ -52,6 +40,8 @@ namespace Sanctuary
 
         protected override void PreInit() => Configure(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), GetStream());
 
-        protected override void PostInit() => Container.ConfigureAsGlobal(this, profile, dontDestroyOnLoad);
+        protected override void PostInit() => SaveProvider.ConfigureAsGlobal(this, profile, dontDestroyOnLoad);
+
+        private void OnDestroy() => SaveProvider.ClearByScope(SaveScope.Global);
     }
 }
