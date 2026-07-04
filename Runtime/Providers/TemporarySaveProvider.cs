@@ -6,6 +6,8 @@ using Sanctuary.Serialization;
 
 namespace Sanctuary
 {
+    [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-1000)]
     [AddComponentMenu("Sanctuary/Temporary Save Provider")]
     public sealed class TemporarySaveProvider : SaveControllerBase
     {
@@ -50,13 +52,17 @@ namespace Sanctuary
             );
         }
 
-        protected override async void PreInit() => Configure(ConstructService());
-
-        protected override void PostInit()
+        protected override async void PreInit()
         {
             // Register this SaveProvider with the SaveProvider static class for temporary scope
             SaveProvider.SetByScope(SaveScope.Temporary, this);
 
+            // Initialize the SanctuaryService with the constructed service and configure it for use
+            Configure(ConstructService());
+        }
+
+        protected override void PostInit()
+        {
             // Make persistent across scenes if specified and in play mode
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
         }

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 using Sanctuary.Configuration;
 using Sanctuary.Serialization;
 
@@ -53,18 +52,19 @@ namespace Sanctuary
             );
         }
 
-        protected override async void PreInit() => Configure(ConstructService());
-
-        protected async override void PostInit()
+        protected override async void PreInit()
         {
             // Register this SaveProvider as the absolute save provider
             SaveProvider.SetByScope(SaveScope.Absolute, this);
 
-            // If an absolute save doesn't already exist, create one
-            if (!Exists) await Save();
+            // Configure the SanctuaryService with the constructed service
+            Configure(ConstructService());
+        }
 
+        protected async override void PostInit()
+        {
             // Load the absolute save if specified
-            if (loadOnBoot) await Load();
+            if (Exists && loadOnBoot) await Load();
 
             // Make persistent across scenes if specified and in play mode
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 using Sanctuary.Configuration;
 using Sanctuary.Serialization;
 
@@ -51,13 +50,17 @@ namespace Sanctuary
             );
         }
 
-        protected override async void PreInit() => Configure(ConstructService());
-
-        protected override void PostInit()
+        protected override async void PreInit()
         {
             // Register this SaveProvider as the global SaveProvider for the specified profile
             SaveProvider.SetByScope(SaveScope.Global, this);
 
+            // Configure the SanctuaryService with the constructed service
+            Configure(ConstructService());
+        }
+
+        protected override void PostInit()
+        {
             // Make persistent across scenes if specified and in play mode
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
         }

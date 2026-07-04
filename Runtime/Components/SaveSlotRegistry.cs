@@ -22,7 +22,33 @@ namespace Sanctuary
 
         public byte[] ToBytes() => System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(m_Slots));
 
-        public static SaveSlotRegistry FromBytes(byte[] data)
+        public void FromBytes(byte[] data)
+        {
+            // If the input data is null or empty, clear the internal dictionary and return.
+            if (data == null || data.Length == 0)
+            {
+                m_Slots.Clear();
+                return;
+            }
+
+            // Convert the byte array to a JSON string using UTF-8 encoding.
+            var json = System.Text.Encoding.UTF8.GetString(data);
+
+            // Deserialize the JSON string into a dictionary of save slot information.
+            var slots = JsonConvert.DeserializeObject<Dictionary<string, SaveSlotInfo>>(json);
+
+            // If the deserialization was successful and the slots dictionary is not null, populate the internal dictionary with the deserialized slots.
+            if (slots != null)
+            {
+                m_Slots.Clear();
+                foreach (var kvp in slots)
+                {
+                    m_Slots[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        public static SaveSlotRegistry CreateFromBytes(byte[] data)
         {
             // Initialize a new instance of SaveSlotRegistry to hold the deserialized data.
             var registry = new SaveSlotRegistry();

@@ -8,6 +8,8 @@ using Sanctuary.Extensions;
 
 namespace Sanctuary
 {
+    [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-1000)]
     /// <summary>
     /// The main controller for managing game saves.
     /// </summary>
@@ -75,6 +77,8 @@ namespace Sanctuary
 
         #region Configuration
 
+        private void Awake() => Initialize();
+
         /// <summary>
         /// Configures the save controller with the provided save loader and stream configuration.
         /// </summary>
@@ -118,6 +122,9 @@ namespace Sanctuary
 
             // Lock the semaphore to prevent other operations
             await Lock();
+
+            // Load the registry to ensure that the save exists in the registry
+            await _service.LoadRegistryAsync();
 
             // Check if the save exists
             Exists = await _service.ExistsAsync(Name);

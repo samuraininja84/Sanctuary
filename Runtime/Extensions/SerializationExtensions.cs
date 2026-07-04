@@ -128,18 +128,7 @@ namespace Sanctuary.Serialization
         public static async Task<FileStream> CreateFileDeserializationStream(string filePath)
         {
             // Check if the file exists before attempting to deserialize it.
-            if (!File.Exists(filePath))
-            {
-                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
-                if (!await AttemptRollback(filePath))
-                {
-                    // Log an error if rollback failed or backups are not allowed.
-                    UnityEngine.Debug.LogError("[Sanctuary]: Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted. Returning null to indicate that the FileStream could not be created.");
-
-                    // Return null to indicate that the FileStream could not be created.
-                    return null;
-                }
-            }
+            if (!File.Exists(filePath)) return null;
 
             // Indicate that the FileStream was successfully created.
             return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, DefaultBufferSize, DefaultFileOptions);

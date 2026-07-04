@@ -333,18 +333,7 @@ namespace Sanctuary
             var data = await m_Provider.ReadAsync(RegistryFile);
 
             // If the registry file exists and has data, load it into the slot registry
-            if (data != null && data.Length > 0)
-            {
-                // Deserialize the registry data
-                var loaded = SaveSlotRegistry.FromBytes(data);
-
-                // Register all loaded slots in the current registry
-                foreach (var slot in loaded.GetAllSlots())
-                {
-                    // Register each slot in the current registry
-                    m_SlotRegistry.RegisterSlot(slot.SlotId, slot);
-                }
-            }
+            if (data != null && data.Length > 0) m_SlotRegistry.FromBytes(data);
         }
     }
 }

@@ -36,6 +36,9 @@ namespace Sanctuary
             // Create a file deserialization stream to read from the file with optional decompression.
             using var source = await m_Configuration.GetStream(Configuration.StreamType.Deserialization, GetFullPath(relativePath));
 
+            // If the source stream is null, return an empty byte array to indicate that there is no data to read.
+            if (source == null) return new byte[0];
+
             // Create a stream reader to read from the file with optional decompression.
             using var reader = SerializationExtensions.CreateStreamReader(Options, source);
 
@@ -46,7 +49,7 @@ namespace Sanctuary
             var serializer = new NewtonsoftJsonSerializer();
 
             // Run the deserialization in a separate task to avoid blocking the main thread.
-            return await Task.Run(() => serializer.Deserialize<byte[]>(jsonReader));
+            return serializer.Deserialize<byte[]>(jsonReader);
         }
 
         public Task<bool> DeleteAsync(string relativePath)
