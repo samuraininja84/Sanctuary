@@ -1,11 +1,4 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using Sanctuary.Loaders;
-using Sanctuary.Extensions;
-using Sanctuary.Configuration;
-using Sanctuary.Serialization;
+﻿using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -175,17 +168,17 @@ namespace Sanctuary
         /// <param name="source">The source SaveController to configure.</param>
         /// <param name="profile">The profile data to use for the configuration.</param>
         /// <returns>True if the configuration was successful; otherwise, false.</returns>
-        public static bool SetByScope(SaveScope scope, ISaveController source, ProfileData profile)
+        public static bool SetByScope(SaveScope scope, ISaveController source)
         {
             switch (scope)
             {
                 case SaveScope.Absolute:
-                    return ConfigureAsAbsolute(source, profile);
+                    return ConfigureAsAbsolute(source);
                 case SaveScope.Global:
-                    ConfigureAsGlobal(source, profile);
+                    ConfigureAsGlobal(source);
                     return true;
                 case SaveScope.Temporary:
-                    ConfigureAsTemporary(source, profile);
+                    ConfigureAsTemporary(source);
                     return true;
                 default:
                     Debug.LogWarning($"[Sanctuary]: SaveProvider.SetByScope: Unsupported Save Scope: {scope}");
@@ -199,7 +192,7 @@ namespace Sanctuary
         /// <param name="source">The source SaveController to configure as absolute.</param>
         /// <param name="profile">The profile data to use for the configuration.</param>
         /// <returns>True if the configuration was successful; otherwise, false.</returns>
-        private static bool ConfigureAsAbsolute(ISaveController source, ProfileData profile)
+        private static bool ConfigureAsAbsolute(ISaveController source)
         {
             // Check if already configured as absolute
             if (absolute == source)
@@ -232,7 +225,7 @@ namespace Sanctuary
         /// Sets up this SaveProvider as the global instance by marking as global and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is true.</param>
-        private static bool ConfigureAsGlobal(ISaveController source, ProfileData profile)
+        private static bool ConfigureAsGlobal(ISaveController source)
         {
             // Check if already configured as global
             if (global == source)
@@ -265,7 +258,7 @@ namespace Sanctuary
         /// Sets up this SaveProvider as the temporary instance by marking as temporary and optionally making persistent across scene loads.
         /// </summary>
         /// <param name="dontDestroyOnLoad">The GameObject will persist across scene loads if true. Default is false.</param>
-        private static bool ConfigureAsTemporary(ISaveController source, ProfileData profile)
+        private static bool ConfigureAsTemporary(ISaveController source)
         {
             // Check if already configured as temporary
             if (temporary == source)

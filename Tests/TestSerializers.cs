@@ -287,7 +287,7 @@ namespace Sanctuary.Tests
         public async Task TestNewSerializer()
         {
             // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
-            var config = new DefaultStreamConfiguration(Application.persistentDataPath + TestFolderName);
+            var config = new DefaultStreamConfiguration(TestFolderName);
 
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create
@@ -315,7 +315,7 @@ namespace Sanctuary.Tests
         public async Task TestNewBackupSerializers()
         {
             // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
-            var config = new DefaultStreamConfiguration(Application.persistentDataPath + TestFolderName);
+            var config = new DefaultStreamConfiguration(TestFolderName);
 
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create
@@ -343,7 +343,7 @@ namespace Sanctuary.Tests
         public async Task TestNewSerializers()
         {
             // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
-            var config = new DefaultStreamConfiguration(Application.persistentDataPath + TestFolderName);
+            var config = new DefaultStreamConfiguration(TestFolderName);
 
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create

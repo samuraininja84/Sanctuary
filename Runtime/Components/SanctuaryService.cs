@@ -2,14 +2,13 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Sanctuary.Extensions;
 using Sanctuary.Serialization;
 
 namespace Sanctuary
 {
     public sealed class SanctuaryService : ISanctuaryService
     {
-        private const string RegistryFile = "_sanctuary_index.json";
-
         private readonly ISaveDataProvider m_Provider;
         private readonly ISaveSerializer m_Serializer;
         private readonly ISaveIntegrityValidator m_Validator;
@@ -190,7 +189,9 @@ namespace Sanctuary
             // Update the slot information to reflect the new current and backup files, as well as the last save time and schema version
             slotInfo.BackupFile = slotInfo.CurrentFile;
             slotInfo.CurrentFile = tempFile;
+            slotInfo.FileCreationTime = slotInfo.FileCreationTime == default ? DateTime.UtcNow : slotInfo.FileCreationTime;
             slotInfo.LastSaveTime = DateTime.UtcNow;
+            slotInfo.FileSize = serialized.Length;
             slotInfo.SchemaVersion = m_Serializer.CurrentSchemaVersion;
 
             // Register the updated slot information in the slot registry to ensure that it is tracked and can be retrieved in future sessions
@@ -315,14 +316,17 @@ namespace Sanctuary
 
         private async Task PersistRegistryAsync()
         {
+            // Convert the slot registry to a byte array for storage
             var registryData = m_SlotRegistry.ToBytes();
-            await m_Provider.WriteAsync(RegistryFile, registryData);
+
+            // Write the updated slot registry data to the registry file using the save data provider
+            await m_Provider.WriteAsync(SanctuaryServiceExtensions.RegistryFile, registryData);
         }
 
         public async Task LoadRegistryAsync()
         {
             // Attempt to read the registry file from the provider
-            var data = await m_Provider.ReadAsync(RegistryFile);
+            var data = await m_Provider.ReadAsync(SanctuaryServiceExtensions.RegistryFile);
 
             // If the registry file exists and has data, load it into the slot registry
             if (data != null && data.Length > 0)
