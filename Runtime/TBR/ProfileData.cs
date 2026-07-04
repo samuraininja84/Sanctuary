@@ -41,14 +41,6 @@ namespace Sanctuary
         public static ProfileData Global(string fileName) => new(SaveScope.Global, fileName);
 
         /// <summary>
-        /// Creates a new instance of <see cref="ProfileData"/> with the specified name and ID, using the <see cref="SaveScope.Scene"/> scope.
-        /// </summary>
-        /// <param name="fileName">The name associated with the profile. Cannot be null or empty.</param>
-        /// <param name="id">The unique identifier for the profile. Must be a non-negative integer.</param>
-        /// <returns>A new <see cref="ProfileData"/> instance configured with the specified name, ID, and scope.</returns>
-        public static ProfileData Scene(string fileName) => new(SaveScope.Scene, fileName);
-
-        /// <summary>
         /// Creates a new instance of <see cref="ProfileData"/> with a temporary save data scope.
         /// </summary>
         /// <param name="fileName">The name associated with the profile data. Cannot be null or empty.</param>
@@ -130,10 +122,6 @@ namespace Sanctuary
                 case SaveScope.Global:
                     if (Id < 0) Id = 0;
                     break;
-                // Clamp ID for scenes.
-                case SaveScope.Scene:
-                    if (Id < 0) Id = 0;
-                    break;
             }
         }
 
@@ -172,12 +160,6 @@ namespace Sanctuary
         public bool IsGlobal() => GetScope() == SaveScope.Global;
 
         /// <summary>
-        /// Determines whether the profile is scene-specific.
-        /// </summary>
-        /// <returns><see langword="true"/> if the profile is <see cref="SaveScope.Scene"/>; otherwise, <see langword="false"/>.</returns>
-        public bool IsScene() => GetScope() == SaveScope.Scene;
-
-        /// <summary>
         /// Determines whether the profile is temporary.
         /// </summary>
         /// <returns><see langword="true"/> if the profile is <see cref="SaveScope.Temporary"/>; otherwise, <see langword="false"/>.</returns>
@@ -210,10 +192,6 @@ namespace Sanctuary
                     break;
                 // If the scope is Global, append the an ID to the folder path id as a subdirectory
                 case SaveScope.Global:
-                    folderPath = Path.Combine(folderPath, $"{Id}");
-                    break;
-                // If the scope is Scene, append the an ID to the folder path id as a subdirectory
-                case SaveScope.Scene:
                     folderPath = Path.Combine(folderPath, $"{Id}");
                     break;
             }

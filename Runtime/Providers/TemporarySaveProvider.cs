@@ -38,7 +38,14 @@ namespace Sanctuary
 
         protected override void PreInit() => Configure(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), GetStream());
 
-        protected override void PostInit() => SaveProvider.ConfigureAsTemporary(this, profile, dontDestroyOnLoad);
+        protected override void PostInit()
+        {
+            // Register this SaveProvider with the SaveProvider static class for temporary scope
+            SaveProvider.SetByScope(SaveScope.Temporary, this, profile);
+
+            // Make persistent across scenes if specified and in play mode
+            if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
+        }
 
         private void OnDestroy() => SaveProvider.ClearByScope(SaveScope.Temporary);
     }

@@ -169,8 +169,8 @@ namespace Sanctuary.Loaders
         /// <returns>An array of loaded save data objects.</returns>
         public async Task<LoadResult<ISaveData>[]> LoadAll(StreamConfiguration config) 
         {
-            // Return early if the scope is not Global or Scene
-            if (!(_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)) return Array.Empty<LoadResult<ISaveData>>();
+            // Return early if the scope is not Global
+            if (_profile.GetScope() != SaveScope.Global) return Array.Empty<LoadResult<ISaveData>>();
 
             // Get the existing saves for the current profile's scope using the provided stream configuration.
             var streams = await config.GetStreams();
@@ -260,7 +260,7 @@ namespace Sanctuary.Loaders
                 Directory.Delete(scopedDirectory.FullName, true);
 
                 // If the profile's scope is Global or Scene, check if there are any files or directories left in the parent directory, if not, delete it as well
-                if (_profile.GetScope() == SaveScope.Global || _profile.GetScope() == SaveScope.Scene)
+                if (_profile.GetScope() == SaveScope.Global)
                 {
                     // Get the parent directory of the scoped path
                     DirectoryInfo parentDirectory = Directory.GetParent(folderPath);

@@ -40,7 +40,14 @@ namespace Sanctuary
 
         protected override void PreInit() => Configure(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), GetStream());
 
-        protected override void PostInit() => SaveProvider.ConfigureAsGlobal(this, profile, dontDestroyOnLoad);
+        protected override void PostInit()
+        {
+            // Register this SaveProvider as the global SaveProvider for the specified profile
+            SaveProvider.SetByScope(SaveScope.Global, this, profile);
+
+            // Make persistent across scenes if specified and in play mode
+            if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
+        }
 
         private void OnDestroy() => SaveProvider.ClearByScope(SaveScope.Global);
     }

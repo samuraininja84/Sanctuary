@@ -42,7 +42,20 @@ namespace Sanctuary
 
         protected override void PreInit() => Configure(FileSaveLoader.Builder.Create(profile, GetSerializer()).Build(), GetStream());
 
-        protected async override void PostInit() => SaveProvider.ConfigureAsAbsolute(this, profile, loadOnBoot, dontDestroyOnLoad);
+        protected async override void PostInit()
+        {
+            // Register this SaveProvider as the absolute save provider
+            SaveProvider.SetByScope(SaveScope.Absolute, this, profile);
+
+            // If an absolute save doesn't already exist, create one
+            if (!Exists) await Save(SaveMode.Full);
+
+            // Load the absolute save if specified
+            if (loadOnBoot) await Load(SaveMode.Full);
+
+            // Make persistent across scenes if specified and in play mode
+            if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
+        }
 
         private void OnDestroy() => SaveProvider.ClearByScope(SaveScope.Absolute);
     }

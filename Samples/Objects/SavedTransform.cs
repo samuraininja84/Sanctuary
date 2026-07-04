@@ -27,7 +27,7 @@ namespace Sanctaury.Samples
 
         public void OnDisable() => SaveStoreRegistry.Unregister(this);
 
-        public void OnSave(SaveControllerBase save)
+        public void OnSave(ISaveController save)
         {
             // Update the stored data
             data.position = targetObject.transform.position;
@@ -37,7 +37,7 @@ namespace Sanctaury.Samples
             save.Data.SetChunkName(_location, targetObject.name).Write(_location, data);
         }
 
-        public void OnLoad(SaveControllerBase save)
+        public void OnLoad(ISaveController save)
         {
             // Try to read the data from the save controller
             if (save.Data.TryRead(_location, out data))

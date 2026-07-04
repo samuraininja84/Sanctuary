@@ -75,8 +75,8 @@ namespace Sanctuary.Editor
         /// <param name="idRect">The rectangular area in which the ID field is drawn.</param>
         private void DrawIdField(SerializedProperty scopeProperty, SerializedProperty idProperty, Rect idRect)
         {
-            // If the scope is set to anything but `ProfileScope.Global` or `ProfileScope.Scene`, draw the ID field
-            if (scopeProperty.enumValueIndex != (int)SaveScope.Global && scopeProperty.enumValueIndex != (int)SaveScope.Scene)
+            // If the scope is set to anything but `ProfileScope.Global`, draw the ID field
+            if (scopeProperty.enumValueIndex != (int)SaveScope.Global)
             {
                 // Set the line count to 2 for non-global and non-scene scopes
                 lineCount = 2;

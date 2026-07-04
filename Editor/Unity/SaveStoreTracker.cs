@@ -7,7 +7,7 @@ namespace Sanctuary.Editor
 {
     public class SaveStoreTracker : EditorWindow
     {
-        private Dictionary<SaveControllerBase, List<ISaveStore>> registeredStores = new();
+        private Dictionary<ISaveController, List<ISaveStore>> registeredStores = new();
 
         private Vector2 scrollPosition;
 
@@ -97,7 +97,7 @@ namespace Sanctuary.Editor
             if (Application.isPlaying && GUILayout.Button("Refresh")) registeredStores = Convert(SaveStoreRegistry.GetRegisteredStores());
         }
 
-        private void Register(ISaveStore store, SaveControllerBase controller)
+        private void Register(ISaveStore store, ISaveController controller)
         {
             // Check if the controller is already registered in the dictionary, if not, add it with an empty list of stores
             if (!registeredStores.ContainsKey(controller)) registeredStores[controller] = new List<ISaveStore>();
@@ -146,7 +146,7 @@ namespace Sanctuary.Editor
                 var stores = kvp.Value;
 
                 // Display the name of the controller associated with the save store
-                if (controller != null) EditorGUILayout.LabelField($"{controller.name}");
+                if (controller != null) EditorGUILayout.LabelField($"{controller.GetType().Name}");
 
                 // Iterate through the list of save stores for the current controller
                 for (var i = 0; i < stores.Count; i++)
@@ -190,10 +190,10 @@ namespace Sanctuary.Editor
             };
         }
 
-        private static Dictionary<SaveControllerBase, List<ISaveStore>> Convert(Dictionary<ISaveStore, SaveControllerBase> source)
+        private static Dictionary<ISaveController, List<ISaveStore>> Convert(Dictionary<ISaveStore, ISaveController> source)
         {
             // Create a new dictionary to hold the converted data
-            var target = new Dictionary<SaveControllerBase, List<ISaveStore>>();
+            var target = new Dictionary<ISaveController, List<ISaveStore>>();
 
             // Iterate through the source dictionary to convert it into the target dictionary
             foreach (var kvp in source)

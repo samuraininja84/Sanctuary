@@ -1472,7 +1472,6 @@ namespace Sanctuary.Editor
         {
             // Save all of the indexed saves (Global and Scene)
             if (SaveToGlobal) SaveStoreRegistry.SaveByScope(SaveScope.Global, saveMode);
-            if (SaveToScene) SaveStoreRegistry.SaveByScope(SaveScope.Scene, saveMode);
 
             // Include Temporary saves as well, for simplicity
             if (SaveToTemporary) SaveStoreRegistry.SaveByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
@@ -1482,7 +1481,6 @@ namespace Sanctuary.Editor
         {
             // Load all of the indexed saves (Global and Scene)
             if (SaveToGlobal) SaveStoreRegistry.LoadByScope(SaveScope.Global, saveMode);
-            if (SaveToScene) SaveStoreRegistry.LoadByScope(SaveScope.Scene, saveMode);
 
             // Include Temporary saves as well, for simplicity
             if (SaveToTemporary) SaveStoreRegistry.LoadByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
@@ -1492,7 +1490,6 @@ namespace Sanctuary.Editor
         {
             // Delete all indexed saves (Global and Scene)
             SaveStoreRegistry.DeleteByScope(SaveScope.Global);
-            SaveStoreRegistry.DeleteByScope(SaveScope.Scene);
 
             // Include Temporary saves as well, for simplicity
             SaveStoreRegistry.DeleteByScope(SaveScope.Temporary);
@@ -1510,7 +1507,6 @@ namespace Sanctuary.Editor
                 SetProfileID(id.Key);
 
                 // Delete all saves for this profile ID
-                SaveStoreRegistry.DeleteByScope(SaveScope.Scene);
                 SaveStoreRegistry.DeleteByScope(SaveScope.Global);
             }
 
