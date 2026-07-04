@@ -17,8 +17,6 @@ namespace Sanctuary
         [SerializeField] private StreamConfiguration stream;
 
         [Header("Save Provider Settings")]
-        [Tooltip("The save mode to use for this SaveProvider.")]
-        public SaveMode saveMode = SaveMode.Full;
         [Tooltip("The profile data to use for this SaveProvider. Controls where persistent data is stored.")]
         public ProfileData profile = ProfileData.Absolute("Absolute");
         [Tooltip("If true, the SaveProvider will load data on boot.")]
@@ -48,10 +46,10 @@ namespace Sanctuary
             SaveProvider.SetByScope(SaveScope.Absolute, this, profile);
 
             // If an absolute save doesn't already exist, create one
-            if (!Exists) await Save(SaveMode.Full);
+            if (!Exists) await Save();
 
             // Load the absolute save if specified
-            if (loadOnBoot) await Load(SaveMode.Full);
+            if (loadOnBoot) await Load();
 
             // Make persistent across scenes if specified and in play mode
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);

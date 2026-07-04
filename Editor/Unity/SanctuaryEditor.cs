@@ -22,9 +22,6 @@ namespace Sanctuary.Editor
         private static SaveControllerBase[] saves = Array.Empty<SaveControllerBase>();
         private static SaveControllerBase currentSave;
 
-        // Current profile selection
-        private SaveMode saveMode = SaveMode.Full;
-
         // Data caches
         private static readonly Dictionary<string, string> _formattedData = new();
         private static readonly Dictionary<string, string> _chunkNames = new();
@@ -513,9 +510,6 @@ namespace Sanctuary.Editor
 
             // Begin a horizontal layout 
             EditorGUILayout.BeginHorizontal();
-
-            // Draw the save mode selection
-            saveMode = (SaveMode)EditorGUILayout.EnumPopup(saveMode);
 
             // Draw a mini button to overwrite this save
             if (GUILayout.Button(overwriteContent, _miniButtonStyle))
@@ -1462,28 +1456,28 @@ namespace Sanctuary.Editor
 
         #region Static Helper Methods
 
-        public void SaveAbsolute() => SaveStoreRegistry.SaveByScope(SaveScope.Absolute, saveMode);
+        public void SaveAbsolute() => SaveStoreRegistry.SaveByScope(SaveScope.Absolute);
 
-        public void LoadAbsolute() => SaveStoreRegistry.LoadByScope(SaveScope.Absolute, saveMode);
+        public void LoadAbsolute() => SaveStoreRegistry.LoadByScope(SaveScope.Absolute);
 
         public void DeleteAbsolute() => SaveStoreRegistry.DeleteByScope(SaveScope.Absolute);
 
         public void SaveIndexed()
         {
             // Save all of the indexed saves (Global and Scene)
-            if (SaveToGlobal) SaveStoreRegistry.SaveByScope(SaveScope.Global, saveMode);
+            if (SaveToGlobal) SaveStoreRegistry.SaveByScope(SaveScope.Global);
 
             // Include Temporary saves as well, for simplicity
-            if (SaveToTemporary) SaveStoreRegistry.SaveByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
+            if (SaveToTemporary) SaveStoreRegistry.SaveByScope(SaveScope.Temporary);
         }
 
         public void LoadIndexed()
         {
             // Load all of the indexed saves (Global and Scene)
-            if (SaveToGlobal) SaveStoreRegistry.LoadByScope(SaveScope.Global, saveMode);
+            if (SaveToGlobal) SaveStoreRegistry.LoadByScope(SaveScope.Global);
 
             // Include Temporary saves as well, for simplicity
-            if (SaveToTemporary) SaveStoreRegistry.LoadByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
+            if (SaveToTemporary) SaveStoreRegistry.LoadByScope(SaveScope.Temporary);
         }
 
         public void DeleteIndexed()

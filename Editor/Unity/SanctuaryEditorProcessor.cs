@@ -128,15 +128,15 @@ namespace Sanctuary.Editor
             {
                 // When entering play mode
                 case PlayModeStateChange.EnteredPlayMode:
-                    // Check if loading on enter is enabled
-                    if (loadOnEnter)
-                    {
-                        // Log a message indicating that save data is being loaded
-                        Debug.Log("[Sanctuary]: Loading all existing save data from disk on entering Play Mode...");
+                    //// Check if loading on enter is enabled
+                    //if (loadOnEnter)
+                    //{
+                    //    // Log a message indicating that save data is being loaded
+                    //    Debug.Log("[Sanctuary]: Loading all existing save data from disk on entering Play Mode...");
 
-                        // Load all existing save data from disk
-                        SaveStoreRegistry.LoadAll();
-                    }
+                    //    // Load all existing save data from disk
+                    //    SaveStoreRegistry.LoadAll();
+                    //}
                     break;
                 // When exiting play mode clean up the cache
                 case PlayModeStateChange.ExitingPlayMode:

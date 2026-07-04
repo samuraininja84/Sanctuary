@@ -17,8 +17,6 @@ namespace Sanctuary
         [SerializeField] private StreamConfiguration stream;
 
         [Header("Save Provider Settings")]
-        [Tooltip("The save mode to use for this SaveProvider.")]
-        public SaveMode saveMode = SaveMode.Full;
         [Tooltip("The profile data to use for this SaveProvider. Controls where persistent data is stored.")]
         public ProfileData profile = ProfileData.Global("Global");
         [Tooltip("If true, the SaveProvider will not be destroyed on scene load.")]

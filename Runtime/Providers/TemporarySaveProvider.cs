@@ -1,7 +1,9 @@
-﻿using UnityEngine;
-using Sanctuary.Configuration;
-using Sanctuary.Serialization;
+﻿using Sanctuary.Configuration;
 using Sanctuary.Loaders;
+using Sanctuary.Serialization;
+using Sanctuary.Stores;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace Sanctuary
 {
@@ -15,8 +17,6 @@ namespace Sanctuary
         [SerializeField] private StreamConfiguration stream;
 
         [Header("Save Provider Settings")]
-        [Tooltip("The save mode to use for this SaveProvider.")]
-        public SaveMode saveMode = SaveMode.MemoryOnly;
         [Tooltip("The profile data to use for this SaveProvider. Controls where persistent data is stored.")]
         public ProfileData profile = ProfileData.Temporary("Temporary");
         [Tooltip("If true, the SaveProvider will not be destroyed on scene load.")]
@@ -45,6 +45,37 @@ namespace Sanctuary
 
             // Make persistent across scenes if specified and in play mode
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
+        }
+
+        public override async Task Save()
+        {
+            // Lock the semaphore to prevent other operations
+            await Lock();
+
+            // If the save doesn't exist, create it
+            if (!Exists)
+            {
+                // Mark the save as existing
+                Exists = true;
+
+                // Create a new save data to avoid null reference exceptions
+                Data = await _loader.Create();
+
+                // Invoke the OnLoad method for custom load logic
+                OnLoad();
+            }
+
+            // Notify all registered stores to save their data
+            SaveStoreRegistry.SaveWith(this);
+
+            // Save the data to persistent storage if needed
+            await _loader.Save(_configuration, Data);
+
+            // Invoke the OnSave method for custom save logic
+            OnSave();
+
+            // Unlock the semaphore and invoke the Saved event
+            Unlock();
         }
 
         private void OnDestroy() => SaveProvider.ClearByScope(SaveScope.Temporary);
