@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using Sanctuary.Stores;
 using Sanctuary.Extensions;
-using Sanctuary.Configuration;
-using Sanctuary.Serialization;
 
 namespace Sanctuary.Editor
 {
@@ -23,8 +20,6 @@ namespace Sanctuary.Editor
         private static SaveControllerBase currentSave;
         private static SaveControllerBase[] saves = Array.Empty<SaveControllerBase>();
 
-        private IStreamConfiguration config;
-        private ISaveDataProvider provider;
         private SaveSlotRegistry slotRegistry = new();
 
         // Data caches
@@ -48,7 +43,6 @@ namespace Sanctuary.Editor
         // Save slot data
         private Vector2 _slotsScrollPos = Vector2.zero;
         private bool showingSaveSlotOptions;
-        private int minimumSaveSlots = 2;
         private int selectedSaveSlot = 0;
 
         // Current selections
@@ -102,16 +96,13 @@ namespace Sanctuary.Editor
             window.titleContent = new GUIContent("Sanctuary", icon);
         }
 
-        private async void OnFocus()
+        private void OnFocus()
         {
             // Clear styles when the window gains focus
             ClearStyles();
 
             // Repaint the window when it gains focus
             Repaint();
-
-            // Load the registry asynchronously when the window is updated
-            await LoadRegistryAsync();
         }
 
         private void OnEnable()
@@ -387,6 +378,9 @@ namespace Sanctuary.Editor
             // Get all the save slots from the slot registry
             var slots = slotRegistry.GetAllSlots();
 
+            // If there are no save slots, display a message
+            if (slots.Length == 0) GUILayout.Label("No save slots found. Create a new save to generate slots.", _listItemStyle);
+
             // Draw the save slots
             for (int i = 0; i < slots.Length; i++) DrawSaveSlot(slots[i], i);
 
@@ -406,7 +400,7 @@ namespace Sanctuary.Editor
             string startedAt = slot.FileCreationTime.ToString("g");
             string lastModified = slot.LastSaveTime.ToString("g");
             string totalPlayTime = TimeSpan.FromSeconds(slot.TotalPlayTimeSeconds).ToString(@"hh\:mm\:ss");
-            string fileSize = $"{slot.FileSize} bytes";
+            string fileSize = $"{GetReadableFileSize(slot.FileSize)})";
             string schemaVersion = $"Schema Version: {slot.SchemaVersion}";
 
             // Combine the info into a string
@@ -433,6 +427,33 @@ namespace Sanctuary.Editor
 
             // If this save slot is selected, draw the save slot options
             if (selectedSaveSlot == index) DrawSaveSlotOptions(index);
+        }
+
+        private string GetReadableFileSize(long fileSize)
+        {
+            // Convert the file size to a human-readable format
+            int unitIndex;
+
+            // If the file size is greater than 0, calculate the unit index and readable size
+            if (fileSize > 0)
+            {
+                // Calculate the unit index based on the file size
+                unitIndex = (int)Mathf.Floor(Mathf.Log10(fileSize) / Mathf.Log10(1024));
+
+                // Clamp the unit index to the available size units
+                unitIndex = Mathf.Clamp(unitIndex, 0, sizeUnits.Length - 1);
+
+                // Calculate the readable file size
+                float readableSize = fileSize / Mathf.Pow(1024, unitIndex);
+
+                // Return the formatted string with two decimal places
+                return $"{readableSize:F2} {sizeUnits[unitIndex]}";
+            }
+            else
+            {
+                // Return "0 B" for a file size of 0
+                return "0 B";
+            }
         }
 
         private void DrawSaveSlotOptions(int index)
@@ -579,32 +600,6 @@ namespace Sanctuary.Editor
 
             // Re-enable GUI
             GUI.enabled = true;
-        }
-
-        public async Task LoadRegistryAsync()
-        {
-            // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
-            config ??= new DefaultStreamConfiguration(SerializationExtensions.DefaultFolderName);
-
-            // Create a new instance of the StreamSaveDataProvider with the configuration
-            provider ??= new StreamSaveDataProvider(config);
-
-            // Attempt to read the registry file from the provider
-            var data = await provider.ReadAsync(SanctuaryServiceExtensions.RegistryFile);
-
-            // If the registry file exists and has data, load it into the slot registry
-            if (data != null && data.Length > 0)
-            {
-                // Deserialize the registry data
-                var loaded = SaveSlotRegistry.FromBytes(data);
-
-                // Register all loaded slots in the current registry
-                foreach (var slot in loaded.GetAllSlots())
-                {
-                    // Register each slot in the current registry
-                    slotRegistry.RegisterSlot(slot.SlotId, slot);
-                }
-            }
         }
 
         #endregion

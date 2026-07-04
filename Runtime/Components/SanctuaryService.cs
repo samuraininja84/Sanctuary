@@ -2,13 +2,17 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Sanctuary.Extensions;
 using Sanctuary.Serialization;
 
 namespace Sanctuary
 {
     public sealed class SanctuaryService : ISanctuaryService
     {
+        /// <summary>
+        /// The name of the registry file that should be used to store the index of all available slots in the Sanctuary service.
+        /// </summary>
+        public const string RegistryFile = "_sanctuary_index.json";
+
         private readonly ISaveDataProvider m_Provider;
         private readonly ISaveSerializer m_Serializer;
         private readonly ISaveIntegrityValidator m_Validator;
@@ -320,13 +324,13 @@ namespace Sanctuary
             var registryData = m_SlotRegistry.ToBytes();
 
             // Write the updated slot registry data to the registry file using the save data provider
-            await m_Provider.WriteAsync(SanctuaryServiceExtensions.RegistryFile, registryData);
+            await m_Provider.WriteAsync(RegistryFile, registryData);
         }
 
         public async Task LoadRegistryAsync()
         {
             // Attempt to read the registry file from the provider
-            var data = await m_Provider.ReadAsync(SanctuaryServiceExtensions.RegistryFile);
+            var data = await m_Provider.ReadAsync(RegistryFile);
 
             // If the registry file exists and has data, load it into the slot registry
             if (data != null && data.Length > 0)

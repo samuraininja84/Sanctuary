@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Threading.Tasks;
+using UnityEngine;
 using Sanctuary.Configuration;
 using Sanctuary.Serialization;
 
@@ -52,7 +53,7 @@ namespace Sanctuary
             );
         }
 
-        protected override void PreInit() => Configure(ConstructService());
+        protected override async void PreInit() => Configure(ConstructService());
 
         protected async override void PostInit()
         {

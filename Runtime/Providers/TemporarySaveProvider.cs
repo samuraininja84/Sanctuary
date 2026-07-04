@@ -50,7 +50,7 @@ namespace Sanctuary
             );
         }
 
-        protected override void PreInit() => Configure(ConstructService());
+        protected override async void PreInit() => Configure(ConstructService());
 
         protected override void PostInit()
         {

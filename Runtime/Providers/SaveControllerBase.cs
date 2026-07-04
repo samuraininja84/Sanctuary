@@ -108,11 +108,11 @@ namespace Sanctuary
 
             #if UNITY_EDITOR
 
-            // Remove dead references
-            ExistingSaves.RemoveAll(wr => !wr.TryGetTarget(out _));
+                // Remove dead references
+                ExistingSaves.RemoveAll(wr => !wr.TryGetTarget(out _));
 
-            // Add this instance to the list of existing saves
-            ExistingSaves.Add(new WeakReference<SaveControllerBase>(this));
+                // Add this instance to the list of existing saves
+                ExistingSaves.Add(new WeakReference<SaveControllerBase>(this));
 
             #endif
 

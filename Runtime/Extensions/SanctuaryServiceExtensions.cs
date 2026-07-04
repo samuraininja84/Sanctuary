@@ -5,11 +5,6 @@ namespace Sanctuary.Extensions
 {
     public static class SanctuaryServiceExtensions
     {
-        /// <summary>
-        /// The name of the registry file that should be used to store the index of all available slots in the Sanctuary service.
-        /// </summary>
-        public const string RegistryFile = "_sanctuary_index.json";
-
         public static async Task<DateTime> LastModifiedTime(this ISanctuaryService service, string slotId)
         {
             // Get the slot information for the specified slot ID
