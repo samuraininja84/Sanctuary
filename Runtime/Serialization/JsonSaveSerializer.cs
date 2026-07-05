@@ -21,12 +21,15 @@ namespace Sanctuary.Serialization
                 Formatting = Formatting.Indented
             };
 
+            // Serialize the input data to a JSON string using the configured settings
+            var json = JsonConvert.SerializeObject(data);
+
             // Create a SaveEnvelope object with the current schema version, timestamp, and serialized data
             var envelope = new SaveEnvelope
             {
                 SchemaVersion = m_CurrentSchemaVersion,
                 Timestamp = DateTime.UtcNow.ToString("o"),
-                DataJson = JsonConvert.SerializeObject(data)
+                DataJson = json
             };
 
             // Serialize the SaveEnvelope object to a JSON string using the configured settings
