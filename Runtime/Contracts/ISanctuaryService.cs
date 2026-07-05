@@ -53,5 +53,11 @@ namespace Sanctuary
         /// </summary>
         /// <returns>An array of information about all available save slots.</returns>
         SaveSlotInfo[] GetAvailableSlots();
+
+        /// <summary>
+        /// Loads the save slot registry from the configured data provider.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous load operation. The task result indicates whether the load was successful.</returns>
+        Task<bool> TryLoadRegistryAsync();
     }
 }

@@ -25,13 +25,12 @@ namespace Sanctuary.Editor
 
         // The scope for saving and loading data in the editor, allowing users to specify whether to save/load globally, per scene, or temporarily.
         public static bool saveToGlobal = true;
-        public static bool saveToScene = false;
         public static bool saveToTemporary = false;
 
         /// <summary>
         /// Determines if all save types (global, scene, and temporary) are enabled for saving and loading in the editor. 
         /// </summary>
-        public static bool saveToAll => saveToGlobal && saveToScene && saveToTemporary;
+        public static bool saveToAll => saveToGlobal && saveToTemporary;
 
         /// <summary>
         /// The menu path for accessing Sanctuary's preferences in Unity's Preferences window.
@@ -62,11 +61,6 @@ namespace Sanctuary.Editor
         /// The EditorPrefs key for saving the save to global preference.
         /// </summary>
         public const string saveToGlobalKey = "Sanctuary_SaveToGlobal";
-
-        /// <summary>
-        /// The EditorPrefs key for saving the save to scene preference.
-        /// </summary>
-        public const string saveToSceneKey = "Sanctuary_SaveToScene";
 
         /// <summary>
         /// The EditorPrefs key for saving the save to temporary preference.
@@ -108,12 +102,6 @@ namespace Sanctuary.Editor
             // Load the saveToGlobal preference from EditorPrefs
             saveToGlobal = EditorPrefs.GetBool(saveToGlobalKey);
 
-            // If there is no key for saveToScene, set it to false
-            if (!EditorPrefs.HasKey(saveToSceneKey)) EditorPrefs.SetBool(saveToSceneKey, false);
-
-            // Load the saveToScene preference from EditorPrefs
-            saveToScene = EditorPrefs.GetBool(saveToSceneKey);
-
             // If there is no key for saveToTemporary, set it to false
             if (!EditorPrefs.HasKey(saveToTemporaryKey)) EditorPrefs.SetBool(saveToTemporaryKey, false);
 
@@ -128,15 +116,6 @@ namespace Sanctuary.Editor
             {
                 // When entering play mode
                 case PlayModeStateChange.EnteredPlayMode:
-                    // Check if loading on enter is enabled
-                    if (loadOnEnter)
-                    {
-                        // Log a message indicating that save data is being loaded
-                        Debug.Log("[Sanctuary]: Loading all existing save data from disk on entering Play Mode...");
-
-                        // Load all existing save data from disk
-                        SaveStoreRegistry.LoadAll();
-                    }
                     break;
                 // When exiting play mode clean up the cache
                 case PlayModeStateChange.ExitingPlayMode:
@@ -271,7 +250,6 @@ namespace Sanctuary.Editor
 
                 // Add menu items for each save type option
                 menu.AddItem(new GUIContent("Save to Global"), saveToGlobal, () => { saveToGlobal = !saveToGlobal; });
-                menu.AddItem(new GUIContent("Save to Scene"), saveToScene, () => { saveToScene = !saveToScene; });
                 menu.AddItem(new GUIContent("Save to Temporary"), saveToTemporary, () => { saveToTemporary = !saveToTemporary; });
 
                 // Add a separator before the "Save to All" option
@@ -282,7 +260,6 @@ namespace Sanctuary.Editor
                 {
                     bool newValue = !saveToAll;
                     saveToGlobal = newValue;
-                    saveToScene = newValue;
                     saveToTemporary = newValue;
                 });
 
@@ -388,19 +365,6 @@ namespace Sanctuary.Editor
 
                 // Save the new value to EditorPrefs
                 EditorPrefs.SetBool(SanctuaryEditorProcessor.saveToGlobalKey, newSaveToGlobal);
-            }
-
-            // Save to Scene toggle
-            bool newSaveToScene = EditorGUILayout.Toggle("Save to Scene", SanctuaryEditorProcessor.saveToScene, GUILayout.ExpandWidth(true));
-
-            // Check if the value has changed
-            if (newSaveToScene != SanctuaryEditorProcessor.saveToScene)
-            {
-                // Update the static field in SanctuaryEditorProcessor
-                SanctuaryEditorProcessor.saveToScene = newSaveToScene;
-
-                // Save the new value to EditorPrefs
-                EditorPrefs.SetBool(SanctuaryEditorProcessor.saveToSceneKey, newSaveToScene);
             }
 
             // Save to Temporary toggle

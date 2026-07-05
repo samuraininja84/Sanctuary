@@ -4,10 +4,13 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using Sanctuary.Stores;
-using Sanctuary.Loaders;
+using Sanctuary.Extensions;
+using Newtonsoft.Json;
 
 namespace Sanctuary
 {
+    [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-1000)]
     /// <summary>
     /// The main controller for managing game saves.
     /// </summary>
@@ -18,8 +21,7 @@ namespace Sanctuary
     /// </remarks>
     public abstract class SaveControllerBase : MonoBehaviour, ISaveController
     {
-        protected ISaveLoader _loader;
-        protected IStreamConfiguration _configuration;
+        protected ISanctuaryService _service;
         protected ISaveData _data;
 
         /// <summary>
@@ -44,10 +46,10 @@ namespace Sanctuary
             }
 
             // Get the data from the value
-            private set => _data = value;
+            protected set => _data = value;
         }
 
-        public string Name { get; protected set; }
+        public abstract string Name { get; }
 
         public bool Exists { get; protected set; }
 
@@ -76,16 +78,18 @@ namespace Sanctuary
 
         #region Configuration
 
+        private void Awake() => Initialize();
+
         /// <summary>
         /// Configures the save controller with the provided save loader and stream configuration.
         /// </summary>
         /// <param name="loader">The save loader to use for loading and saving data.</param>
         /// <param name="configuration">The stream configuration to use for saving and loading data.</param>
         /// <exception cref="ArgumentNullException">Thrown if the loader or configuration is null.</exception>
-        public void Configure(ISaveLoader loader, IStreamConfiguration configuration)
+        public void Configure(ISanctuaryService service)
         {
-            _loader = loader ?? throw new ArgumentNullException(nameof(loader), "SaveControllerBase.Configure: The save loader cannot be null.");
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "SaveControllerBase.Configure: The stream configuration cannot be null.");
+            // Check if the service is null and throw an exception if it is
+            _service = service ?? throw new ArgumentNullException(nameof(service), "SaveControllerBase.Configure: The save service cannot be null.");
         }
 
         /// <summary>
@@ -96,7 +100,7 @@ namespace Sanctuary
         /// name and whether it exists.
         /// It does not load the data itself.
         /// </remarks>
-        public async void Initialize() 
+        public virtual async void Initialize() 
         {
             // If already initialized, do nothing
             if (_isInitialized) return;
@@ -109,22 +113,25 @@ namespace Sanctuary
 
             #if UNITY_EDITOR
 
-            // Remove dead references
-            ExistingSaves.RemoveAll(wr => !wr.TryGetTarget(out _));
+                // Remove dead references
+                ExistingSaves.RemoveAll(wr => !wr.TryGetTarget(out _));
 
-            // Add this instance to the list of existing saves
-            ExistingSaves.Add(new WeakReference<SaveControllerBase>(this));
+                // Add this instance to the list of existing saves
+                ExistingSaves.Add(new WeakReference<SaveControllerBase>(this));
 
             #endif
 
             // Lock the semaphore to prevent other operations
             await Lock();
 
-            // Check if the save exists
-            Exists = await _loader.Exists();
+            // Load the registry to ensure that the save exists in the registry
+            var registryLoaded = await _service.TryLoadRegistryAsync();
 
-            // Get the name of the save
-            Name = await _loader.GetName();
+            // Check if the registry was loaded successfully
+            var fileExists = await _service.ExistsAsync(Name);
+
+            // Check if the save exists in the registry and in the file system
+            Exists = registryLoaded && fileExists;
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
@@ -133,11 +140,15 @@ namespace Sanctuary
             PostInit();
         }
 
+        #endregion
+
+        #region Save Operations
+
         /// <summary>
         /// Save the game state. 
         /// </summary>
         /// <remarks>Saves based on the <see cref="SaveMode"/> provided.</remarks>
-        public async Task Save(SaveMode mode = SaveMode.MemoryOnly)
+        public virtual async Task Save()
         {
             // Lock the semaphore to prevent other operations
             await Lock();
@@ -149,85 +160,70 @@ namespace Sanctuary
                 Exists = true;
 
                 // Create a new save data to avoid null reference exceptions
-                Data = await _loader.Create();
+                Data = new SaveData();
 
                 // Invoke the OnLoad method for custom load logic
                 OnLoad();
             }
 
-            // Notify stores and invoke OnSave if needed
-            if (mode != SaveMode.PersistentOnly)
-            {
-                // Notify all registered stores to save their data
-                SaveStoreRegistry.SaveWith(this);
+            // Notify all registered stores to save their data
+            SaveStoreRegistry.SaveWith(this);
 
-                // Invoke the OnSave method for custom save logic
-                OnSave();
-            }
+            // Save the data to persistent storage if needed
+            await _service.SaveAsync(Name, Data);
 
-            // Save to persistent storage if needed
-            if (mode != SaveMode.MemoryOnly) await _loader.Save(_configuration, Data);
+            // Invoke the OnSave method for custom save logic
+            OnSave();
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
-
-            // Await the next frame to ensure that all operations are completed before allowing any new ones
-            await Task.Yield();
         }
 
         /// <summary>
         /// Load the game state.
         /// </summary>
         /// <remarks>Loads based on the <see cref="SaveMode"/> provided.</remarks>
-        public async Task Load(SaveMode mode = SaveMode.MemoryOnly)
+        public virtual async Task Load()
         {
             // Lock the semaphore to prevent other operations
             await Lock();
 
-            // Load from persistent storage if needed
-            if (mode != SaveMode.MemoryOnly)
-            {
-                // Load the save data from persistent storage
-                var result = await _loader.Load(_configuration);
+            // Load the save data
+            var result = await _service.LoadAsync<SaveData>(Name);
 
-                // Handle the result of the load operation
-                switch (result.Status)
-                {
-                    case LoadStatus.Success:
-                        Data = result.Data;
-                        break;
-                    case LoadStatus.SuccessFromBackup:
-                        Data = result.Data;
-                        break;
-                    case LoadStatus.SuccessMigrated:
-                        Data = result.Data;
-                        break;
-                    case LoadStatus.SuccessMigratedFromBackup:
-                        Data = result.Data;
-                        break;
-                    case LoadStatus.NoValidSave:
-                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage. {result.Message}");
-                        break;
-                    case LoadStatus.ProviderError:
-                        Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage due to a provider error. {result.Message}");
-                        break;
-                    case LoadStatus.MigrationFailed:
-                        Debug.LogWarning($"[Sanctuary]: Failed to migrate save '{name}' from persistent storage. {result.Message}");
-                        break;
-                    default: 
-                        throw new ArgumentOutOfRangeException();
-                }
+            // Handle the result of the load operation
+            switch (result.Status)
+            {
+                case LoadStatus.Success:
+                    Data = result.Data;
+                    break;
+                case LoadStatus.SuccessFromBackup:
+                    Data = result.Data;
+                    break;
+                case LoadStatus.SuccessMigrated:
+                    Data = result.Data;
+                    break;
+                case LoadStatus.SuccessMigratedFromBackup:
+                    Data = result.Data;
+                    break;
+                case LoadStatus.NoValidSave:
+                    Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage. {result.Message}");
+                    break;
+                case LoadStatus.ProviderError:
+                    Debug.LogError($"[Sanctuary]: Failed to load save '{name}' from persistent storage due to a provider error. {result.Message}");
+                    break;
+                case LoadStatus.MigrationFailed:
+                    Debug.LogError($"[Sanctuary]: Failed to migrate save '{name}' from persistent storage. {result.Message}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
-            // Notify stores and invoke OnLoad if needed
-            if (mode != SaveMode.PersistentOnly)
-            {
-                // Notify all registered stores to load their data
-                SaveStoreRegistry.LoadWith(this);
+            // Notify all registered stores to load their data
+            SaveStoreRegistry.LoadWith(this);
 
-                // Invoke the OnLoad method for custom load logic
-                OnLoad();
-            }
+            // Invoke the OnLoad method for custom load logic
+            OnLoad();
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
@@ -236,13 +232,13 @@ namespace Sanctuary
         /// <summary>
         /// Delete the save.
         /// </summary>
-        public async Task Delete()
+        public virtual async Task Delete()
         {
             // Lock the semaphore to prevent other operations
             await Lock();
 
             // Check if the save exists
-            Exists = await _loader.Exists();
+            Exists = await _service.ExistsAsync(Name);
 
             // If the save exists, delete it
             if (Exists)
@@ -257,18 +253,30 @@ namespace Sanctuary
                 Data = null;
 
                 // Delete the save from persistent storage
-                await _loader.Delete();
+                await _service.DeleteAsync(Name);
             }
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();
         }
 
+        public virtual async Task DeleteAll()
+        {
+            // Lock the semaphore to prevent
+            await Lock();
+
+            // Delete all saves from persistent storage
+            await _service.DeleteAllAsync();
+
+            // Unlock the semaphore and invoke the Saved event
+            Unlock();
+        }
+
         /// <summary>
-        /// Lock the semaphore and invokes the Saving event.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        private async Task Lock()
+            /// Lock the semaphore and invokes the Saving event.
+            /// </summary>
+            /// <returns>A task that represents the asynchronous operation.</returns>
+        protected async Task Lock()
         {
             // Check if the lock exists
             if (_lock == null) throw new InvalidOperationException("SaveProvider.Lock: The lock semaphore is null.");
@@ -283,7 +291,7 @@ namespace Sanctuary
         /// <summary>
         /// Unlock the semaphore and invokes the Saved event.
         /// </summary>
-        private void Unlock()
+        protected void Unlock()
         {
             // Check if the lock exists and is currently locked before releasing
             _lock.Release();
@@ -299,9 +307,9 @@ namespace Sanctuary
         /// <summary>
         /// Sets the ID of save loader.
         /// </summary>
+        /// <remarks>Only used for internal purposes. This method is called by the editor to make it easier to identify saves in the editor. It is not used at runtime.</remarks>
         /// <param name="id">The ID to set.</param>
-        [Obsolete("SetID will be removed in future versions. To be replaced with a string-based identifier system.")]
-        public virtual void SetID(int id) => _loader.WithID(id);
+        public virtual void SetID(string slotID) { }
 
         /// <summary>
         /// Invoked before the save controller is initialized.
@@ -350,8 +358,12 @@ namespace Sanctuary
 
         ISaveData Data { get; }
 
-        Task Save(SaveMode mode = SaveMode.Full);
-        Task Load(SaveMode mode = SaveMode.Full);
+        Task Save();
+
+        Task Load();
+
         Task Delete();
+
+        Task DeleteAll();
     }
 }

@@ -37,50 +37,6 @@ namespace Sanctuary.Serialization
         private const FileOptions DefaultFileOptions = FileOptions.Asynchronous | FileOptions.SequentialScan;
 
         /// <summary>
-        /// Attempts to roll back a file to its backup version if the backup file exists.
-        /// </summary>
-        /// <remarks>
-        /// This method checks for the existence of a backup file at the specified location, appending a predefined backup file extension to the original file path. 
-        /// If the backup file exists, it replaces the original file with the backup. If the backup file is missing, the method logs an error and returns <see langword="false"/>. Any exceptions encountered during the rollback process are propagated to the caller.
-        /// </remarks>
-        /// <param name="filePath">The path of the original file to roll back to.</param>
-        /// <returns><see langword="true"/> if the rollback was successful and the backup file was restored; otherwise, <see langword="false"/> if the backup file does not exist.</returns>
-        /// <exception cref="Exception">Thrown if an error occurs during the rollback process, such as a failure to copy the backup file.</exception>
-        public static async Task<bool> AttemptRollback(string filePath)
-        {
-            // Initialize the success variable to false
-            bool success = false;
-
-            // Construct the backup file path.
-            var backupFilePath = filePath + DefaultBackupExtension;
-
-            // Attempt to roll back to the backup file.
-            try
-            {
-                // If the backup file exists, copy it to the original file path, overwriting the original file.
-                if (File.Exists(backupFilePath))
-                {
-                    // Use the DirectoryUtility to copy the backup file to the original file path.
-                    await DirectoryUtility.CopyFileAsync(backupFilePath, filePath);
-
-                    // Log a message indicating that the rollback was successful.
-                    UnityEngine.Debug.Log($"[Sanctuary]: Rollback successful: {backupFilePath} has been restored to {filePath}.");
-
-                    // Indicate that the rollback was successful.
-                    success = true;
-                }
-            }
-            catch (Exception e)
-            {
-                // Throw an exception if the rollback failed to copy the backup file to the original file path.
-                throw new Exception("[Sanctuary]: Error occured when trying to roll back to backup file at: " + backupFilePath + " to " + filePath + ", did not work.\n" + e);
-            }
-
-            // Indicate that the rollback was successful.
-            return success;
-        }
-
-        /// <summary>
         /// Creates a FileStream for corruption testing, ensuring that the directory exists before creating the file. 
         /// </summary>
         /// <remarks>
@@ -127,19 +83,11 @@ namespace Sanctuary.Serialization
         /// <returns>A boolean indicating whether the FileStream was successfully created.</returns>
         public static async Task<FileStream> CreateFileDeserializationStream(string filePath)
         {
-            // Check if the file exists before attempting to deserialize it.
-            if (!File.Exists(filePath))
-            {
-                // Attempt to roll back to the backup file, if it fails or backups are not allowed, return a new empty save data object.
-                if (!await AttemptRollback(filePath))
-                {
-                    // Log an error if rollback failed or backups are not allowed.
-                    UnityEngine.Debug.LogError("[Sanctuary]: Save file not found at " + filePath + " and rollback to backup failed, the backup file may not exist or is corrupted. Returning null to indicate that the FileStream could not be created.");
+            // Ensure the folder path exists.
+            var folderPath = Path.GetDirectoryName(filePath);
 
-                    // Return null to indicate that the FileStream could not be created.
-                    return null;
-                }
-            }
+            // Create the directory if it does not exist.
+            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 
             // Indicate that the FileStream was successfully created.
             return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, DefaultBufferSize, DefaultFileOptions);

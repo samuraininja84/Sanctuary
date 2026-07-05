@@ -1,12 +1,10 @@
 ﻿using System;
-using System.IO;
-using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using Sanctuary.Stores;
 using Sanctuary.Extensions;
-using Sanctuary.Serialization;
 
 namespace Sanctuary.Editor
 {
@@ -19,11 +17,10 @@ namespace Sanctuary.Editor
     public class SanctuaryEditor : EditorWindow
     {
         // Cached saves
-        private static SaveControllerBase[] saves = Array.Empty<SaveControllerBase>();
         private static SaveControllerBase currentSave;
+        private static SaveControllerBase[] saves = Array.Empty<SaveControllerBase>();
 
-        // Current profile selection
-        private SaveMode saveMode = SaveMode.Full;
+        private SaveSlotRegistry slotRegistry = new();
 
         // Data caches
         private static readonly Dictionary<string, string> _formattedData = new();
@@ -45,9 +42,7 @@ namespace Sanctuary.Editor
 
         // Save slot data
         private Vector2 _slotsScrollPos = Vector2.zero;
-        private Dictionary<int, string> existingSaves = new();
         private bool showingSaveSlotOptions;
-        private int minimumSaveSlots = 2;
         private int selectedSaveSlot = 0;
 
         // Current selections
@@ -79,14 +74,11 @@ namespace Sanctuary.Editor
         // Convert the size to a human-readable format
         private static string[] sizeUnits = { "B", "KB", "MB", "GB", "TB" };
 
-        private int HighestSaveId => GetHighestSaveId();
         private bool HorizontalLayout => Screen.width > Screen.height;
         private bool HasSaves => SaveControllerBase.ExistingSaves.Count > 0;
         private bool ShowLocation => SanctuaryEditorProcessor.showLocationWhenNamed;
         private bool FilterFiles => SanctuaryEditorProcessor.filterFiles;
-        private string ExistingSavesPath => Path.Combine(Application.persistentDataPath, SerializationExtensions.DefaultFolderName);
         public static bool SaveToGlobal => SanctuaryEditorProcessor.saveToGlobal;
-        public static bool SaveToScene => SanctuaryEditorProcessor.saveToScene;
         public static bool SaveToTemporary => SanctuaryEditorProcessor.saveToTemporary;
         public static bool SaveToAll => SanctuaryEditorProcessor.saveToAll;
 
@@ -105,9 +97,6 @@ namespace Sanctuary.Editor
 
         private void OnFocus()
         {
-            // Get existing save IDs
-            RefreshExistingSaveIDs();
-
             // Clear styles when the window gains focus
             ClearStyles();
 
@@ -385,17 +374,14 @@ namespace Sanctuary.Editor
             // Disable GUI if there are no existing saves
             GUI.enabled = HasSaves;
 
-            // Draw the 'Absolute' save slot if it exists, because it uses the id of -1
-            if (ValidSave(-1)) DrawActiveSaveSlot(-1);
-            else DrawEmptySaveSlot(-1);
+            // Get all the save slots from the slot registry
+            var slots = slotRegistry.GetAllSlots();
+
+            // If there are no save slots, display a message
+            if (slots.Length == 0) GUILayout.Label("No save slots found. Create a new save to generate slots.", _listItemStyle);
 
             // Draw the save slots
-            for (int i = 0; i < HighestSaveId; i++)
-            {
-                // If the save is valid, draw the active save slot, otherwise draw the empty save slot
-                if (ValidSave(i)) DrawActiveSaveSlot(i);
-                else DrawEmptySaveSlot(i);
-            }
+            for (int i = 0; i < slots.Length; i++) DrawSaveSlot(slots[i], i);
 
             // End the scroll view if there are more than the minimum save slots
             GUILayout.EndScrollView();
@@ -404,21 +390,20 @@ namespace Sanctuary.Editor
             GUI.enabled = true;
         }
 
-        private void DrawActiveSaveSlot(int index)
+        private void DrawSaveSlot(SaveSlotInfo slot, int index)
         {
             // Store the slot name
-            string slotName = index == -1 ? "Absolute Save Slot" : $"Save Slot {index}";
-
-            // Get the save slot information
-            string[] info = existingSaves[index].Split('-');
+            string slotName = slot.SlotId;
 
             // Store the started at and last modified
-            string startedAt = info[0].Trim();
-            string lastModified = info[1].Trim();
-            string fileSize = info[2].Trim();
+            string startedAt = slot.FileCreationTime.ToString("g");
+            string lastModified = slot.LastSaveTime.ToString("g");
+            string totalPlayTime = TimeSpan.FromSeconds(slot.TotalPlayTimeSeconds).ToString(@"hh\:mm\:ss");
+            string fileSize = $"{GetReadableFileSize(slot.FileSize)})";
+            string schemaVersion = $"Schema Version: {slot.SchemaVersion}";
 
             // Combine the info into a string
-            string combinedInfo = $"{slotName}\n{startedAt}\n{lastModified}\n{fileSize}";
+            string combinedInfo = $"{slotName}\n{startedAt}\n{lastModified}\n{totalPlayTime}\n{fileSize}\n{schemaVersion}";
 
             // Draw the button
             if (GUILayout.Button(combinedInfo, _saveSlotStyle))
@@ -434,9 +419,6 @@ namespace Sanctuary.Editor
                     // Set the current index to this index
                     selectedSaveSlot = index;
 
-                    // Set the profile ID
-                    SetProfileID(index);
-
                     // Show the save slot options when selecting a new slot
                     showingSaveSlotOptions = true;
                 }
@@ -446,49 +428,31 @@ namespace Sanctuary.Editor
             if (selectedSaveSlot == index) DrawSaveSlotOptions(index);
         }
 
-        private void DrawEmptySaveSlot(int index)
+        private string GetReadableFileSize(long fileSize)
         {
-            // Create a copy of the save slot style to modify the height
-            GUIStyle buttonStyle = new GUIStyle(_saveSlotStyle) 
-            { 
-                alignment = TextAnchor.MiddleCenter,
-                fixedHeight = (EditorGUIUtility.singleLineHeight + 3) * 3
-            };
+            // Convert the file size to a human-readable format
+            int unitIndex;
 
-            // Change the color of the button to a darker gray
-            GUI.backgroundColor = new Color(0.75f, 0.75f, 0.75f);
-
-            // Change the color of the text to yellow
-            GUI.contentColor = Color.yellowNice;
-
-            // Create New Game Content
-            GUIContent newGameContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
-            newGameContent.tooltip = $"Create a New Save with Default Settings in Slot {index}";
-
-            // Draw the button for creating a new save in this slot
-            if (GUILayout.Button(newGameContent, buttonStyle))
+            // If the file size is greater than 0, calculate the unit index and readable size
+            if (fileSize > 0)
             {
-                // Set the selected save slot to this index
-                selectedSaveSlot = index;
+                // Calculate the unit index based on the file size
+                unitIndex = (int)Mathf.Floor(Mathf.Log10(fileSize) / Mathf.Log10(1024));
 
-                // Set the profile ID
-                SetProfileID(index);
+                // Clamp the unit index to the available size units
+                unitIndex = Mathf.Clamp(unitIndex, 0, sizeUnits.Length - 1);
 
-                // Create a save in this slot
-                if (index >= 0) SaveIndexed();
-                else SaveAbsolute();
+                // Calculate the readable file size
+                float readableSize = fileSize / Mathf.Pow(1024, unitIndex);
 
-                // Refresh the save IDs
-                RefreshExistingSaveIDs();
-                RefreshExistingSaveIDs();
-
-                // Repaint the window
-                Repaint();
+                // Return the formatted string with two decimal places
+                return $"{readableSize:F2} {sizeUnits[unitIndex]}";
             }
-
-            // Reset the color of the button to the default color
-            GUI.backgroundColor = Color.white;
-            GUI.contentColor = Color.white;
+            else
+            {
+                // Return "0 B" for a file size of 0
+                return "0 B";
+            }
         }
 
         private void DrawSaveSlotOptions(int index)
@@ -514,25 +478,15 @@ namespace Sanctuary.Editor
             // Begin a horizontal layout 
             EditorGUILayout.BeginHorizontal();
 
-            // Draw the save mode selection
-            saveMode = (SaveMode)EditorGUILayout.EnumPopup(saveMode);
-
             // Draw a mini button to overwrite this save
             if (GUILayout.Button(overwriteContent, _miniButtonStyle))
             {
                 // Set the current index to this index
                 selectedSaveSlot = index;
 
-                // Set the profile ID
-                SetProfileID(index);
-
                 // Save the data
                 if (index >= 0) SaveIndexed();
                 else SaveAbsolute();
-
-                // Update the existing save IDs
-                RefreshExistingSaveIDs();
-                RefreshExistingSaveIDs();
             }
 
             // Draw a mini button to load this save
@@ -540,9 +494,6 @@ namespace Sanctuary.Editor
             {
                 // Set the current index to this index
                 selectedSaveSlot = index;
-
-                // Set the profile ID
-                SetProfileID(index);
 
                 // Load the save
                 if (index >= 0) LoadIndexed();
@@ -555,15 +506,9 @@ namespace Sanctuary.Editor
                 // Set the current index to this index
                 selectedSaveSlot = index;
 
-                // Set the profile ID
-                SetProfileID(index);
-
                 // Delete the save
                 if (index >= 0) DeleteIndexed();
                 else DeleteAbsolute();
-
-                // Update the existing save IDs
-                RefreshExistingSaveIDs();
             }
 
             // End the horizontal layout
@@ -576,7 +521,7 @@ namespace Sanctuary.Editor
             GUI.enabled = HasSaves;
 
             // Check if there are any existing saves with an id higher than the highest save id
-            if (HasMinimumSaveSlots())
+            //if (HasMinimumSaveSlots())
             {
                 // Draw a horizontal line to separate the save slots from the buttons
                 HorizontalLine();
@@ -596,24 +541,17 @@ namespace Sanctuary.Editor
 
                 // Create New Game Content
                 GUIContent newGameContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
-                newGameContent.tooltip = $"Create a New Save with Default Settings in Slot {HighestSaveId}";
+                newGameContent.tooltip = $"Create a New Save with Default Settings";
 
                 // Draw the button for creating a new save in this slot
                 if (GUILayout.Button(newGameContent, _miniButtonStyle))
                 {
-                    // Set the selected save slot to this index
-                    selectedSaveSlot = HighestSaveId;
-
-                    // Set the profile ID
-                    SetProfileID(selectedSaveSlot);
+                    // Set the save data id to -1
+                    selectedSaveSlot = -1;
 
                     // Create a save in this slot
                     if (selectedSaveSlot >= 0) SaveIndexed();
                     else SaveAbsolute();
-
-                    // Refresh the save IDs
-                    RefreshExistingSaveIDs();
-                    RefreshExistingSaveIDs();
 
                     // Repaint the window
                     Repaint();
@@ -625,18 +563,12 @@ namespace Sanctuary.Editor
                 // Draw a button to delete the last save
                 if (GUILayout.Button(deleteLastSaveContent, _miniButtonStyle))
                 {
-                    // Set the save data id to the highest save id - 1 and delete the game
-                    selectedSaveSlot = HighestSaveId - 1;
-
-                    // Set the profile ID
-                    SetProfileID(selectedSaveSlot);
+                    // Set the save data id to -1
+                    selectedSaveSlot = -1;
 
                     // Delete the save
                     if (selectedSaveSlot >= 0) DeleteIndexed();
                     else DeleteAbsolute();
-
-                    // Refresh the save IDs
-                    RefreshExistingSaveIDs();
 
                     // Repaint the window
                     Repaint();
@@ -654,9 +586,6 @@ namespace Sanctuary.Editor
                     {
                         // Delete all saves
                         DeleteAll();
-
-                        // Refresh the save IDs
-                        RefreshExistingSaveIDs();
                     }
                 }
 
@@ -724,26 +653,8 @@ namespace Sanctuary.Editor
             // Draw a search field with a toolbar style
             searchString = EditorGUILayout.TextField(searchString, searchField);
 
-            // Show the profile ID field only if a valid save slot is selected
-            if (selectedSaveSlot >= 0)
-            {
-                // Store the current profile id
-                int currentId = EditorGUILayout.IntField(ProfileData.Id, GUILayout.Width(50));
-
-                // Clamp the current id to 0 minimum
-                currentId = Mathf.Max(0, currentId);
-
-                // On Value Changed, update the existing save IDs
-                if (GUI.changed && currentId != ProfileData.Id) SetProfileID(currentId);
-
-                // Add some space between the buttons and the search field
-                GUILayout.Space(5f);
-            }
-            else
-            {
-                // Add some space between the edge and the search field
-                GUILayout.Space(3f);
-            }
+            // Add some space between the edge and the search field
+            GUILayout.Space(3f);
 
             // End the horizontal layout
             EditorGUILayout.EndHorizontal();
@@ -1282,244 +1193,47 @@ namespace Sanctuary.Editor
 
         #endregion
 
-        #region ID Helper Methods
-
-        private void SetProfileID(int currentId)
-        {
-            // Clamp the current id to 0 minimum
-            currentId = Mathf.Max(-1, currentId);
-
-            // Update the existing save IDs for the current save
-            foreach (var save in saves)
-            {
-                // Update the static profile id
-                ProfileData.Id = currentId;
-
-                // Update the existing save IDs
-                save.SetID(ProfileData.Id);
-            }
-        }
-
-        private void RefreshExistingSaveIDs()
-        {
-            // Clear the existing save IDs list
-            existingSaves.Clear();
-
-            // Check if the saves directory exists
-            if (!Directory.Exists(ExistingSavesPath)) return;
-
-            // Get all folders in the saves directory
-            DirectoryInfo savesDirectory = new DirectoryInfo(ExistingSavesPath);
-
-            // Loop through all folders in the saves directory
-            foreach (var dir in savesDirectory.GetDirectories())
-            {
-                // Try to parse the folder name as an integer
-                if (int.TryParse(dir.Name, out int id))
-                {
-                    // Get the save file data
-                    string startedAt = GetSaveSlotStartedAt(id.ToString());
-                    string lastModified = GetSaveSlotLastModified(id.ToString());
-                    string fileSize = GetSaveSlotFolderSize(id.ToString());
-                    string combinedData = startedAt + " - "  +  lastModified + " - " + fileSize;
-
-                    // Add the parsed id to the existing save IDs list
-                    existingSaves.Add(id, combinedData);
-                }
-                else
-                {
-                    // This is likely to be the 'Absolute' save folder, so add it with an id of -1
-                    string startedAt = GetSaveSlotStartedAt(dir.Name);
-                    string lastModified = GetSaveSlotLastModified(dir.Name);
-                    string fileSize = GetSaveSlotFolderSize(dir.Name);
-                    string combinedData = startedAt + " - "  +  lastModified + " - " + fileSize;
-
-                    // Add the parsed id to the existing save IDs list
-                    existingSaves.Add(-1, combinedData);
-                }
-            }
-        }
-
-        private string GetSaveSlotStartedAt(string subDirectory)
-        {
-            // Get the path to the save slot directory
-            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
-
-            // If the directory doesn't exist, return "Started At: N/A"
-            if (!Directory.Exists(saveSlotPath)) return "Started At: N/A";
-
-            // Create a DirectoryInfo object for the save slot directory
-            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
-
-            // Get all files in the directory and its subdirectories
-            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-
-            // If there are no files, return DateTime.MinValue
-            if (files.Length == 0) return "Started At: N/A";
-
-            // Find the earliest creation time among all files
-            DateTime startedAt = files.Min(file => file.CreationTime);
-
-            // Return the earliest creation time
-            return "Started At: " + startedAt.ToString("g");
-        }
-
-        private string GetSaveSlotLastModified(string subDirectory)
-        {
-            // Get the path to the save slot directory
-            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
-
-            // If the directory doesn't exist, return "Last Modified: N/A"
-            if (!Directory.Exists(saveSlotPath)) return "Last Modified: N/A";
-
-            // Create a DirectoryInfo object for the save slot directory
-            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
-
-            // Get all files in the directory and its subdirectories
-            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-
-            // If there are no files, return DateTime.MinValue
-            if (files.Length == 0) return "Last Modified: N/A";
-
-            // Find the most recent last write time among all files
-            DateTime lastModified = files.Max(file => file.LastWriteTime);
-
-            // Return the most recent last write time
-            return "Last Modified: " + lastModified.ToString("g");
-        }
-
-        private string GetSaveSlotFolderSize(string subDirectory)
-        {
-            // Get the path to the save slot directory
-            string saveSlotPath = Path.Combine(ExistingSavesPath, subDirectory);
-
-            // If the directory doesn't exist, return "N/A"
-            if (!Directory.Exists(saveSlotPath)) return "File Size: N/A";
-
-            // Create a DirectoryInfo object for the save slot directory
-            DirectoryInfo dirInfo = new DirectoryInfo(saveSlotPath);
-
-            // Get all files in the directory and its subdirectories
-            FileInfo[] files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-
-            // If there are no files, return "N/A"
-            if (files.Length == 0) return "File Size: N/A";
-
-            // Calculate the total size of all files in bytes
-            long totalSize = files.Sum(file => file.Length);
-
-            // Convert the size to a double for easier calculations
-            double size = totalSize;
-
-            // Initialize the unit index
-            int unitIndex = 0;
-
-            // Convert the size to the appropriate unit
-            while (size >= 1024 && unitIndex < sizeUnits.Length - 1)
-            {
-                // Divide the size by 1024 to convert to the next unit
-                size /= 1024;
-
-                // Increment the unit index
-                unitIndex++;
-            }
-
-            // Return the formatted size string
-            return $"File Size: {size:F2} {sizeUnits[unitIndex]}";
-        }
-
-        private int GetHighestSaveId()
-        {
-            // Initialize the highest as -1
-            int highestId = -1;
-
-            // If the list is empty, return -1
-            if (existingSaves != null && existingSaves.Count > 0)
-            {
-                // Loop through the list and find the greatest value
-                foreach (var value in existingSaves)
-                {
-                    // If the value is greater than the highest value, set the highest value to the value
-                    if (value.Key > highestId) highestId = value.Key;
-                }
-            }
-
-            // If the highest id is less than the minimum save slots, set it to always show the minimum save slots (-1, 0, 1), accounting for negative indexing
-            if (highestId < minimumSaveSlots) highestId = minimumSaveSlots - 1;
-
-            // Increment the highest id by 1 to account for negative indexing
-            highestId += 1;
-
-            // Return the highest id found
-            return highestId;
-        }
-
-        private bool HasMinimumSaveSlots() => ValidSave(HighestSaveId - 1);
-
-        private bool ValidSave(int id) => existingSaves != null && existingSaves.ContainsKey(id);
-
-        #endregion
-
         #region Static Helper Methods
 
-        public void SaveAbsolute() => SaveStoreRegistry.SaveByScope(SaveScope.Absolute, saveMode);
+        public void SaveAbsolute() => SaveStoreRegistry.SaveByScope(SaveScope.Absolute);
 
-        public void LoadAbsolute() => SaveStoreRegistry.LoadByScope(SaveScope.Absolute, saveMode);
+        public void LoadAbsolute() => SaveStoreRegistry.LoadByScope(SaveScope.Absolute);
 
         public void DeleteAbsolute() => SaveStoreRegistry.DeleteByScope(SaveScope.Absolute);
 
         public void SaveIndexed()
         {
             // Save all of the indexed saves (Global and Scene)
-            if (SaveToGlobal) SaveStoreRegistry.SaveByScope(SaveScope.Global, saveMode);
-            if (SaveToScene) SaveStoreRegistry.SaveByScope(SaveScope.Scene, saveMode);
+            if (SaveToGlobal) SaveStoreRegistry.SaveByScope(SaveScope.Global);
 
             // Include Temporary saves as well, for simplicity
-            if (SaveToTemporary) SaveStoreRegistry.SaveByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
+            if (SaveToTemporary) SaveStoreRegistry.SaveByScope(SaveScope.Temporary);
         }
 
         public void LoadIndexed()
         {
             // Load all of the indexed saves (Global and Scene)
-            if (SaveToGlobal) SaveStoreRegistry.LoadByScope(SaveScope.Global, saveMode);
-            if (SaveToScene) SaveStoreRegistry.LoadByScope(SaveScope.Scene, saveMode);
+            if (SaveToGlobal) SaveStoreRegistry.LoadByScope(SaveScope.Global);
 
             // Include Temporary saves as well, for simplicity
-            if (SaveToTemporary) SaveStoreRegistry.LoadByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
+            if (SaveToTemporary) SaveStoreRegistry.LoadByScope(SaveScope.Temporary);
         }
 
         public void DeleteIndexed()
         {
             // Delete all indexed saves (Global and Scene)
             SaveStoreRegistry.DeleteByScope(SaveScope.Global);
-            SaveStoreRegistry.DeleteByScope(SaveScope.Scene);
 
             // Include Temporary saves as well, for simplicity
             SaveStoreRegistry.DeleteByScope(SaveScope.Temporary);
         }
 
-        public void DeleteAll()
+        public async void DeleteAll()
         {
-            // Get the existing save IDs before deletion
-            RefreshExistingSaveIDs();
-
-            // Loop through all existing save IDs
-            foreach (var id in existingSaves)
-            {
-                // Set the profile ID, if it isn't a negative index
-                SetProfileID(id.Key);
-
-                // Delete all saves for this profile ID
-                SaveStoreRegistry.DeleteByScope(SaveScope.Scene);
-                SaveStoreRegistry.DeleteByScope(SaveScope.Global);
-            }
-
             // Finally, delete Temporary and Absolute saves
-            SaveStoreRegistry.DeleteByScope(SaveScope.Temporary);
-            SaveStoreRegistry.DeleteByScope(SaveScope.Absolute);
-
-            // Clear the existing save IDs list
-            existingSaves.Clear();
+            await SaveProvider.ByScope(SaveScope.Absolute).DeleteAll();
+            await SaveProvider.ByScope(SaveScope.Global).DeleteAll();
+            await SaveProvider.ByScope(SaveScope.Temporary).DeleteAll();
         }
 
         [MenuItem("Window/Sanctuary/Clear Cache")]

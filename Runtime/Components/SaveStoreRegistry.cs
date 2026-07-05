@@ -15,12 +15,12 @@ namespace Sanctuary.Stores
         /// <summary>
         /// A lookup dictionary for stores and their associated save controllers.
         /// </summary>
-        private static readonly Dictionary<ISaveStore, SaveControllerBase> _storeLookup = new();
+        private static readonly Dictionary<ISaveStore, ISaveController> _storeLookup = new();
 
         /// <summary>
         /// An event that is invoked when a store is registered. It takes the registered store and its associated save controller as parameters.
         /// </summary>
-        public static event System.Action<ISaveStore, SaveControllerBase> OnStoreRegistered = delegate { };
+        public static event System.Action<ISaveStore, ISaveController> OnStoreRegistered = delegate { };
 
         /// <summary>
         /// An event that is invoked when a store is unregistered. It takes the unregistered store as a parameter.
@@ -33,14 +33,14 @@ namespace Sanctuary.Stores
         /// Gets a copy of the currently registered stores and their associated save controllers.
         /// </summary>
         /// <returns>A dictionary containing the registered stores and their associated save controllers.</returns>
-        public static Dictionary<ISaveStore, SaveControllerBase> GetRegisteredStores() => new(_storeLookup);
+        public static Dictionary<ISaveStore, ISaveController> GetRegisteredStores() => new(_storeLookup);
 
         /// <summary>
         /// Register a store.
         /// </summary>
         /// <param name="store">The store to register.</param>
         /// <param name="save">The associated save controller.</param>
-        public static void Register(this ISaveStore store, SaveControllerBase save = null)
+        public static void Register(this ISaveStore store, ISaveController save = null)
         {
             // Register the store in the linked list.
             _stores.AddFirst(store);
@@ -98,7 +98,7 @@ namespace Sanctuary.Stores
         /// Find all stores associated with the given save controller and invoke their save operation.
         /// </summary>
         /// <param name="save">The save controller to match.</param>
-        internal static void SaveWith(this SaveControllerBase save)
+        internal static void SaveWith(this ISaveController save)
         {
             // Find all stores associated with the given save controller.
             foreach (var kvp in _storeLookup)
@@ -112,7 +112,7 @@ namespace Sanctuary.Stores
         /// Find all stores associated with the given save controller and invoke their load operation.
         /// </summary>
         /// <param name="save">The save controller to match.</param>
-        internal static void LoadWith(this SaveControllerBase save)
+        internal static void LoadWith(this ISaveController save)
         {
             // Find all stores associated with the given save controller.
             foreach (var kvp in _storeLookup)
@@ -129,7 +129,7 @@ namespace Sanctuary.Stores
         /// <summary>
         /// Invoke <see cref="ISaveStore.OnSave"/> on all registered stores.
         /// </summary>
-        public static void SaveAllWith(this SaveControllerBase save)
+        public static void SaveAllWith(this ISaveController save)
         {
             // Get the first store in the linked list.
             var store = _stores.First;
@@ -149,7 +149,7 @@ namespace Sanctuary.Stores
         /// Invoke <see cref="ISaveStore.OnLoad"/> on all registered stores.
         /// </summary>
         /// <param name="save">The current save controller.</param>
-        public static void LoadAllWith(this SaveControllerBase save)
+        public static void LoadAllWith(this ISaveController save)
         {
             // Get the first store in the linked list.
             var store = _stores.First;
@@ -167,46 +167,6 @@ namespace Sanctuary.Stores
 
         #endregion
 
-        #region Create/Save/Load/Delete All
-
-        /// <summary>
-        /// Simultaneously saves all registered stores.
-        /// </summary>
-        public static void SaveAll(SaveMode mode = SaveMode.Full)
-        {
-            // Save all of the registered stores with their associated save controllers.
-            SaveByScope(SaveScope.Absolute, mode);
-            SaveByScope(SaveScope.Global, mode);
-            SaveByScope(SaveScope.Scene, mode);
-            SaveByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
-        }
-
-        /// <summary>
-        /// Simultaneously loads all registered stores.
-        /// </summary>
-        public static void LoadAll(SaveMode mode = SaveMode.Full)
-        {
-            // Load all of the registered stores with their associated save controllers.
-            LoadByScope(SaveScope.Absolute, mode);
-            LoadByScope(SaveScope.Global, mode);
-            LoadByScope(SaveScope.Scene, mode);
-            LoadByScope(SaveScope.Temporary, SaveMode.MemoryOnly);
-        }
-
-        /// <summary>
-        /// Simultaneously deletes all saved data for all registered stores.
-        /// </summary>
-        public static void DeleteAll()
-        {
-            // Delete all of the registered stores with their associated save controllers.
-            DeleteByScope(SaveScope.Absolute);
-            DeleteByScope(SaveScope.Global);
-            DeleteByScope(SaveScope.Scene);
-            DeleteByScope(SaveScope.Temporary);
-        }
-
-        #endregion
-
         #region Create/Save/Load/Delete By Scope
 
         /// <summary>
@@ -218,7 +178,7 @@ namespace Sanctuary.Stores
         /// </remarks>
         /// <param name="scope">The scope of the stores to save. This parameter cannot be <see langword="null"/> or empty.</param>
         /// <param name="mode">The mode in which to save the stores. Defaults to <see cref="SaveMode.Full"/>.</param>
-        public static async void SaveByScope(this SaveScope scope, SaveMode mode = SaveMode.Full) => await SaveProvider.ByScope(scope).Save(mode);
+        public static async void SaveByScope(this SaveScope scope) => await SaveProvider.ByScope(scope).Save();
 
         /// <summary>
         /// Loads and initializes all stores associated with the specified scope.
@@ -226,7 +186,7 @@ namespace Sanctuary.Stores
         /// <remarks>This method iterates through all registered stores and invokes their load operation if their name matches the specified value.</remarks>
         /// <param name="scope">The scope of the stores to load. This parameter cannot be <see langword="null"/> or empty.</param>
         /// <param name="mode">The mode in which to load the stores. Defaults to <see cref="SaveMode.Full"/>.</param>
-        public static async void LoadByScope(this SaveScope scope, SaveMode mode = SaveMode.Full) => await SaveProvider.ByScope(scope).Load(mode);
+        public static async void LoadByScope(this SaveScope scope) => await SaveProvider.ByScope(scope).Load();
 
         /// <summary>
         /// Deletes all saved data associated with the specified scope.

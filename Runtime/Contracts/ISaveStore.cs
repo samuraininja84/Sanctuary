@@ -18,12 +18,12 @@
         /// Invoked right before the data is saved to the memory.
         /// </summary>
         /// <param name="save">The save controller that provides context or state required for the load operation. Cannot be null.</param>
-        void OnSave(SaveControllerBase save);
+        void OnSave(ISaveController save);
 
         /// <summary>
         /// Invoked when the data is loaded from the memory.
         /// </summary>
         /// <param name="save">The save controller that provides context or state required for the load operation. Cannot be null.</param>
-        void OnLoad(SaveControllerBase save);
+        void OnLoad(ISaveController save);
     }
 }

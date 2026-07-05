@@ -65,4 +65,49 @@ namespace Sanctuary
 
         private string GetFullPath(string relativePath) => Path.Combine(RootPath, relativePath);
     }
+
+    public readonly struct FileSaveDataProvider : ISaveDataProvider
+    {
+        private readonly IStreamConfiguration m_Configuration;
+
+        public string RootPath => m_Configuration.RootPath;
+
+        public FileSaveDataProvider(IStreamConfiguration configuration) => m_Configuration = configuration;
+
+        public async Task<bool> WriteAsync(string relativePath, byte[] data)
+        {
+            var fullPath = GetFullPath(relativePath);
+            var directory = Path.GetDirectoryName(fullPath);
+
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await File.WriteAllBytesAsync(fullPath, data);
+            return true;
+        }
+
+        public async Task<byte[]> ReadAsync(string relativePath)
+        {
+            var fullPath = GetFullPath(relativePath);
+
+            if (!File.Exists(fullPath)) return null;
+
+            return await File.ReadAllBytesAsync(fullPath);
+        }
+
+        public Task<bool> DeleteAsync(string relativePath)
+        {
+            var fullPath = GetFullPath(relativePath);
+
+            if (File.Exists(fullPath)) File.Delete(fullPath);
+
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ExistsAsync(string relativePath) => Task.FromResult(File.Exists(GetFullPath(relativePath)));
+
+        private string GetFullPath(string relativePath) => Path.Combine(RootPath, relativePath);
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using UnityEngine;
 using Sanctuary.Serialization;
 
 namespace Sanctuary.Configuration
@@ -21,9 +22,9 @@ namespace Sanctuary.Configuration
 
         public SerializationOptions Options => m_Options;
 
-        public DefaultStreamConfiguration(string rootPath = "Save Data", SerializationOptions options = SerializationOptions.None, int currentSchemaVersion = 1)
+        public DefaultStreamConfiguration(string folderName = SerializationExtensions.DefaultFolderName, SerializationOptions options = SerializationOptions.None, int currentSchemaVersion = 1)
         {
-            m_RootPath = rootPath;
+            m_RootPath = Path.Combine(Application.persistentDataPath, folderName);
             m_Options = options;
             m_CurrentSchemaVersion = currentSchemaVersion;
         }

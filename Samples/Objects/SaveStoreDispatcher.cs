@@ -10,7 +10,7 @@ namespace Sanctuary.Samples
     public class SaveStoreDispatcher : MonoBehaviour 
     {
         [Tooltip("The scope to register the stores with.")]
-        [SerializeField] private SaveScope Scope = SaveScope.Scene;
+        [SerializeField] private SaveScope scope;
         private ISaveStore[] _stores;
 
         private void Awake() => _stores = GetComponents<ISaveStore>();
@@ -24,7 +24,7 @@ namespace Sanctuary.Samples
                 var store = _stores[i];
 
                 // Register the store
-                SaveStoreRegistry.Register(store, SaveProvider.ByScope(Scope));
+                SaveStoreRegistry.Register(store, SaveProvider.ByScope(scope));
             }
         }
 

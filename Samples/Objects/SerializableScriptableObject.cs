@@ -17,8 +17,8 @@ namespace Sanctuary.Samples
 
         public void Dispose() => SaveStoreRegistry.Unregister(this);
 
-        public virtual void OnSave(SaveControllerBase save) => save.Data.SetChunkName(_location, name).Write(_location, this);
+        public virtual void OnSave(ISaveController save) => save.Data.SetChunkName(_location, name).Write(_location, this);
 
-        public virtual void OnLoad(SaveControllerBase save) => save.Data.SetChunkName(_location, name).TryRead(_location, this);
+        public virtual void OnLoad(ISaveController save) => save.Data.SetChunkName(_location, name).TryRead(_location, this);
     }
 }
