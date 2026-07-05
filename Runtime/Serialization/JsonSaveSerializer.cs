@@ -14,6 +14,13 @@ namespace Sanctuary.Serialization
 
         public byte[] Serialize<T>(T data) where T : class
         {
+            // Configure the JSON serializer settings to handle type names and format the output with indentation
+            var settings = new JsonSerializerSettings
+            {
+                // TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.Indented
+            };
+
             // Create a SaveEnvelope object with the current schema version, timestamp, and serialized data
             var envelope = new SaveEnvelope
             {
@@ -22,8 +29,11 @@ namespace Sanctuary.Serialization
                 DataJson = JsonConvert.SerializeObject(data)
             };
 
+            // Serialize the SaveEnvelope object to a JSON string using the configured settings
+            var updatedJson = JsonConvert.SerializeObject(envelope, settings);
+
             // Convert the envelope JSON string to a byte array using UTF-8 encoding and return it
-            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(envelope));
+            return Encoding.UTF8.GetBytes(updatedJson);
         }
 
         public SaveDeserializeResult<T> Deserialize<T>(byte[] data) where T : class

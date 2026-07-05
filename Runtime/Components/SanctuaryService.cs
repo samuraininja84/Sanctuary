@@ -313,6 +313,13 @@ namespace Sanctuary
 
         private byte[] EmbedChecksum(byte[] serializedData)
         {
+            // Configure the JSON serializer settings to handle type names and format the output with indentation
+            var settings = new JsonSerializerSettings
+            {
+                // TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.Indented
+            };
+
             // Deserialize the serialized data to extract the JSON string
             var json = Encoding.UTF8.GetString(serializedData);
 
@@ -321,10 +328,14 @@ namespace Sanctuary
 
             // Get the bytes of the DataJson property and generate a checksum for it
             var dataBytes = Encoding.UTF8.GetBytes(envelope.DataJson);
+
+            // Generate a checksum for the data bytes using the integrity validator and assign it to the Checksum property of the envelope
             envelope.Checksum = m_Validator.GenerateChecksum(dataBytes);
 
             // Update the envelope with the new checksum and serialize it back to JSON
-            var updatedJson = JsonConvert.SerializeObject(envelope);
+            var updatedJson = JsonConvert.SerializeObject(envelope, settings);
+
+            // Return the updated JSON as a byte array using UTF-8 encoding
             return Encoding.UTF8.GetBytes(updatedJson);
         }
 
