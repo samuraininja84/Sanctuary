@@ -132,9 +132,6 @@ namespace Sanctuary
             // Check if the save exists in the registry and in the file system
             Exists = registryLoaded && fileExists;
 
-            // Log the result of the initialization
-            Debug.Log("[Sanctuary]: SaveControllerBase.Initialize: Save '" + Name + "' exists: " + Exists);
-
             // Unlock the semaphore and invoke the Saved event
             Unlock();
 
