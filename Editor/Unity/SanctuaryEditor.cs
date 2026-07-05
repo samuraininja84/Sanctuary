@@ -20,7 +20,7 @@ namespace Sanctuary.Editor
         private static SaveControllerBase currentSave;
         private static SaveControllerBase[] saves = Array.Empty<SaveControllerBase>();
 
-        private SaveSlotRegistry slotRegistry = new();
+        private readonly SaveSlotRegistry slotRegistry = new();
 
         // Data caches
         private static readonly Dictionary<string, string> _formattedData = new();
@@ -56,8 +56,8 @@ namespace Sanctuary.Editor
         private Vector2 _dataScrollPos;
 
         // Section resizing
-        private Vector2 minSectionSplit = new Vector2(150f, 235f);
-        private Vector2 sectionSplit = new Vector2(300f, 400f);
+        private Vector2 minSectionSplit = new(150f, 235f);
+        private Vector2 sectionSplit = new(300f, 400f);
         private Rect dataSectionRect;
         private bool resizingSection;
 
@@ -67,12 +67,12 @@ namespace Sanctuary.Editor
         private bool resizingLocation;
 
         // Data area resizing
-        private Vector2 minDataSplit = new Vector2(150f, 150f);
-        private Vector2 dataSplit = new Vector2(300f, 300f);
+        private Vector2 minDataSplit = new(150f, 150f);
+        private Vector2 dataSplit = new(300f, 300f);
         private bool resizingData;
 
         // Convert the size to a human-readable format
-        private static string[] sizeUnits = { "B", "KB", "MB", "GB", "TB" };
+        private static readonly string[] sizeUnits = { "B", "KB", "MB", "GB", "TB" };
 
         private bool HorizontalLayout => Screen.width > Screen.height;
         private bool HasSaves => SaveControllerBase.ExistingSaves.Count > 0;
