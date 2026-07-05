@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sanctuary.Stores;
 using Sanctuary.Extensions;
+using Newtonsoft.Json;
 
 namespace Sanctuary
 {
@@ -188,7 +189,7 @@ namespace Sanctuary
             await Lock();
 
             // Load the save data
-            var result = await _service.LoadAsync<ISaveData>(Name);
+            var result = await _service.LoadAsync<SaveData>(Name);
 
             // Handle the result of the load operation
             switch (result.Status)
@@ -209,10 +210,10 @@ namespace Sanctuary
                     Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage. {result.Message}");
                     break;
                 case LoadStatus.ProviderError:
-                    Debug.LogWarning($"[Sanctuary]: Failed to load save '{name}' from persistent storage due to a provider error. {result.Message}");
+                    Debug.LogError($"[Sanctuary]: Failed to load save '{name}' from persistent storage due to a provider error. {result.Message}");
                     break;
                 case LoadStatus.MigrationFailed:
-                    Debug.LogWarning($"[Sanctuary]: Failed to migrate save '{name}' from persistent storage. {result.Message}");
+                    Debug.LogError($"[Sanctuary]: Failed to migrate save '{name}' from persistent storage. {result.Message}");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
