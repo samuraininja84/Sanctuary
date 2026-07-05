@@ -45,10 +45,11 @@ namespace Sanctuary
             // Create a new instance of the SanctuaryService with the specified configuration and components
             return SanctuaryService.Create
             (
-                new StreamSaveDataProvider(config),
+                new FileSaveDataProvider(config),
                 new JsonSaveSerializer(config),
                 new Sha256IntegrityValidator(),
-                new UnityDebugLogger()
+                new UnityDebugLogger(),
+                Name
             );
         }
 

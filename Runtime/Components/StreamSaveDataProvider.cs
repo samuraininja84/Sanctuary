@@ -36,9 +36,6 @@ namespace Sanctuary
             // Create a file deserialization stream to read from the file with optional decompression.
             using var source = await m_Configuration.GetStream(Configuration.StreamType.Deserialization, GetFullPath(relativePath));
 
-            // If the source stream is null, return an empty byte array to indicate that there is no data to read.
-            if (source == null) return new byte[0];
-
             // Create a stream reader to read from the file with optional decompression.
             using var reader = SerializationExtensions.CreateStreamReader(Options, source);
 
@@ -49,7 +46,7 @@ namespace Sanctuary
             var serializer = new NewtonsoftJsonSerializer();
 
             // Run the deserialization in a separate task to avoid blocking the main thread.
-            return serializer.Deserialize<byte[]>(jsonReader);
+            return await Task.Run(() => serializer.Deserialize<byte[]>(jsonReader));
         }
 
         public Task<bool> DeleteAsync(string relativePath)
@@ -61,6 +58,51 @@ namespace Sanctuary
             if (File.Exists(fullPath)) File.Delete(fullPath);
 
             // Return true even if the file didn't exist, as the end result is that the file is not present.
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ExistsAsync(string relativePath) => Task.FromResult(File.Exists(GetFullPath(relativePath)));
+
+        private string GetFullPath(string relativePath) => Path.Combine(RootPath, relativePath);
+    }
+
+    public readonly struct FileSaveDataProvider : ISaveDataProvider
+    {
+        private readonly IStreamConfiguration m_Configuration;
+
+        public string RootPath => m_Configuration.RootPath;
+
+        public FileSaveDataProvider(IStreamConfiguration configuration) => m_Configuration = configuration;
+
+        public async Task<bool> WriteAsync(string relativePath, byte[] data)
+        {
+            var fullPath = GetFullPath(relativePath);
+            var directory = Path.GetDirectoryName(fullPath);
+
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await File.WriteAllBytesAsync(fullPath, data);
+            return true;
+        }
+
+        public async Task<byte[]> ReadAsync(string relativePath)
+        {
+            var fullPath = GetFullPath(relativePath);
+
+            if (!File.Exists(fullPath)) return null;
+
+            return await File.ReadAllBytesAsync(fullPath);
+        }
+
+        public Task<bool> DeleteAsync(string relativePath)
+        {
+            var fullPath = GetFullPath(relativePath);
+
+            if (File.Exists(fullPath)) File.Delete(fullPath);
+
             return Task.FromResult(true);
         }
 

@@ -124,10 +124,16 @@ namespace Sanctuary
             await Lock();
 
             // Load the registry to ensure that the save exists in the registry
-            await _service.LoadRegistryAsync();
+            var registryLoaded = await _service.TryLoadRegistryAsync();
 
-            // Check if the save exists
-            Exists = await _service.ExistsAsync(Name);
+            // Check if the registry was loaded successfully
+            var fileExists = await _service.ExistsAsync(Name);
+
+            // Check if the save exists in the registry and in the file system
+            Exists = registryLoaded && fileExists;
+
+            // Log the result of the initialization
+            Debug.Log("[Sanctuary]: SaveControllerBase.Initialize: Save '" + Name + "' exists: " + Exists);
 
             // Unlock the semaphore and invoke the Saved event
             Unlock();

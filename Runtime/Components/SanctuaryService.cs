@@ -11,28 +11,38 @@ namespace Sanctuary
         /// <summary>
         /// The name of the registry file that should be used to store the index of all available slots in the Sanctuary service.
         /// </summary>
-        public const string RegistryFile = "_sanctuary_index.json";
+        public const string DefaultRegistryFile = "sanctuary" + RegistryFileSuffix;
+
+        /// <summary>
+        /// The suffix that should be appended to the registry file name to indicate that it is an index file.
+        /// </summary>
+        public const string RegistryFileSuffix = "_index.json";
 
         private readonly ISaveDataProvider m_Provider;
         private readonly ISaveSerializer m_Serializer;
         private readonly ISaveIntegrityValidator m_Validator;
         private readonly ISanctuaryLogger m_Logger;
+        public readonly string m_registryFile;
         private readonly SaveSlotRegistry m_SlotRegistry;
         private readonly SaveMigrationPipeline m_MigrationPipeline;
 
         private bool m_SaveInProgress;
 
-        SanctuaryService(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger)
+        SanctuaryService(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger, string registry = DefaultRegistryFile)
         {
             m_Provider = provider;
             m_Serializer = serializer;
             m_Validator = validator;
             m_Logger = logger;
+            m_registryFile = registry + RegistryFileSuffix;
             m_SlotRegistry = new SaveSlotRegistry();
             m_MigrationPipeline = new SaveMigrationPipeline();
         }
 
-        public static SanctuaryService Create(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger) => new(provider, serializer, validator, logger);
+        public static SanctuaryService Create(ISaveDataProvider provider, ISaveSerializer serializer, ISaveIntegrityValidator validator, ISanctuaryLogger logger, string registry = DefaultRegistryFile)
+        {
+            return new(provider, serializer, validator, logger, registry);
+        }
 
         public void RegisterMigrationStep(ISaveMigrationStep step) => m_MigrationPipeline.RegisterStep(step);
 
@@ -324,16 +334,32 @@ namespace Sanctuary
             var registryData = m_SlotRegistry.ToBytes();
 
             // Write the updated slot registry data to the registry file using the save data provider
-            await m_Provider.WriteAsync(RegistryFile, registryData);
+            await m_Provider.WriteAsync(m_registryFile, registryData);
         }
 
-        public async Task LoadRegistryAsync()
+        public async Task<bool> TryLoadRegistryAsync()
         {
-            // Attempt to read the registry file from the provider
-            var data = await m_Provider.ReadAsync(RegistryFile);
+            // Check if the registry file exists in the save data provider
+            if (await m_Provider.ExistsAsync(m_registryFile))
+            {
+                // Attempt to read the registry file from the provider
+                var data = await m_Provider.ReadAsync(m_registryFile);
 
-            // If the registry file exists and has data, load it into the slot registry
-            if (data != null && data.Length > 0) m_SlotRegistry.FromBytes(data);
+                // If the registry file exists and has data, load it into the slot registry
+                if (data != null && data.Length > 0) m_SlotRegistry.FromBytes(data);
+
+                // Log the number of slots loaded from the registry for debugging purposes
+                m_Logger?.Info($"[Sanctuary]: Loaded {m_SlotRegistry.GetAllSlots().Length} slots from registry");
+
+                // Return true to indicate that the registry was successfully loaded
+                return true;
+            }
+
+            // If the registry file does not exist, log a warning and return false to indicate that the registry could not be loaded
+            m_Logger?.Warn($"[Sanctuary]: Registry file '{m_registryFile}' not found");
+
+            // Return false to indicate that the registry could not be loaded
+            return false;
         }
     }
 }
