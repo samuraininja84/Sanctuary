@@ -79,7 +79,6 @@ namespace Sanctuary.Editor
         private bool ShowLocation => SanctuaryEditorProcessor.showLocationWhenNamed;
         private bool FilterFiles => SanctuaryEditorProcessor.filterFiles;
         public static bool SaveToGlobal => SanctuaryEditorProcessor.saveToGlobal;
-        public static bool SaveToScene => SanctuaryEditorProcessor.saveToScene;
         public static bool SaveToTemporary => SanctuaryEditorProcessor.saveToTemporary;
         public static bool SaveToAll => SanctuaryEditorProcessor.saveToAll;
 
