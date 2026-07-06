@@ -1,10 +1,8 @@
 using NUnit.Framework;
-using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using Sanctuary.Configuration;
 using Sanctuary.Serialization;
-using CancellationToken = System.Threading.CancellationToken;
 
 namespace Sanctuary.Tests
 {
@@ -16,7 +14,7 @@ namespace Sanctuary.Tests
         public const string TestObjectId = "5561391260475779002";
         public const int BenchmarkIterations = 100;
 
-        #region New Serializer Tests
+        #region Serializer Tests
 
         [Test]
         public async Task TestSerialization()
@@ -27,7 +25,7 @@ namespace Sanctuary.Tests
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create
             (
-                new FileSaveDataProvider(config),
+                new StreamSaveDataProvider(config),
                 new JsonSaveSerializer(config),
                 new Sha256IntegrityValidator(),
                 new UnityDebugLogger(),
@@ -63,7 +61,7 @@ namespace Sanctuary.Tests
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create
             (
-                new FileSaveDataProvider(config),
+                new StreamSaveDataProvider(config),
                 new JsonSaveSerializer(config),
                 new Sha256IntegrityValidator(),
                 new UnityDebugLogger(),
@@ -99,7 +97,7 @@ namespace Sanctuary.Tests
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create
             (
-                new FileSaveDataProvider(config),
+                new StreamSaveDataProvider(config),
                 new JsonSaveSerializer(config),
                 new Sha256IntegrityValidator(),
                 new UnityDebugLogger(),

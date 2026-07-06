@@ -57,11 +57,11 @@ namespace Sanctuary
             // If the checksum is null or empty, return an integrity failure indicating that the checksum is missing.
             if (string.IsNullOrEmpty(envelope.Checksum)) return IntegrityResult.Fail(IntegrityFailureReason.MissingChecksum);
             
-            // If the data JSON is null or empty, return an integrity failure indicating that the file is incomplete.
-            if (string.IsNullOrEmpty(envelope.DataJson)) return IntegrityResult.Fail(IntegrityFailureReason.IncompleteFile);
+            // If the data is null or empty, return an integrity failure indicating that the file is incomplete.
+            if (envelope.Data == null) return IntegrityResult.Fail(IntegrityFailureReason.IncompleteFile);
 
-            // Convert the DataJson string to a byte array using UTF-8 encoding.
-            var dataBytes = Encoding.UTF8.GetBytes(envelope.DataJson);
+            // Convert the Data to a byte array by serializing it to JSON and then using UTF-8 encoding.
+            var dataBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(envelope.Data));
 
             // Generate the checksum of the data bytes and compare it with the checksum in the envelope.
             var computed = GenerateChecksum(dataBytes);

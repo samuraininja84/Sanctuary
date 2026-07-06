@@ -275,31 +275,25 @@ namespace Sanctuary
                 var envelope = JsonConvert.DeserializeObject<SaveEnvelope>(envelopeJson);
 
                 // If the envelope is null, it means that the deserialization failed, and we cannot proceed with migration
-                if (envelope == null)
-                {
-                    // If the envelope cannot be deserialized, return a failure result indicating that the migration failed
-                    return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, "Cannot read save envelope for migration"));
-                }
+                if (envelope == null) return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, "Cannot read save envelope for migration"));
+
+                // If the data is null, it means that the deserialization failed, and we cannot proceed with migration
+                if (envelope.Data == null) return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, "Cannot read save data for migration"));
+
+                // Serialize the data from the envelope into a JSON string to prepare it for migration
+                var dataJson = JsonConvert.SerializeObject(envelope.Data);
 
                 // Create a migration pipeline and attempt to migrate the data from the old schema version to the current schema version
-                var migration = m_MigrationPipeline.Migrate(envelope.DataJson, envelope.SchemaVersion, m_Serializer.CurrentSchemaVersion);
+                var migration = m_MigrationPipeline.Migrate(dataJson, envelope.SchemaVersion, m_Serializer.CurrentSchemaVersion);
 
                 // If migration fails, return a failure result indicating that the migration failed
-                if (!migration.Success)
-                {
-                    // If migration fails, return a failure result indicating that the migration failed
-                    return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, migration.ErrorMessage));
-                }
+                if (!migration.Success) return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, migration.ErrorMessage));
 
                 // Deserialize the migrated JSON into the target type T
                 var data = JsonConvert.DeserializeObject<T>(migration.MigratedJson);
 
                 // If deserialization fails after migration, return a failure result indicating that the migration failed
-                if (data == null)
-                {
-                    // If deserialization fails after migration, return a failure result indicating that the migration failed
-                    return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, "Deserialization failed after migration"));
-                }
+                if (data == null) return Task.FromResult(LoadResult<T>.Fail(LoadStatus.MigrationFailed, "Deserialization failed after migration"));
 
                 // If migration and deserialization are successful, return a result indicating that the data was migrated
                 return Task.FromResult(LoadResult<T>.Migrated(data, slotInfo));
@@ -313,12 +307,8 @@ namespace Sanctuary
 
         private byte[] EmbedChecksum(byte[] serializedData)
         {
-            // Configure the JSON serializer settings to handle type names and format the output with indentation
-            var settings = new JsonSerializerSettings
-            {
-                // TypeNameHandling = TypeNameHandling.Auto,
-                Formatting = Formatting.Indented
-            };
+            // Configure the JSON serializer settings to format the output with indentation
+            var settings = Formatting.Indented;
 
             // Deserialize the serialized data to extract the JSON string
             var json = Encoding.UTF8.GetString(serializedData);
@@ -327,7 +317,7 @@ namespace Sanctuary
             var envelope = JsonConvert.DeserializeObject<SaveEnvelope>(json);
 
             // Get the bytes of the DataJson property and generate a checksum for it
-            var dataBytes = Encoding.UTF8.GetBytes(envelope.DataJson);
+            var dataBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(envelope.Data));
 
             // Generate a checksum for the data bytes using the integrity validator and assign it to the Checksum property of the envelope
             envelope.Checksum = m_Validator.GenerateChecksum(dataBytes);
