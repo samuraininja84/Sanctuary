@@ -62,9 +62,7 @@ namespace Sanctuary.Editor
         private bool resizingSection;
 
         // Chunk / Location resizing
-        private float minLocationSplit = 75f;
-        private float locationSplit = 150f;
-        private bool resizingLocation;
+        private bool showNestedLocations = false;
 
         // Data area resizing
         private Vector2 minDataSplit = new(150f, 150f);
@@ -161,8 +159,20 @@ namespace Sanctuary.Editor
             // Get the window rect
             Rect windowRect = position;
 
-            #region Actions Menu Area
+            // Draw the action menu section
+            DrawActionMenu(scrollRectSpacing);
 
+            // Adjust the layout based on the current mouse position and window rect
+            LayoutAdjustments(globalMousePosition, windowRect);
+
+            // Draw the save data section
+            DrawSaveData(scrollRectSpacing);
+        }
+
+        #region Draw Methods
+
+        private void DrawActionMenu(float scrollRectSpacing)
+        {
             // If using horizontal layout, draw the actions section on the left side
             if (HorizontalLayout)
             {
@@ -198,11 +208,10 @@ namespace Sanctuary.Editor
 
             // End the area for the actions section
             GUILayout.EndArea();
+        }
 
-            #endregion
-
-            #region Area Seperator Resizing
-
+        private void LayoutAdjustments(Vector2 globalMousePosition, Rect windowRect)
+        {
             // If using horizontal layout, create a resizable splitter between the two sections
             if (HorizontalLayout)
             {
@@ -272,11 +281,10 @@ namespace Sanctuary.Editor
                     if (Event.current.type == EventType.MouseUp) resizingSection = false;
                 }
             }
+        }
 
-            #endregion
-
-            #region Save Data Area
-
+        private void DrawSaveData(float scrollRectSpacing)
+        {
             // Begin the area for the right section, if using horizontal layout
             if (HorizontalLayout)
             {
@@ -320,7 +328,7 @@ namespace Sanctuary.Editor
                 // End the area for the right section, if using horizontal layout
                 GUILayout.EndArea();
 
-                // Return early if no saves are found
+                // Return early since there are no saves to display
                 return;
             }
 
@@ -357,9 +365,9 @@ namespace Sanctuary.Editor
 
             // End the area for the right section, if using horizontal layout
             GUILayout.EndArea();
-
-            #endregion
         }
+
+        #endregion
 
         #region Save Slot Methods
 
@@ -617,22 +625,50 @@ namespace Sanctuary.Editor
             // Draw a button to open the saves folder
             if (GUILayout.Button(openSavesFolderContent, _toolButtonStyle)) SavesFolderOpener.OpenSavesFolder();
 
+            // Create toggle button content
+            GUIContent toggleContent = (SanctuaryEditorProcessor.filterFiles ? "ToggleOn" : "ToggleOff").ToGUIContent();
+            toggleContent.tooltip = SanctuaryEditorProcessor.filterFiles ? "Filtering files enabled. Click to disable." : "Filtering files disabled. Click to enable.";
+
+            // Draw the toggle button
+            if (GUILayout.Button(toggleContent, _toolButtonStyle))
+            {
+                // Toggle the filterFiles state
+                SanctuaryEditorProcessor.filterFiles = !SanctuaryEditorProcessor.filterFiles;
+
+                // Save the new value to EditorPrefs
+                EditorPrefs.SetBool(SanctuaryEditorProcessor.filterFilesKey, SanctuaryEditorProcessor.filterFiles);
+            }
+
             // Disable GUI if there are no saves
             GUI.enabled = HasSaves;
 
-            // If filtering files, draw the save controller dropdown
-            if (FilterFiles)
+            // If there are saves, draw the save controller dropdown, otherwise show a disabled popup indicating no saves are available
+            if (HasSaves)
             {
-                // Dropdown to select the save controller
-                _currentIndex = EditorGUILayout.Popup(_currentIndex, saves.Select(save => save.name).ToArray());
+                // If filtering files, draw the save controller dropdown
+                if (FilterFiles)
+                {
+                    // Dropdown to select the save controller
+                    _currentIndex = EditorGUILayout.Popup(_currentIndex, saves.Select(save => save.Name).ToArray());
+                }
+                else
+                {
+                    // Draw disabled popup when not filtering files
+                    EditorGUI.BeginDisabledGroup(true);
+                    EditorGUILayout.Popup(0, new string[] { "Composite Save Data (All Controllers)" });
+                    EditorGUI.EndDisabledGroup();
+                }
             }
             else
             {
-                // Draw disabled popup when not filtering files
+                // Draw a disabled popup with a message indicating no save files found
                 EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.Popup(0, new string[] { "Composite Save Data (All Controllers)" });
+                EditorGUILayout.Popup(0, new string[] { "No Save Files Available" });
                 EditorGUI.EndDisabledGroup();
             }
+
+            // Add some space between the edge and the search field
+            GUILayout.Space(3f);
 
             // End the horizontal layout
             EditorGUILayout.EndHorizontal();
@@ -683,16 +719,19 @@ namespace Sanctuary.Editor
             // Start a horizontal layout that expands to the height of the window
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandHeight(true));
 
-            // Start a vertical layout for the chunks / locations section, taking up 20% of the screen width
-            EditorGUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.2f));
-
             // Spacing between elements
             float spacing = 3f;
+
+            // Calculate the height for the data section, accounting for the header and spacing
+            float height = dataSectionRect.height - (45 + spacing);
+
+            // Calculate the y position for the data section, accounting for the header and spacing
+            float yPosition = dataSectionRect.y + 40;
 
             #region Chunks GUI
 
             // Get the rect for the chunks section
-            Rect chunkRect = new Rect(0, dataSectionRect.y + 40, dataSplit.x, locationSplit);
+            Rect chunkRect = new Rect(0, yPosition, dataSplit.x, height);
 
             // Create an area for the chunks section
             GUILayout.BeginArea(chunkRect, EditorStyles.objectFieldThumb);
@@ -705,65 +744,10 @@ namespace Sanctuary.Editor
 
             #endregion
 
-            #region Chunks and Locations Splitter
-
-            // Add a draggable splitter at the gap between the chunks and locations section
-            Rect locationSplitterRect = new Rect(0, chunkRect.y + chunkRect.height + spacing, chunkRect.width, 7.5f);
-
-            // Draw a rect at the splitter position
-            EditorGUIUtility.AddCursorRect(locationSplitterRect, MouseCursor.ResizeVertical);
-
-            // Start resizing on mouse down in the splitter rect
-            if (EventInputs.MouseLeft(EventType.MouseDown) && locationSplitterRect.Contains(Event.current.mousePosition)) resizingLocation = true;
-
-            // Calculate the clamp for the split position 
-            float locationClamp = dataSectionRect.height - (minLocationSplit * 1.5f);
-
-            // Clamp the split position
-            locationSplit = Mathf.Clamp(locationSplit, minLocationSplit, locationClamp);
-
-            // Handle resizing
-            if (resizingLocation)
-            {
-                // Handle mouse drag events
-                if (Event.current.type == EventType.MouseDrag)
-                {
-                    // Update the split position based on the mouse position
-                    locationSplit = Mathf.Clamp(Event.current.mousePosition.y - dataSectionRect.y - 40, minLocationSplit, locationClamp);
-
-                    // Repaint the window to reflect the changes
-                    Repaint();
-                }
-
-                // Stop resizing on mouse up
-                if (Event.current.type == EventType.MouseUp) resizingLocation = false;
-            }
-
-            #endregion
-
-            #region Locations GUI
-
-            // Get the rect for the locations section
-            Rect locationRect = new Rect(0, chunkRect.y + chunkRect.height + spacing, chunkRect.width, (dataSectionRect.height - locationSplit) - (48 + spacing));
-
-            // Create an area for the locations section
-            GUILayout.BeginArea(locationRect, EditorStyles.objectFieldThumb);
-
-            // Render the locations GUI
-            LocationsGUI(data);
-
-            // End the area for the locations section
-            GUILayout.EndArea();
-
-            #endregion
-
-            // End the vertical layout for the chunks and locations section
-            EditorGUILayout.EndVertical();
-
             #region Data Section Split Resizer
 
             // Add a draggable splitter at the right edge of the chunks and locations section for the data section
-            Rect dataSplitterRect = new Rect(chunkRect.width - 2f, chunkRect.y, 50f, dataSectionRect.height - 50f);
+            Rect dataSplitterRect = new Rect(chunkRect.width - 2f, chunkRect.y, 50f, height);
 
             // Draw the splitter rect
             EditorGUIUtility.AddCursorRect(dataSplitterRect, MouseCursor.ResizeHorizontal);
@@ -802,7 +786,7 @@ namespace Sanctuary.Editor
             EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true));
 
             // Get the rect for the data section
-            Rect dataRect = new Rect(dataSplit.x + spacing, dataSectionRect.y + 40, dataSectionRect.width - chunkRect.width - (5 + spacing), dataSectionRect.height - (45 + spacing));
+            Rect dataRect = new Rect(dataSplit.x + spacing, yPosition, dataSectionRect.width - chunkRect.width - (5 + spacing), height);
 
             // Create an area for the data section
             GUILayout.BeginArea(dataRect, EditorStyles.objectFieldThumb);
@@ -827,16 +811,19 @@ namespace Sanctuary.Editor
             // Start a horizontal layout that expands to the height of the window
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandHeight(true));
 
-            // Start a vertical layout for the chunks section, taking up half the screen width
-            EditorGUILayout.BeginVertical(GUILayout.Height(Screen.height * 0.2f));
-
             // Spacing between elements
             float spacing = 3f;
+
+            // Calculate the height for the data section, accounting for the header and spacing
+            float height = dataSectionRect.height - (45 + spacing);
+
+            // Calculate the y position for the data section, accounting for the header and spacing
+            float yPosition = 40 + spacing;
 
             #region Locations GUI
 
             // Get the rect for the chunks section
-            Rect chunkRect = new Rect(0, dataSectionRect.y - sectionSplit.y + 40, dataSplit.y, locationSplit);
+            Rect chunkRect = new Rect(0, yPosition, dataSplit.y, height);
 
             // Create an area for the chunks section
             GUILayout.BeginArea(chunkRect, EditorStyles.objectFieldThumb);
@@ -849,65 +836,10 @@ namespace Sanctuary.Editor
 
             #endregion
 
-            #region Chunks and Locations Splitter
-
-            // Add a draggable splitter at the gap between the chunks and locations section
-            Rect locationSplitterRect = new Rect(0, chunkRect.y + chunkRect.height + spacing, chunkRect.width, 7.5f);
-
-            // Draw a rect at the splitter position
-            EditorGUIUtility.AddCursorRect(locationSplitterRect, MouseCursor.ResizeVertical);
-
-            // Start resizing on mouse down in the splitter rect
-            if (EventInputs.MouseLeft(EventType.MouseDown) && locationSplitterRect.Contains(Event.current.mousePosition)) resizingLocation = true;
-
-            // Calculate the clamp for the split position 
-            float locationClamp = dataSectionRect.height - (minLocationSplit * 1.5f);
-
-            // Clamp the split position
-            locationSplit = Mathf.Clamp(locationSplit, minLocationSplit, locationClamp);
-
-            // Handle resizing
-            if (resizingLocation)
-            {
-                // Handle mouse drag events
-                if (Event.current.type == EventType.MouseDrag)
-                {
-                    // Update the split position based on the mouse position
-                    locationSplit = Mathf.Clamp(Event.current.mousePosition.y - 40, minLocationSplit, locationClamp);
-
-                    // Repaint the window to reflect the changes
-                    Repaint();
-                }
-
-                // Stop resizing on mouse up
-                if (Event.current.type == EventType.MouseUp) resizingLocation = false;
-            }
-
-            #endregion
-
-            #region Locations GUI
-
-            // Get the rect for the locations section
-            Rect locationRect = new Rect(0, chunkRect.y + chunkRect.height + spacing, chunkRect.width, (dataSectionRect.height - locationSplit) - (48 + spacing));
-
-            // Create an area for the locations section
-            GUILayout.BeginArea(locationRect, EditorStyles.objectFieldThumb);
-
-            // Render the locations GUI
-            LocationsGUI(data);
-
-            // End the area for the locations section
-            GUILayout.EndArea();
-
-            // End the vertical layout for the locations section
-            EditorGUILayout.EndVertical();
-
-            #endregion
-
             #region Section Split Resizer
 
             // Add a draggable splitter at the right edge of the chunks and locations section for the data section
-            Rect dataSplitterRect = new Rect(chunkRect.width - 2f, chunkRect.y, 50f, dataSectionRect.height - 50f);
+            Rect dataSplitterRect = new Rect(chunkRect.width - 2f, chunkRect.y, 50f, height);
 
             // Draw the splitter rect
             EditorGUIUtility.AddCursorRect(dataSplitterRect, MouseCursor.ResizeHorizontal);
@@ -946,7 +878,7 @@ namespace Sanctuary.Editor
             EditorGUILayout.BeginVertical(GUILayout.ExpandHeight(true));
 
             // Get the rect for the data section
-            Rect dataRect = new Rect(dataSplit.y + spacing, dataSectionRect.y - sectionSplit.y + 40, dataSectionRect.width - chunkRect.width - (5 + spacing), dataSectionRect.height - (40 + spacing));
+            Rect dataRect = new Rect(dataSplit.y + spacing, yPosition, dataSectionRect.width - chunkRect.width - (5 + spacing), height);
 
             // Create an area for the data section
             GUILayout.BeginArea(dataRect, EditorStyles.objectFieldThumb);
@@ -993,54 +925,59 @@ namespace Sanctuary.Editor
                     _chunkNames.Add(chunkId, chunkName);
                 }
 
+                // Add an arrow to indicate whether the chunk is expanded or collapsed
+                string showingLocations = chunkId == _currentChunk && showNestedLocations ? "▼ " : "▶ ";
+
                 // Create a list item for each chunk, if clicked, set it as the current chunk
-                if (ListItem(chunkId, chunkName, _currentChunk))
+                if (ListItem(chunkId, showingLocations + chunkName, _currentChunk))
                 {
                     // Set the clicked chunk as the current chunk
                     _currentChunk = chunkId;
 
                     // Reset the current location when the chunk changes
                     _currentLocation = null;
+
+                    // Toggle the display of nested locations when a chunk is clicked
+                    showNestedLocations = !showNestedLocations;
                 }
+
+                // If the current chunk is selected, display its locations in a nested list
+                if (chunkId == _currentChunk && showNestedLocations) LocationsGUI(data, chunkId);
             }
 
             // End the scroll view
             EditorGUILayout.EndScrollView();
         }
 
-        private void LocationsGUI(ISaveData data)
+        private void LocationsGUI(ISaveData data, string chunkId)
         {
-            // Display the header for the locations section
-            Header("Locations");
+            // Get the current chunk of data
+            var chunk = data.GetChunk(chunkId);
 
-            // Set up a scroll view for the locations list
-            _locationScrollPos = EditorGUILayout.BeginScrollView(_locationScrollPos);
-
-            // Only display locations if a chunk is selected
-            if (!string.IsNullOrEmpty(_currentChunk))
+            // Iterate through each location in the current chunk
+            foreach (var location in chunk.Keys)
             {
-                // Get the current chunk of data
-                var chunk = data.GetChunk(_currentChunk);
+                // Set the first location as the current location if none is selected
+                _currentLocation ??= location;
 
-                // Iterate through each location in the current chunk
-                foreach (var location in chunk.Keys)
-                {
-                    // Set the first location as the current location if none is selected
-                    _currentLocation ??= location;
+                // Get a readable name for the location
+                var name = ShowLocation ? $"{data.GetChunkName(location)}: {location}" : data.GetChunkName(location);
 
-                    // Get a readable name for the location
-                    var name = ShowLocation ? $"{data.GetChunkName(location)}: {location}" : data.GetChunkName(location);
+                // Filter locations based on the search string
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(searchString) && !name.ToLower().Contains(searchString.ToLower())) continue;
 
-                    // Filter locations based on the search string
-                    if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(searchString) && !name.ToLower().Contains(searchString.ToLower())) continue;
+                // Start a horizontal layout for the location list item
+                EditorGUILayout.BeginHorizontal();
 
-                    // Create a list item for each location in the chunk, if clicked, set it as the current location
-                    if (ListItem(location, name, _currentLocation)) _currentLocation = location;
-                }
+                // Add an arrow to indicate the current location
+                string addDot = location == _currentLocation ? "● " : "  ";
+
+                // Create a list item for each location in the chunk, if clicked, set it as the current location
+                if (ListItem(location, addDot + name, _currentLocation)) _currentLocation = location;
+
+                // End the horizontal layout for the location list item
+                EditorGUILayout.EndHorizontal();
             }
-
-            // End the scroll view
-            EditorGUILayout.EndScrollView();
         }
 
         private void DataGUI(ISaveData data)
@@ -1083,8 +1020,14 @@ namespace Sanctuary.Editor
 #endif
                     }
 
+                    // Disable editing of the text area to prevent focusing the text area and modifying the data
+                    EditorGUI.BeginDisabledGroup(true);
+
                     // Display the formatted data in a text area
                     EditorGUILayout.TextArea(formatted, GUILayout.ExpandHeight(true));
+
+                    // Re-enable GUI after displaying the text area
+                    EditorGUI.EndDisabledGroup();
                 }
             }
 
