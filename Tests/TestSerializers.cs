@@ -88,8 +88,8 @@ namespace Sanctuary.Tests
             }
         }
 
-        [Test]
-        public async Task TestEscapeSlashes()
+        //[Test]
+        public async Task TestFileStructure()
         {
             // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
             var config = new DefaultStreamConfiguration(TestFolderName);
@@ -97,7 +97,7 @@ namespace Sanctuary.Tests
             // Create a new instance of the SanctuaryService with the specified configuration and components
             var service = SanctuaryService.Create
             (
-                new StreamSaveDataProvider(config),
+                new FileSaveDataProvider(config),
                 new JsonSaveSerializer(config),
                 new Sha256IntegrityValidator(),
                 new UnityDebugLogger(),

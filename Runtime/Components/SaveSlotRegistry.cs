@@ -8,6 +8,8 @@ namespace Sanctuary
     {
         private readonly Dictionary<string, SaveSlotInfo> m_Slots = new();
 
+        public int Count => m_Slots.Count;
+
         public SaveSlotInfo GetSlot(string slotId) => m_Slots.TryGetValue(slotId, out var info) ? info : null;
 
         public SaveSlotInfo[] GetAllSlots() => m_Slots.Values.ToArray();

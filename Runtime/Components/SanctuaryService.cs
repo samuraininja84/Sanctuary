@@ -362,5 +362,20 @@ namespace Sanctuary
             // Return false to indicate that the registry could not be loaded
             return false;
         }
+
+        private async Task CleanupRegistryAsync()
+        {
+            // If the slot registry is now empty, delete the registry file to clean up
+            if (m_SlotRegistry.Count == 0)
+            {
+                // If there are no more slots in the registry, delete the registry file to clean up
+                await m_Provider.DeleteAsync(m_registryFile);
+            }
+            else
+            {
+                // If there are still slots in the registry, persist the updated registry to ensure that the deleted slot is no longer tracked
+                await PersistRegistryAsync();
+            }
+        }
     }
 }
