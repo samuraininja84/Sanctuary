@@ -17,10 +17,8 @@ namespace Sanctuary.Editor
     public class SanctuaryEditor : EditorWindow
     {
         // Cached saves
-        private static SaveControllerBase currentSave;
-        private static SaveControllerBase[] saves = Array.Empty<SaveControllerBase>();
-
-        private readonly SaveSlotRegistry slotRegistry = new();
+        private static ISaveController currentController;
+        private static ISaveController[] saveControllers = Array.Empty<ISaveController>();
 
         // Data caches
         private static readonly Dictionary<string, string> _formattedData = new();
@@ -52,7 +50,6 @@ namespace Sanctuary.Editor
 
         // Scroll positions for the three main sections
         private Vector2 _chunkScrollPos;
-        private Vector2 _locationScrollPos;
         private Vector2 _dataScrollPos;
 
         // Section resizing
@@ -73,7 +70,7 @@ namespace Sanctuary.Editor
         private static readonly string[] sizeUnits = { "B", "KB", "MB", "GB", "TB" };
 
         private bool HorizontalLayout => Screen.width > Screen.height;
-        private bool HasSaves => SaveControllerBase.ExistingSaves.Count > 0;
+        private bool HasSaves => SaveProvider.ExistingControllers.Count > 0;
         private bool ShowLocation => SanctuaryEditorProcessor.showLocationWhenNamed;
         private bool FilterFiles => SanctuaryEditorProcessor.filterFiles;
         public static bool SaveToGlobal => SanctuaryEditorProcessor.saveToGlobal;
@@ -91,6 +88,25 @@ namespace Sanctuary.Editor
 
             // Set the window icon
             window.titleContent = new GUIContent("Sanctuary", icon);
+        }
+
+        [MenuItem("Window/Sanctuary/Clear Cache")]
+        public static void ClearCache()
+        {
+            // Clear existing saves in all save controllers
+            SaveProvider.ClearAllControllers();
+
+            // Clear the existing saves in the editor
+            saveControllers = null;
+
+            // Clear the current save reference
+            currentController = null;
+
+            // Clear the formatted data cache
+            _formattedData.Clear();
+
+            // Clear the chunk names cache
+            _chunkNames.Clear();
         }
 
         private void OnFocus()
@@ -136,7 +152,7 @@ namespace Sanctuary.Editor
         private void OnInspectorUpdate()
         {
             // If the application is not running, clear the data caches to avoid stale data
-            if (!Application.isPlaying && saves != null) ClearCache();
+            if (!Application.isPlaying && saveControllers != null) ClearCache();
         }
 
         private void OnGUI()
@@ -147,8 +163,8 @@ namespace Sanctuary.Editor
             // Get the current mouse position
             Vector2 globalMousePosition = Event.current.mousePosition;
 
-            // Fetch existing saves
-            saves = SaveControllerBase.ExistingSaves.Select(wr => wr.TryGetTarget(out var save) ? save : null).Where(save => save != null).ToArray();
+            // Update the static saveControllers reference
+            saveControllers = SaveProvider.ExistingControllers.Select(wr => wr.TryGetTarget(out var save) ? save : null).Where(save => save != null).ToArray();
 
             // Start checking for changes in the GUI
             EditorGUI.BeginChangeCheck();
@@ -313,7 +329,7 @@ namespace Sanctuary.Editor
             DrawInformationHeader();
 
             // Handle the empty state when no saves are found
-            if (saves.Length == 0)
+            if (saveControllers.Length == 0)
             {
                 // Define a style for the empty state message
                 var emptyStateStyle = new GUIStyle(GUI.skin.label)
@@ -333,7 +349,7 @@ namespace Sanctuary.Editor
             }
 
             // Get the currently selected save
-            currentSave = saves[Mathf.Clamp(_currentIndex, 0, saves.Length - 1)];
+            currentController = saveControllers[Mathf.Clamp(_currentIndex, 0, saveControllers.Length - 1)];
 
             // Reset the current chunk and location if the selected save changes
             if (EditorGUI.EndChangeCheck())
@@ -346,10 +362,10 @@ namespace Sanctuary.Editor
             }
 
             // Get the composite save data
-            ISaveData composite = ISaveDataExtensions.Combine(new SaveData(), saves.Select(s => s.Data));
+            ISaveData composite = ISaveDataExtensions.Combine(new SaveData(), saveControllers.Select(s => s.Data));
 
             // Determine the save data to display based on filtering
-            ISaveData data = FilterFiles ? currentSave.Data : composite;
+            ISaveData data = FilterFiles ? currentController.Data : composite;
 
             // Check if the current save data is null
             if (data == null)
@@ -371,6 +387,25 @@ namespace Sanctuary.Editor
 
         #region Save Slot Methods
 
+        private List<SaveSlotInfo> GetAllAvailableSlots()
+        {
+            // Initialize a list to hold the save slot information
+            var slots = new List<SaveSlotInfo>();
+
+            // Iterate through each save controller to gather save slot information
+            foreach (var save in saveControllers)
+            {
+                // Get the save slot information for the current save controller
+                var slotInfo = save.GetAvailableSlots();
+
+                // Add the save slot information to the list
+                slots.AddRange(slotInfo);
+            }
+
+            // Return the list of save slot information
+            return slots;
+        }
+
         private void DrawSaveSlots()
         {
             // Start a scroll view for the save slots if there are more than the minimum save slots
@@ -383,13 +418,26 @@ namespace Sanctuary.Editor
             GUI.enabled = HasSaves;
 
             // Get all the save slots from the slot registry
-            var slots = slotRegistry.GetAllSlots();
+            var slots = GetAllAvailableSlots();
 
-            // If there are no save slots, display a message
-            if (slots.Length == 0) GUILayout.Label("No save slots found. Create a new save to generate slots.", _listItemStyle);
+            // If there are no save slots, display a help box indicating that no save slots were found
+            if (slots.Count == 0)
+            {
+                // Show the help box indicating no save slots found
+                EditorGUILayout.HelpBox("No save slots found. Please create a new save slot or load existing data.", MessageType.Info);
+
+                // End the scroll view if there are more than the minimum save slots
+                GUILayout.EndScrollView();
+
+                // Re-enable GUI
+                GUI.enabled = true;
+
+                // Return early since there are no save slots to display
+                return;
+            }
 
             // Draw the save slots
-            for (int i = 0; i < slots.Length; i++) DrawSaveSlot(slots[i], i);
+            for (int i = 0; i < slots.Count; i++) DrawSaveSlot(slots[i], i);
 
             // End the scroll view if there are more than the minimum save slots
             GUILayout.EndScrollView();
@@ -400,15 +448,13 @@ namespace Sanctuary.Editor
 
         private void DrawSaveSlot(SaveSlotInfo slot, int index)
         {
-            // Store the slot name
-            string slotName = slot.SlotId;
-
-            // Store the started at and last modified
-            string startedAt = slot.FileCreationTime.ToString("g");
-            string lastModified = slot.LastSaveTime.ToString("g");
-            string totalPlayTime = TimeSpan.FromSeconds(slot.TotalPlayTimeSeconds).ToString(@"hh\:mm\:ss");
-            string fileSize = $"{GetReadableFileSize(slot.FileSize)})";
-            string schemaVersion = $"Schema Version: {slot.SchemaVersion}";
+            // Extract the relevant information from the save slot
+            string slotName = "Slot ID: " + slot.SlotId;
+            string startedAt = "Started At: " + slot.FileCreationTime.ToString("g");
+            string lastModified = "Last Modified: " + slot.LastSaveTime.ToString("g");
+            string totalPlayTime = "Total Play Time: " + TimeSpan.FromSeconds(slot.TotalPlayTimeSeconds).ToString(@"hh\:mm\:ss");
+            string fileSize = "File Size: " + GetReadableFileSize(slot.FileSize);
+            string schemaVersion = "Schema Version: " + slot.SchemaVersion;
 
             // Combine the info into a string
             string combinedInfo = $"{slotName}\n{startedAt}\n{lastModified}\n{totalPlayTime}\n{fileSize}\n{schemaVersion}";
@@ -493,8 +539,7 @@ namespace Sanctuary.Editor
                 selectedSaveSlot = index;
 
                 // Save the data
-                if (index >= 0) SaveIndexed();
-                else SaveAbsolute();
+                Save(index);
             }
 
             // Draw a mini button to load this save
@@ -504,8 +549,7 @@ namespace Sanctuary.Editor
                 selectedSaveSlot = index;
 
                 // Load the save
-                if (index >= 0) LoadIndexed();
-                else LoadAbsolute();
+                Load(index);
             }
 
             // Draw a mini button to delete this save
@@ -515,8 +559,7 @@ namespace Sanctuary.Editor
                 selectedSaveSlot = index;
 
                 // Delete the save
-                if (index >= 0) DeleteIndexed();
-                else DeleteAbsolute();
+                Delete(index);
             }
 
             // End the horizontal layout
@@ -554,12 +597,11 @@ namespace Sanctuary.Editor
                 // Draw the button for creating a new save in this slot
                 if (GUILayout.Button(newGameContent, _miniButtonStyle))
                 {
-                    // Set the save data id to -1
-                    selectedSaveSlot = -1;
+                    //// Set the save data id to -1
+                    //selectedSaveSlot = -1;
 
-                    // Create a save in this slot
-                    if (selectedSaveSlot >= 0) SaveIndexed();
-                    else SaveAbsolute();
+                    //// Create a save in this slot
+                    //Save(selectedSaveSlot);
 
                     // Repaint the window
                     Repaint();
@@ -571,12 +613,11 @@ namespace Sanctuary.Editor
                 // Draw a button to delete the last save
                 if (GUILayout.Button(deleteLastSaveContent, _miniButtonStyle))
                 {
-                    // Set the save data id to -1
-                    selectedSaveSlot = -1;
+                    //// Set the save data id to -1
+                    //selectedSaveSlot = -1;
 
-                    // Delete the save
-                    if (selectedSaveSlot >= 0) DeleteIndexed();
-                    else DeleteAbsolute();
+                    //// Delete the save
+                    //Delete(selectedSaveSlot);
 
                     // Repaint the window
                     Repaint();
@@ -608,6 +649,42 @@ namespace Sanctuary.Editor
             // Re-enable GUI
             GUI.enabled = true;
         }
+
+        private static void DrawDynamicToolbar()
+        {
+            // Begin the horizontal toolbar layout
+            GUILayout.BeginHorizontal(EditorStyles.toolbar);
+
+            // Add some space at the start of the toolbar
+            GUILayout.FlexibleSpace();
+
+            // Invoke the registered toolbar button method
+            OnDrawToolbar.Invoke();
+
+            // Add some space at the end of the toolbar
+            GUILayout.Space(4);
+
+            // End the horizontal toolbar layout
+            GUILayout.EndHorizontal();
+        }
+
+        #region Save Helper Methods
+
+        public async void Save(int index) => await saveControllers[index].Save();
+
+        public async void Load(int index) => await saveControllers[index].Load();
+
+        public async void Delete(int index) => await saveControllers[index].Delete();
+
+        public async void DeleteAll()
+        {
+            // Finally, delete Temporary and Absolute saves
+            await SaveProvider.ByScope(SaveScope.Absolute).DeleteAll();
+            await SaveProvider.ByScope(SaveScope.Global).DeleteAll();
+            await SaveProvider.ByScope(SaveScope.Temporary).DeleteAll();
+        }
+
+        #endregion
 
         #endregion
 
@@ -649,7 +726,7 @@ namespace Sanctuary.Editor
                 if (FilterFiles)
                 {
                     // Dropdown to select the save controller
-                    _currentIndex = EditorGUILayout.Popup(_currentIndex, saves.Select(save => save.Name).ToArray());
+                    _currentIndex = EditorGUILayout.Popup(_currentIndex, saveControllers.Select(save => save.Name).ToArray());
                 }
                 else
                 {
@@ -1039,6 +1116,22 @@ namespace Sanctuary.Editor
 
         #region GUI Helper Methods
 
+        private void Header(string label) => GUILayout.Box(label, _headerStyle);
+
+        private void HorizontalLine() => EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
+        private bool ListItem<T>(T id, string label, T activeId)
+        {
+            // Create a button for the list item
+            var clicked = GUILayout.Button(label, _listItemStyle);
+
+            // Highlight the active item
+            if (id.Equals(activeId)) EditorGUI.DrawRect(GUILayoutUtility.GetLastRect(), new Color(1, 1, 1, 0.2f));
+
+            // Return true if the item was clicked and is not already active
+            return clicked;
+        }
+
         private void GetStyles()
         {
             // Get the section style
@@ -1076,7 +1169,7 @@ namespace Sanctuary.Editor
             _saveSlotStyle ??= new GUIStyle(EditorStyles.miniButton)
             {
                 padding = new RectOffset(10, 10, 10, 10),
-                fixedHeight = (EditorGUIUtility.singleLineHeight + 3) * 4,
+                fixedHeight = (EditorGUIUtility.singleLineHeight + 3) * 5,
                 alignment = TextAnchor.MiddleLeft,
                 fontStyle = FontStyle.Bold
             };
@@ -1098,104 +1191,6 @@ namespace Sanctuary.Editor
             _toolButtonStyle = null;
             _saveSlotStyle = null;
             _miniButtonStyle = null;
-        }
-
-        private void Header(string label) => GUILayout.Box(label, _headerStyle);
-
-        private void HorizontalLine() => EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-
-        private bool ListItem<T>(T id, string label, T activeId)
-        {
-            // Create a button for the list item
-            var clicked = GUILayout.Button(label, _listItemStyle);
-
-            // Highlight the active item
-            if (id.Equals(activeId)) EditorGUI.DrawRect(GUILayoutUtility.GetLastRect(), new Color(1, 1, 1, 0.2f));
-
-            // Return true if the item was clicked and is not already active
-            return clicked;
-        }
-
-        private static void DrawDynamicToolbar()
-        {
-            // Begin the horizontal toolbar layout
-            GUILayout.BeginHorizontal(EditorStyles.toolbar);
-
-            // Add some space at the start of the toolbar
-            GUILayout.FlexibleSpace();
-
-            // Invoke the registered toolbar button method
-            OnDrawToolbar.Invoke();
-
-            // Add some space at the end of the toolbar
-            GUILayout.Space(4);
-
-            // End the horizontal toolbar layout
-            GUILayout.EndHorizontal();
-        }
-
-        #endregion
-
-        #region Static Helper Methods
-
-        public void SaveAbsolute() => SaveStoreRegistry.SaveByScope(SaveScope.Absolute);
-
-        public void LoadAbsolute() => SaveStoreRegistry.LoadByScope(SaveScope.Absolute);
-
-        public void DeleteAbsolute() => SaveStoreRegistry.DeleteByScope(SaveScope.Absolute);
-
-        public void SaveIndexed()
-        {
-            // Save all of the indexed saves (Global and Scene)
-            if (SaveToGlobal) SaveStoreRegistry.SaveByScope(SaveScope.Global);
-
-            // Include Temporary saves as well, for simplicity
-            if (SaveToTemporary) SaveStoreRegistry.SaveByScope(SaveScope.Temporary);
-        }
-
-        public void LoadIndexed()
-        {
-            // Load all of the indexed saves (Global and Scene)
-            if (SaveToGlobal) SaveStoreRegistry.LoadByScope(SaveScope.Global);
-
-            // Include Temporary saves as well, for simplicity
-            if (SaveToTemporary) SaveStoreRegistry.LoadByScope(SaveScope.Temporary);
-        }
-
-        public void DeleteIndexed()
-        {
-            // Delete all indexed saves (Global and Scene)
-            SaveStoreRegistry.DeleteByScope(SaveScope.Global);
-
-            // Include Temporary saves as well, for simplicity
-            SaveStoreRegistry.DeleteByScope(SaveScope.Temporary);
-        }
-
-        public async void DeleteAll()
-        {
-            // Finally, delete Temporary and Absolute saves
-            await SaveProvider.ByScope(SaveScope.Absolute).DeleteAll();
-            await SaveProvider.ByScope(SaveScope.Global).DeleteAll();
-            await SaveProvider.ByScope(SaveScope.Temporary).DeleteAll();
-        }
-
-        [MenuItem("Window/Sanctuary/Clear Cache")]
-        public static void ClearCache()
-        {
-            // Clear existing saves in all save controllers
-            SaveControllerBase.ExistingSaves.Clear();
-
-            // Clear the existing saves in the editor
-            saves = null;
-
-            // Clear the current save reference
-            currentSave = null;
-
-            // Clear the formatted data cache
-            _formattedData.Clear();
-
-            // Clear the chunk names cache
-            _chunkNames.Clear();
         }
 
         #endregion

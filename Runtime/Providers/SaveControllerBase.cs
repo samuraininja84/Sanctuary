@@ -63,19 +63,6 @@ namespace Sanctuary
 
         protected SemaphoreSlim _lock = new(1);
 
-        #region Static Accessors
-
-#if UNITY_EDITOR
-
-        /// <summary>
-        /// A list of existing saves, used for debugging purposes.
-        /// </summary>
-        public static readonly List<WeakReference<SaveControllerBase>> ExistingSaves = new();
-
-#endif
-
-        #endregion
-
         #region Configuration
 
         private void Awake() => Initialize();
@@ -110,16 +97,6 @@ namespace Sanctuary
 
             // Invoke the PrepareInit method for any pre-initialization logic
             PreInit();
-
-            #if UNITY_EDITOR
-
-                // Remove dead references
-                ExistingSaves.RemoveAll(wr => !wr.TryGetTarget(out _));
-
-                // Add this instance to the list of existing saves
-                ExistingSaves.Add(new WeakReference<SaveControllerBase>(this));
-
-            #endif
 
             // Lock the semaphore to prevent other operations
             await Lock();
@@ -260,6 +237,10 @@ namespace Sanctuary
             Unlock();
         }
 
+        /// <summary>
+        /// Delete all saves.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         public virtual async Task DeleteAll()
         {
             // Lock the semaphore to prevent
@@ -273,9 +254,15 @@ namespace Sanctuary
         }
 
         /// <summary>
-            /// Lock the semaphore and invokes the Saving event.
-            /// </summary>
-            /// <returns>A task that represents the asynchronous operation.</returns>
+        /// Get a list of available save slots.
+        /// </summary>
+        /// <returns>An array of <see cref="SaveSlotInfo"/> representing the available save slots.</returns>
+        public virtual SaveSlotInfo[] GetAvailableSlots() => _service.GetAvailableSlots();
+
+        /// <summary>
+        /// Lock the semaphore and invokes the Saving event.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         protected async Task Lock()
         {
             // Check if the lock exists
@@ -365,5 +352,7 @@ namespace Sanctuary
         Task Delete();
 
         Task DeleteAll();
+
+        SaveSlotInfo[] GetAvailableSlots();
     }
 }

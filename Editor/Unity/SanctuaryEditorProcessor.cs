@@ -119,6 +119,7 @@ namespace Sanctuary.Editor
                     break;
                 // When exiting play mode clean up the cache
                 case PlayModeStateChange.ExitingPlayMode:
+                    SaveProvider.ClearAllControllers();
                     SanctuaryEditor.ClearCache();
                     break;
             }
