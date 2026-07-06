@@ -88,7 +88,7 @@ namespace Sanctuary.Tests
             }
         }
 
-        //[Test]
+        [Test]
         public async Task TestFileStructure()
         {
             // Create a new instance of the FileStreamConfiguration ScriptableObject to configure the file save data provider and JSON save serializer
@@ -114,8 +114,32 @@ namespace Sanctuary.Tests
             if (registryLoaded) Debug.Log($"[Sanctuary]: Loaded save slot registry from {TestRegistryFile}.");
             else Debug.Log($"[Sanctuary]: A new registry will be created upon the first save operation.");
 
+            // Create a test dictionary with multiple TestSaveDataClass instances
+            var testDictionary = new System.Collections.Generic.Dictionary<string, object>
+            {
+                { "Number", 69 },
+                { "Greeting", "Hello, World!" },
+                { "Condition", true }
+            };
+
             // Save the test data to the specified save slot
-            await Save(service, slotId);
+            await Save(service, slotId, testDictionary);
+
+            // Load the test data from the specified save slot
+            await Load<System.Collections.Generic.Dictionary<string, object>>(service, slotId);
+        }
+
+        public async Task Save<T>(ISanctuaryService service, string slotId, T data) where T : class
+        {
+            var result = await service.SaveAsync(slotId, data);
+            Debug.Log(result.Success ? $"[Sanctuary]: Saved {Newtonsoft.Json.JsonConvert.SerializeObject(data)} → {slotId} ({result.FilePath})." : $"[Sanctuary]: Save failed: {result.Reason}`.");
+        }
+
+        public async Task Load<T>(ISanctuaryService service, string slotId) where T : class
+        {
+            // Attempt to load the save slot with the specified slotId
+            var result = await service.LoadAsync<T>(slotId);
+            Debug.Log(result.Success ? $"[Sanctuary]: Loaded {Newtonsoft.Json.JsonConvert.SerializeObject(result.Data)} (status: {result.Status})." : $"[Sanctuary]: Load failed: {result.Status} — {result.Message}.");
         }
 
         public async Task Save(ISanctuaryService service, string slotId)

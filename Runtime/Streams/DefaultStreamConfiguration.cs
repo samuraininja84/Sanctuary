@@ -29,6 +29,13 @@ namespace Sanctuary.Configuration
             m_CurrentSchemaVersion = currentSchemaVersion;
         }
 
+        public DefaultStreamConfiguration(string[] folders, SerializationOptions options = SerializationOptions.None, int currentSchemaVersion = 1)
+        {
+            m_RootPath = Path.Combine(Application.persistentDataPath, Path.Combine(folders));
+            m_Options = options;
+            m_CurrentSchemaVersion = currentSchemaVersion;
+        }
+
         public async Task<Stream> GetStream(StreamType streamType, string filePath = null)
         {
             return streamType switch

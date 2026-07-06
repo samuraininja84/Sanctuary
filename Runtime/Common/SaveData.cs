@@ -27,7 +27,7 @@ namespace Sanctuary
         /// <summary>
         /// Public accessor for the save data.
         /// </summary>
-        public Dictionary<string, Dictionary<string, string>> Data { get => _data; }
+        public Dictionary<string, Dictionary<string, string>> Data => _data;
 
         /// <summary>
         /// A static instance of <see cref="SaveData"/> that represents an empty save data.
