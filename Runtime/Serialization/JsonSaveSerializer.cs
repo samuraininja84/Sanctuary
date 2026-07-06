@@ -14,16 +14,22 @@ namespace Sanctuary.Serialization
 
         public byte[] Serialize<T>(T data) where T : class
         {
+            // Configure the JSON serializer settings to format the output with indentation
+            var settings = Formatting.Indented;
+
             // Create a SaveEnvelope object with the current schema version, timestamp, and serialized data
             var envelope = new SaveEnvelope
             {
                 SchemaVersion = m_CurrentSchemaVersion,
                 Timestamp = DateTime.UtcNow.ToString("o"),
-                DataJson = JsonConvert.SerializeObject(data)
+                Data = data
             };
 
+            // Serialize the SaveEnvelope object to a JSON string using the configured settings
+            var updatedJson = JsonConvert.SerializeObject(envelope, settings);
+
             // Convert the envelope JSON string to a byte array using UTF-8 encoding and return it
-            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(envelope));
+            return Encoding.UTF8.GetBytes(updatedJson);
         }
 
         public SaveDeserializeResult<T> Deserialize<T>(byte[] data) where T : class
@@ -43,8 +49,8 @@ namespace Sanctuary.Serialization
                 // If the envelope is null, it means that the deserialization of the envelope failed, so we return a failure result with an appropriate message
                 if (envelope == null) return SaveDeserializeResult<T>.Fail("Failed to deserialize save envelope");
 
-                // Get the result of deserializing the DataJson property of the envelope into an object of type T
-                var result = JsonConvert.DeserializeObject<T>(envelope.DataJson);
+                // Get the result of deserializing the Data property of the envelope into an object of type T
+                var result = JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(envelope.Data));
 
                 // If the result is null, it means that the deserialization failed, so we return a failure result with an appropriate message
                 if (result == null) return SaveDeserializeResult<T>.Fail("Failed to deserialize save data");
