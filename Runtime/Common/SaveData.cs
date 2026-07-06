@@ -7,7 +7,7 @@ namespace Sanctuary
     /// A basic implementation of <see cref="ISaveData"/> that uses JSON
     /// serialization.
     /// </summary>
-    public class SaveData : ISaveData
+    public sealed class SaveData : ISaveData
     {
         /// <summary>
         /// The default chunk ID used when no chunk ID is provided.
@@ -17,12 +17,12 @@ namespace Sanctuary
         /// <summary>
         /// The actual save data, organized by chunk ID and object ID.
         /// </summary>
-        protected readonly Dictionary<string, Dictionary<string, string>> _data = new();
+        private readonly Dictionary<string, Dictionary<string, string>> _data = new();
 
         /// <summary>
         /// The information about each chunk in the save data, organized by chunk ID to output a name for each chunk.
         /// </summary>
-        protected readonly Dictionary<string, string> _chunkInformation = new();
+        private readonly Dictionary<string, string> _chunkInformation = new();
 
         /// <summary>
         /// Public accessor for the save data.
