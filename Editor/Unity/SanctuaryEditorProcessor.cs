@@ -119,6 +119,7 @@ namespace Sanctuary.Editor
                     break;
                 // When exiting play mode clean up the cache
                 case PlayModeStateChange.ExitingPlayMode:
+                    SaveProvider.ClearAllControllers();
                     SanctuaryEditor.ClearCache();
                     break;
             }
@@ -190,30 +191,6 @@ namespace Sanctuary.Editor
 
                 // Save the new value to EditorPrefs
                 EditorPrefs.SetBool(showLocationKey, showLocationWhenNamed);
-            }
-
-            // Reset content color
-            GUI.contentColor = Color.white;
-        }
-
-        [SanctuaryToolbarButton]
-        private static void ToggleFilterFiles()
-        {
-            // Create toggle button content
-            GUIContent toggleContent = EditorGUIUtility.IconContent("d_Animation.FilterBySelection");
-            toggleContent.tooltip = filterFiles ? "Filtering files enabled. Click to disable." : "Filtering files disabled. Click to enable.";
-
-            // Set content color based on toggle state
-            GUI.contentColor = filterFiles ? Color.green : Color.red;
-
-            // Draw the toggle button
-            if (GUILayout.Button(toggleContent, EditorStyles.toolbarButton))
-            {
-                // Toggle the filterFiles state
-                filterFiles = !filterFiles;
-
-                // Save the new value to EditorPrefs
-                EditorPrefs.SetBool(filterFilesKey, filterFiles);
             }
 
             // Reset content color

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -216,6 +217,13 @@ namespace Sanctuary
                 // Configure as absolute
                 absolute = source;
 
+#if UNITY_EDITOR
+
+                // Register the controller in the editor for debugging purposes
+                RegisterController(source);
+
+#endif
+
                 // Return true to indicate that the configuration was successful
                 return true;
             }
@@ -248,6 +256,13 @@ namespace Sanctuary
             {
                 // Configure as global
                 global = source;
+
+#if UNITY_EDITOR
+
+                // Register the controller in the editor for debugging purposes
+                RegisterController(source);
+
+#endif
 
                 // Return true to indicate that the configuration was successful
                 return true;
@@ -282,6 +297,13 @@ namespace Sanctuary
                 // Configure as temporary
                 temporary = source;
 
+#if UNITY_EDITOR
+
+                // Register the controller in the editor for debugging purposes
+                RegisterController(source);
+
+#endif
+
                 // Return true to indicate that the configuration was successful
                 return true;
             }
@@ -294,6 +316,13 @@ namespace Sanctuary
         /// <exception cref="System.ArgumentOutOfRangeException">Thrown if an unsupported SaveScope is provided.</exception>
         public static void ClearByScope(SaveScope scope)
         {
+#if UNITY_EDITOR
+
+            // Remove the controller from the list of existing controllers in the editor for debugging purposes
+            UnregisterController(scope.ByScope());
+
+#endif
+
             switch (scope)
             {
                 case SaveScope.Absolute:
@@ -321,9 +350,64 @@ namespace Sanctuary
 
             // Reset temporary instance
             temporary = null;
+
+#if UNITY_EDITOR
+
+            // Remove dead references from the existing controllers list
+            ExistingControllers.RemoveAll(reference => !reference.TryGetTarget(out _));
+
+#endif
         }
 
 #if UNITY_EDITOR
+
+        /// <summary>
+        /// A list of existing save controllers, used for debugging purposes.
+        /// </summary>
+        public static readonly List<System.WeakReference<ISaveController>> ExistingControllers = new();
+
+        /// <summary>
+        /// Registers a save controller in the editor for debugging purposes.
+        /// </summary>
+        /// <remarks>This method adds the controller to the list of existing controllers and sorts the list to keep the most recently added controllers at the top.</remarks>
+        /// <param name="controller">The save controller to register.</param>
+        public static void RegisterController(ISaveController controller)
+        {
+            // If the controller is null, do nothing
+            if (controller == null) return;
+
+            // Add the controller to the list of existing controllers
+            ExistingControllers.Add(new System.WeakReference<ISaveController>(controller));
+
+            // Sort the list to keep the most recently added controllers at the top
+            ExistingControllers.Sort((a, b) =>
+            {
+                // Get the target controllers from the weak references
+                a.TryGetTarget(out var controllerA);
+                b.TryGetTarget(out var controllerB);
+
+                // Compare the controllers based on their names
+                return string.Compare(controllerA?.Name, controllerB?.Name, System.StringComparison.Ordinal);
+            });
+        }
+
+        /// <summary>
+        /// Unregisters a save controller from the editor for debugging purposes.
+        /// </summary>
+        /// <param name="controller">The save controller to unregister.</param>
+        public static void UnregisterController(ISaveController controller)
+        {
+            // If the controller is null, do nothing
+            if (controller == null) return;
+
+            // Remove the controller from the list of existing controllers
+            ExistingControllers.RemoveAll(reference => reference.TryGetTarget(out var target) && target == controller);
+        }
+
+        /// <summary>
+        /// Clears all registered save controllers from the editor for debugging purposes.
+        /// </summary>
+        public static void ClearAllControllers() => ExistingControllers.Clear();
 
         /// <summary>
         /// Adds an Absolute SaveProvider to the scene.

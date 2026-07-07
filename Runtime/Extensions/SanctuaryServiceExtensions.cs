@@ -31,5 +31,29 @@ namespace Sanctuary.Extensions
             // Iterate through each slot and delete it
             for (int i = 0; i < slots.Length; i++) await service.DeleteAsync(slots[i].SlotId);
         }
+
+        public static bool HasSlot(this ISanctuaryService service, string slotId)
+        {
+            // Check if the specified slot ID exists in the available slots
+            var slots = service.GetAvailableSlots();
+
+            // Iterate through each slot and check if the slot ID matches
+            foreach (var slot in slots) if (slot.SlotId == slotId) return true;
+
+            // If the slot ID was not found, return false
+            return false;
+        }
+
+        public static bool HasSlot(this ISaveController controller, string slotId)
+        {
+            // Check if the specified slot ID exists in the available slots
+            var slots = controller.GetAvailableSlots();
+
+            // Iterate through each slot and check if the slot ID matches
+            foreach (var slot in slots) if (slot.SlotId == slotId) return true;
+
+            // If the slot ID was not found, return false
+            return false;
+        }
     }
 }

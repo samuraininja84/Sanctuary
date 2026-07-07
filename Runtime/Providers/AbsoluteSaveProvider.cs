@@ -16,12 +16,16 @@ namespace Sanctuary
         [SerializeField] private StreamConfiguration stream;
 
         [Header("Save Provider Settings")]
+        [Tooltip("The slot ID to use for saving and loading data.")]
+        [SerializeField] private string slotID = "Absolute";
         [Tooltip("If true, the SaveProvider will load data on boot.")]
         [SerializeField] private bool loadOnBoot = true;
         [Tooltip("If true, the SaveProvider will not be destroyed on scene load.")]
         [SerializeField] private bool dontDestroyOnLoad = true;
 
         public override string Name => "Absolute";
+
+        public override string SlotID { get => slotID; protected set => slotID = value; }
 
         /// <summary>
         /// Retrieves the serializer to be used for saving and loading data.
@@ -70,6 +74,8 @@ namespace Sanctuary
             // Make persistent across scenes if specified and in play mode
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
         }
+
+        public override void SetID(string slotID) => this.slotID = slotID;
 
         private void OnDestroy() => SaveProvider.ClearByScope(SaveScope.Absolute);
     }
