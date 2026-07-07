@@ -21,19 +21,18 @@ namespace Sanctuary.Editor
         private static ISaveController[] saveControllers = Array.Empty<ISaveController>();
 
         // Registered stores
-        private Dictionary<ISaveController, List<ISaveStore>> registeredStores = new();
-        private Vector2 storeScrollPos;
+        private static Dictionary<ISaveController, List<ISaveStore>> registeredStores = new();
+        private static Dictionary<ISaveController, bool> controllerFoldouts = new();
 
         // Data caches
         private static readonly Dictionary<string, string> _formattedData = new();
         private static readonly Dictionary<string, string> _chunkNames = new();
 
+        // Tabs for the two main sections
+        private static readonly string[] sectionNames = new string[] { "Data Viewer", "Store Tracker" };
+
         // Toolbar event
         private static event Action OnDrawToolbar = delegate { };
-
-        // Tabs for the two main sections
-        private static string[] sectionNames = new string[] { "Data Viewer", "Store Tracker" };
-        private int selectedSectionIndex = 0;
 
         // Search string for filtering locations
         private string searchString = string.Empty;
@@ -49,16 +48,20 @@ namespace Sanctuary.Editor
         // Save slot data
         private Vector2 _slotsScrollPos = Vector2.zero;
         private bool showingSaveSlotOptions;
-        private int selectedSaveSlot = 0;
+        private int selectedSaveSlot;
 
         // Current selections
         private int _currentIndex;
         private string _currentChunk;
         private string _currentLocation;
+        private int _selectedSectionIndex;
 
         // Scroll positions for the two main data viewing sections
         private Vector2 _chunkScrollPos;
         private Vector2 _dataScrollPos;
+
+        // Scroll position for the store tracker section
+        private Vector2 _storeScrollPos;
 
         // Section resizing
         private Vector2 minSectionSplit = new(150f, 235f);
@@ -66,7 +69,7 @@ namespace Sanctuary.Editor
         private Rect dataSectionRect;
         private bool resizingSection;
 
-        // Chunk / Location resizing
+        // Chunk / Location settings
         private bool showNestedLocations = false;
 
         // Data area resizing
@@ -109,6 +112,12 @@ namespace Sanctuary.Editor
 
             // Clear the current save reference
             currentController = null;
+
+            // Clear the registered stores dictionary
+            registeredStores.Clear();
+
+            // Clear the controller foldouts dictionary
+            controllerFoldouts.Clear();
 
             // Clear the formatted data cache
             _formattedData.Clear();
@@ -186,7 +195,7 @@ namespace Sanctuary.Editor
             EditorGUI.BeginChangeCheck();
 
             // Additional spacing for the scroll rect
-            float scrollRectSpacing = 5f;
+            float scrollRectSpacing = 3f;
 
             // Get the window rect
             Rect windowRect = position;
@@ -198,7 +207,7 @@ namespace Sanctuary.Editor
             LayoutAdjustments(globalMousePosition, windowRect);
 
             // Draw the save data section
-            DrawSection(selectedSectionIndex, scrollRectSpacing);
+            DrawSection(_selectedSectionIndex, scrollRectSpacing);
         }
 
         #region Draw Methods
@@ -315,7 +324,7 @@ namespace Sanctuary.Editor
             }
         }
 
-        private void DrawSectionToolbar(float width = -1) => selectedSectionIndex = Tabs(sectionNames, selectedSectionIndex, width);
+        private void DrawSectionToolbar(float width = -1) => _selectedSectionIndex = Tabs(sectionNames, _selectedSectionIndex, ref searchString, width);
 
         private void DrawSection(int sectionIndex, float scrollRectSpacing)
         {
@@ -342,7 +351,7 @@ namespace Sanctuary.Editor
                 float startPos = Mathf.Max(sectionSplit.x, minSectionSplit.x) + scrollRectSpacing;
 
                 // Define the rect for the right section
-                dataSectionRect = new Rect(startPos + 1, 3, (position.width - startPos - 1), position.height - 3);
+                dataSectionRect = new Rect(startPos, 3, (position.width - startPos - 1), position.height - 3);
 
                 // Begin the area for the right section
                 GUILayout.BeginArea(dataSectionRect);
@@ -363,7 +372,7 @@ namespace Sanctuary.Editor
             DrawInformationHeader();
 
             // Handle the empty state when no saves are found
-            if (saveControllers.Length == 0)
+            if (!HasSaves)
             {
                 // Define a style for the empty state message
                 var emptyStateStyle = new GUIStyle(GUI.skin.label)
@@ -374,6 +383,9 @@ namespace Sanctuary.Editor
 
                 // Display a message when no saves are found
                 GUILayout.Box("No existing save controllers found.\nOnce created, they'll appear in this window.", emptyStateStyle);
+
+                // Draw the section toolbar
+                DrawSectionToolbar(dataSectionRect.width / 2);
 
                 // End the area for the right section, if using horizontal layout
                 GUILayout.EndArea();
@@ -429,7 +441,7 @@ namespace Sanctuary.Editor
                 float startPos = Mathf.Max(sectionSplit.x, minSectionSplit.x) + scrollRectSpacing;
 
                 // Define the rect for the right section
-                dataSectionRect = new Rect(startPos + 1, 3, (position.width - startPos - 1), position.height - 3);
+                dataSectionRect = new Rect(startPos + 2, 3, (position.width - startPos - 1), position.height - 3);
 
                 // Begin the area for the right section
                 GUILayout.BeginArea(dataSectionRect);
@@ -446,6 +458,9 @@ namespace Sanctuary.Editor
                 GUILayout.BeginArea(dataSectionRect);
             }
 
+            // Draw the tracking header for the store tracker section
+            DrawTrackingHeader();
+
             // If the application is in play mode, display the list of save stores, otherwise display a message indicating that the window is only available in play mode
             if (!Application.isPlaying)
             {
@@ -459,6 +474,9 @@ namespace Sanctuary.Editor
                 // Display a message indicating that the window is only available in play mode
                 GUILayout.Box("The Save Store Tracker window is only available in play mode.", emptyStateStyle);
 
+                // Draw the section toolbar
+                DrawSectionToolbar(dataSectionRect.width / 2);
+
                 // End the area for the right section, if using horizontal layout
                 GUILayout.EndArea();
 
@@ -468,11 +486,7 @@ namespace Sanctuary.Editor
             else
             {
                 // Start a scroll view to display the list of save stores
-                storeScrollPos = EditorGUILayout.BeginScrollView(storeScrollPos);
-
-                // Display the title and description of the window
-                EditorGUILayout.LabelField("Store Tracker", HeaderStyle(Color.aliceBlue));
-                EditorGUILayout.LabelField("This window is used to track the active save stores in the project.", CenteredMiniLabelStyle(Color.darkGray));
+                _storeScrollPos = EditorGUILayout.BeginScrollView(_storeScrollPos);
 
                 // Add a space between the label and the list of save stores
                 EditorGUILayout.Separator();
@@ -486,6 +500,9 @@ namespace Sanctuary.Editor
 
             // Begin a horizontal layout for the section toolbar and refresh button
             EditorGUILayout.BeginHorizontal();
+
+            // Reduce the space between the section toolbar and the refresh button
+            EditorGUILayout.Space(-3f);
 
             // Draw the section toolbar
             DrawSectionToolbar(dataSectionRect.width / 2);
@@ -842,8 +859,11 @@ namespace Sanctuary.Editor
             // Create a new dictionary to hold the converted data
             var target = new Dictionary<ISaveController, List<ISaveStore>>();
 
-            // Iterate through the source dictionary to convert it into the target dictionary
-            foreach (var kvp in source)
+            // Sort the source dictionary by the controller's name and the list of stores for each controller by the store's name
+            var sortedSource = source.OrderBy(kvp => kvp.Value.Name).ThenBy(kvp => kvp.Key.Source.name).ToList();
+
+            // Iterate through the sorted source dictionary to convert it into the target dictionary
+            foreach (var kvp in sortedSource)
             {
                 // Get the save store and its associated controller from the source dictionary
                 var store = kvp.Key;
@@ -933,7 +953,7 @@ namespace Sanctuary.Editor
             GUILayout.Space(3f);
 
             // Create a style for the search field
-            GUIStyle searchField = new GUIStyle(EditorStyles.toolbarSearchField)
+            var searchField = new GUIStyle(EditorStyles.toolbarSearchField)
             {
                 // Set fixed height to match other toolbar elements
                 fixedHeight = EditorGUIUtility.singleLineHeight
@@ -1292,6 +1312,44 @@ namespace Sanctuary.Editor
 
         #region Save Store Tracker
 
+        private void DrawTrackingHeader()
+        {
+            // Start a horizontal layout for save file features
+            EditorGUILayout.BeginHorizontal();
+
+            // Create Open Saves Path Content
+            GUIContent openSavesFolderContent = EditorGUIUtility.IconContent("d_FolderFavorite Icon");
+            openSavesFolderContent.tooltip = "Open the Saves Folder in File Explorer";
+
+            // Draw a button to open the saves folder
+            if (GUILayout.Button(openSavesFolderContent, _toolButtonStyle)) SavesFolderOpener.OpenSavesFolder();
+
+            // Add some space between the buttons and the search field
+            GUILayout.Space(3f);
+
+            // Disable GUI if there are no saves
+            GUI.enabled = HasSaves;
+
+            // Create a style for the search field
+            var searchField = new GUIStyle(EditorStyles.toolbarSearchField)
+            {
+                // Set fixed height to match other toolbar elements
+                fixedHeight = EditorGUIUtility.singleLineHeight
+            };
+
+            // Draw a search field with a toolbar style
+            searchString = EditorGUILayout.TextField(searchString, searchField);
+
+            // Add some space between the edge and the search field
+            GUILayout.Space(3f);
+
+            // End the horizontal layout
+            EditorGUILayout.EndHorizontal();
+
+            // Re-enable GUI
+            GUI.enabled = true;
+        }
+
         private void StoreTrackerGUI()
         {
             // If the registered stores dictionary is empty, display a message indicating that there are no save stores registered
@@ -1304,6 +1362,23 @@ namespace Sanctuary.Editor
                 return;
             }
 
+            // If the controller foldouts dictionary is empty, initialize it with the registered controllers
+            if (controllerFoldouts.Count != registeredStores.Count)
+            {
+                // Clear the controller foldouts dictionary to avoid stale data
+                controllerFoldouts.Clear();
+
+                // Iterate through the registered stores to initialize the controller foldouts
+                foreach (var kvp in registeredStores)
+                {
+                    // Get the save controller from the registered stores
+                    var controller = kvp.Key;
+
+                    // Initialize the foldout state for the controller to false (collapsed)
+                    controllerFoldouts[controller] = false;
+                }
+            }
+
             // Display the list of save stores here
             foreach (var kvp in registeredStores)
             {
@@ -1312,21 +1387,43 @@ namespace Sanctuary.Editor
                 var stores = kvp.Value;
 
                 // Display the name of the controller associated with the save store
-                if (controller != null) EditorGUILayout.LabelField(controller.Name + " (" + controller.GetType().Name + ")", EditorStyles.boldLabel);
-
-                // Indent the list of save stores for better readability
-                if (stores != null)
+                if (controller != null)
                 {
-                    // Iterate through the list of save stores for the current controller
-                    for (var i = 0; i < stores.Count; i++)
-                    {
-                        // Get the current save store from the list of stores
-                        var store = stores[i];
+                    // Create a string that combines the controller's name and its type for display
+                    string controllerName = controller.Name + " (" + controller.GetType().Name + ")";
 
-                        // Display the source object of the save store if it exists, otherwise display "None" and the type of the save store
-                        if (store.Source != null) EditorGUILayout.ObjectField(store.Source, typeof(UnityEngine.Object), true);
-                        else EditorGUILayout.LabelField("Source: None | Type: " + store.GetType().Name);
+                    // Draw a foldout for the list of save stores associated with the current controller
+                    controllerFoldouts[controller] = EditorGUILayout.Foldout(controllerFoldouts[controller], controllerName, true);
+
+                    // Indent the foldout for better readability
+                    EditorGUI.indentLevel++;
+
+                    // If the foldout is expanded and there are save stores associated with the controller, display the list of save stores
+                    if (controllerFoldouts[controller] && stores != null)
+                    {
+                        // Iterate through the list of save stores for the current controller
+                        for (var i = 0; i < stores.Count; i++)
+                        {
+                            // Get the current save store from the list of stores
+                            var store = stores[i];
+
+                            // Skip null stores to avoid displaying them
+                            if (store == null) continue;
+
+                            // Create a string that combines the source object's name (if it exists) and the type of the save store for display
+                            string storeName = store.Source != null ? store.Source.name : store.GetType().Name;
+
+                            // If the store name doesn't match the search string, skip displaying it
+                            if (!string.IsNullOrEmpty(searchString) && !storeName.ToLower().Contains(searchString.ToLower())) continue;
+
+                            // Display the source object of the save store if it exists, otherwise display "N/A" and the type of the save store
+                            if (store.Source != null) EditorGUILayout.ObjectField(store.Source, typeof(UnityEngine.Object), true);
+                            else EditorGUILayout.LabelField("Source: N/A | Type: " + store.GetType().Name);
+                        }
                     }
+
+                    // Reset the indent level after displaying the list of save stores
+                    EditorGUI.indentLevel--;
                 }
 
                 // Add a space between the list of save stores for each controller
@@ -1377,7 +1474,7 @@ namespace Sanctuary.Editor
             return clicked;
         }
 
-        public static int Tabs(string[] options, int selected, float width = -1)
+        public static int Tabs(string[] options, int selected, ref string searchString, float width = -1)
         {
             // Define the colors for the tabs
             const float DarkGray = 0.5f;
@@ -1405,7 +1502,14 @@ namespace Sanctuary.Editor
                 GUI.backgroundColor = i == selected ? bgCol : highlightCol;
 
                 // Create a button for the tab, and if it's clicked, set it as the selected tab
-                if (GUILayout.Button(options[i], buttonStyle)) selected = i;
+                if (GUILayout.Button(options[i], buttonStyle))
+                {
+                    // Set the selected tab index to the clicked tab
+                    selected = i;
+
+                    // Clear the search string when a new tab is selected to avoid filtering the list based on the previous tab's search
+                    searchString = string.Empty;
+                }
             }
 
             // End the horizontal layout for the tabs
