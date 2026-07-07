@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using UnityEngine;
 using Sanctuary.Stores;
 using Sanctuary.Extensions;
-using Newtonsoft.Json;
 
 namespace Sanctuary
 {
@@ -50,6 +48,8 @@ namespace Sanctuary
         }
 
         public abstract string Name { get; }
+
+        public abstract string SlotID { get; protected set; }
 
         public bool Exists { get; protected set; }
 
@@ -105,7 +105,7 @@ namespace Sanctuary
             var registryLoaded = await _service.TryLoadRegistryAsync();
 
             // Check if the registry was loaded successfully
-            var fileExists = await _service.ExistsAsync(Name);
+            var fileExists = await _service.ExistsAsync(SlotID);
 
             // Check if the save exists in the registry and in the file system
             Exists = registryLoaded && fileExists;
@@ -125,7 +125,7 @@ namespace Sanctuary
         /// Save the game state. 
         /// </summary>
         /// <remarks>Saves based on the <see cref="SaveMode"/> provided.</remarks>
-        public virtual async Task Save()
+        public virtual async Task Save(string slotID = null)
         {
             // Lock the semaphore to prevent other operations
             await Lock();
@@ -146,8 +146,11 @@ namespace Sanctuary
             // Notify all registered stores to save their data
             SaveStoreRegistry.SaveWith(this);
 
+            // If a new slot ID is provided, update the SlotID
+            if (!string.IsNullOrEmpty(slotID)) SlotID = slotID;
+
             // Save the data to persistent storage if needed
-            await _service.SaveAsync(Name, Data);
+            await _service.SaveAsync(SlotID, Data);
 
             // Invoke the OnSave method for custom save logic
             OnSave();
@@ -160,13 +163,16 @@ namespace Sanctuary
         /// Load the game state.
         /// </summary>
         /// <remarks>Loads based on the <see cref="SaveMode"/> provided.</remarks>
-        public virtual async Task Load()
+        public virtual async Task Load(string slotID = null)
         {
             // Lock the semaphore to prevent other operations
             await Lock();
 
+            // If a new slot ID is provided, update the SlotID
+            if (!string.IsNullOrEmpty(slotID)) SlotID = slotID;
+
             // Load the save data
-            var result = await _service.LoadAsync<SaveData>(Name);
+            var result = await _service.LoadAsync<SaveData>(SlotID);
 
             // Handle the result of the load operation
             switch (result.Status)
@@ -209,13 +215,16 @@ namespace Sanctuary
         /// <summary>
         /// Delete the save.
         /// </summary>
-        public virtual async Task Delete()
+        public virtual async Task Delete(string slotID = null)
         {
             // Lock the semaphore to prevent other operations
             await Lock();
 
+            // If a new slot ID is provided, update the SlotID
+            if (!string.IsNullOrEmpty(slotID)) SlotID = slotID;
+
             // Check if the save exists
-            Exists = await _service.ExistsAsync(Name);
+            Exists = await _service.ExistsAsync(SlotID);
 
             // If the save exists, delete it
             if (Exists)
@@ -230,7 +239,7 @@ namespace Sanctuary
                 Data = null;
 
                 // Delete the save from persistent storage
-                await _service.DeleteAsync(Name);
+                await _service.DeleteAsync(SlotID);
             }
 
             // Unlock the semaphore and invoke the Saved event
@@ -292,11 +301,10 @@ namespace Sanctuary
         #region Protected Save Callbacks
 
         /// <summary>
-        /// Sets the ID of save loader.
+        /// Sets the ID of the save slot. This is used to identify different save slots for the same game.
         /// </summary>
-        /// <remarks>Only used for internal purposes. This method is called by the editor to make it easier to identify saves in the editor. It is not used at runtime.</remarks>
-        /// <param name="id">The ID to set.</param>
-        public virtual void SetID(string slotID) { }
+        /// <param name="slotID">The ID of the save slot.</param>
+        public abstract void SetID(string slotID);
 
         /// <summary>
         /// Invoked before the save controller is initialized.
@@ -345,11 +353,13 @@ namespace Sanctuary
 
         ISaveData Data { get; }
 
-        Task Save();
+        void SetID(string slotID);
 
-        Task Load();
+        Task Save(string slotID = null);
 
-        Task Delete();
+        Task Load(string slotID = null);
+
+        Task Delete(string slotID = null);
 
         Task DeleteAll();
 

@@ -18,10 +18,14 @@ namespace Sanctuary
         [SerializeField] private StreamConfiguration stream;
 
         [Header("Save Provider Settings")]
+        [Tooltip("The slot ID to use for saving and loading data.")]
+        [SerializeField] private string slotID = "Temporary";
         [Tooltip("If true, the SaveProvider will not be destroyed on scene load.")]
         [SerializeField] private bool dontDestroyOnLoad = false;
 
         public override string Name => "Temporary";
+
+        public override string SlotID { get => slotID; protected set => slotID = value; }
 
         /// <summary>
         /// Retrieves the serializer to be used for saving and loading data.
@@ -68,7 +72,9 @@ namespace Sanctuary
             if (dontDestroyOnLoad && Application.isPlaying) DontDestroyOnLoad(this);
         }
 
-        public override async Task Save()
+        public override void SetID(string slotID) => this.slotID = slotID;
+
+        public override async Task Save(string slotID = null)
         {
             // Lock the semaphore to prevent other operations
             await Lock();
@@ -88,6 +94,9 @@ namespace Sanctuary
 
             // Notify all registered stores to save their data
             SaveStoreRegistry.SaveWith(this);
+
+            // If a new slot ID is provided, update the SlotID
+            if (!string.IsNullOrEmpty(slotID)) SlotID = slotID;
 
             //// Save the data to persistent storage if needed | Disabled for temporary saves as they are not meant to be persisted
             // await _service.SaveAsync(Name, Data);

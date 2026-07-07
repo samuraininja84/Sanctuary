@@ -48,7 +48,7 @@ namespace Sanctuary.Editor
         // Save slot data
         private Vector2 _slotsScrollPos = Vector2.zero;
         private bool showingSaveSlotOptions;
-        private int selectedSaveSlot;
+        private string selectedSlotId;
 
         // Current selections
         private int _currentIndex;
@@ -241,8 +241,8 @@ namespace Sanctuary.Editor
             // Push actions to the bottom, if using horizontal layout
             GUILayout.FlexibleSpace();
 
-            //// Draw the save slot actions if there are any existing saves
-            // DrawSaveSlotActions();
+            // Draw the save slot actions if there are any existing saves
+            DrawSaveSlotActions();
 
             // Draw the dynamic toolbar
             DrawDynamicToolbar();
@@ -559,7 +559,15 @@ namespace Sanctuary.Editor
             }
 
             // Draw the save slots
-            for (int i = 0; i < slots.Count; i++) DrawSaveSlot(slots[i], i);
+            foreach (var kvp in slots)
+            {
+                // Get the save controller and its associated save slots
+                var controller = kvp.Key;
+                var saveSlots = kvp.Value;
+
+                // Draw each save slot for the current save controller
+                for (int i = 0; i < saveSlots.Count; i++) DrawSaveSlot(controller, saveSlots[i]);
+            }
 
             // End the scroll view if there are more than the minimum save slots
             GUILayout.EndScrollView();
@@ -568,10 +576,10 @@ namespace Sanctuary.Editor
             GUI.enabled = true;
         }
 
-        private void DrawSaveSlot(SaveSlotInfo slot, int index)
+        private void DrawSaveSlot(ISaveController controller, SaveSlotInfo slot)
         {
             // Extract the relevant information from the save slot
-            string slotName = "Slot ID: " + slot.SlotId;
+            string sourceName = "Source: " + controller.Name + " - ID: " + slot.SlotId;
             string startedAt = "Started At: " + slot.FileCreationTime.ToString("g");
             string lastModified = "Last Modified: " + slot.LastSaveTime.ToString("g");
             string totalPlayTime = "Total Play Time: " + TimeSpan.FromSeconds(slot.TotalPlayTimeSeconds).ToString(@"hh\:mm\:ss");
@@ -579,21 +587,24 @@ namespace Sanctuary.Editor
             string schemaVersion = "Schema Version: " + slot.SchemaVersion;
 
             // Combine the info into a string
-            string combinedInfo = $"{slotName}\n{startedAt}\n{lastModified}\n{totalPlayTime}\n{fileSize}\n{schemaVersion}";
+            string combinedInfo = $"{sourceName}\n{startedAt}\n{lastModified}\n{totalPlayTime}\n{fileSize}\n{schemaVersion}";
+
+            // Get the index of the current save slot in the list of save slots for this controller
+            int index = saveControllers.ToList().IndexOf(controller);
 
             // Draw the button
             if (GUILayout.Button(combinedInfo, _saveSlotStyle))
             {
                 // Toggle the save slot options
-                if (selectedSaveSlot == index)
+                if (selectedSlotId == slot.SlotId)
                 {
                     // Toggle the save slot options if selecting the same slot
                     showingSaveSlotOptions = !showingSaveSlotOptions;
                 }
                 else
                 {
-                    // Set the current index to this index
-                    selectedSaveSlot = index;
+                    // Set the current save slot ID to this slot's ID
+                    selectedSlotId = slot.SlotId;
 
                     // Show the save slot options when selecting a new slot
                     showingSaveSlotOptions = true;
@@ -601,10 +612,10 @@ namespace Sanctuary.Editor
             }
 
             // If this save slot is selected, draw the save slot options
-            if (selectedSaveSlot == index) DrawSaveSlotOptions(index);
+            if (selectedSlotId == slot.SlotId) DrawSaveSlotOptions(controller, slot.SlotId);
         }
 
-        private void DrawSaveSlotOptions(int index)
+        private void DrawSaveSlotOptions(ISaveController controller, string id)
         {
             // If has no save hide the save slot options
             if (!HasSaves) showingSaveSlotOptions = false;
@@ -628,34 +639,13 @@ namespace Sanctuary.Editor
             EditorGUILayout.BeginHorizontal();
 
             // Draw a mini button to overwrite this save
-            if (GUILayout.Button(overwriteContent, _miniButtonStyle))
-            {
-                // Set the current index to this index
-                selectedSaveSlot = index;
-
-                // Save the data
-                Save(index);
-            }
+            if (GUILayout.Button(overwriteContent, _miniButtonStyle)) Save(controller, id);
 
             // Draw a mini button to load this save
-            if (GUILayout.Button(loadContent, _miniButtonStyle))
-            {
-                // Set the current index to this index
-                selectedSaveSlot = index;
-
-                // Load the save
-                Load(index);
-            }
+            if (GUILayout.Button(loadContent, _miniButtonStyle)) Load(controller, id);
 
             // Draw a mini button to delete this save
-            if (GUILayout.Button(deleteContent, _miniButtonStyle))
-            {
-                // Set the current index to this index
-                selectedSaveSlot = index;
-
-                // Delete the save
-                Delete(index);
-            }
+            if (GUILayout.Button(deleteContent, _miniButtonStyle)) Delete(controller, id);
 
             // End the horizontal layout
             EditorGUILayout.EndHorizontal();
@@ -666,80 +656,60 @@ namespace Sanctuary.Editor
             // Disable GUI if there are no existing saves
             GUI.enabled = HasSaves;
 
-            // Check if there are any existing saves with an id higher than the highest save id
-            //if (HasMinimumSaveSlots())
+            // Draw a horizontal line to separate the save slots from the buttons
+            HorizontalLine();
+
+            // Change the color of the button to a darker gray
+            GUI.backgroundColor = new Color(0.75f, 0.75f, 0.75f);
+
+            // Change the color of the text to yellow
+            GUI.contentColor = Color.yellowNice;
+
+            // Begin a horizontal layout for the buttons
+            EditorGUILayout.BeginHorizontal();
+
+            // Create Delete Last Save Content
+            GUIContent deleteLastSaveContent = EditorGUIUtility.IconContent("d_Toolbar Minus");
+            deleteLastSaveContent.tooltip = "Delete the Last Save File";
+
+            // Create New Game Content
+            GUIContent newGameContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
+            newGameContent.tooltip = $"Create a New Save with Default Settings";
+
+            // Draw the button for creating a new save in this slot
+            if (GUILayout.Button(newGameContent, _miniButtonStyle))
             {
-                // Draw a horizontal line to separate the save slots from the buttons
-                HorizontalLine();
+                // Open create new save window
+                CreateSaveDataWindow.Show(saveControllers);
 
-                // Change the color of the button to a darker gray
-                GUI.backgroundColor = new Color(0.75f, 0.75f, 0.75f);
+                // Repaint the window
+                Repaint();
 
-                // Change the color of the text to yellow
-                GUI.contentColor = Color.yellowNice;
-
-                // Begin a horizontal layout for the buttons
-                EditorGUILayout.BeginHorizontal();
-
-                // Create Delete Last Save Content
-                GUIContent deleteLastSaveContent = EditorGUIUtility.IconContent("d_Toolbar Minus");
-                deleteLastSaveContent.tooltip = "Delete the Last Save File";
-
-                // Create New Game Content
-                GUIContent newGameContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
-                newGameContent.tooltip = $"Create a New Save with Default Settings";
-
-                // Draw the button for creating a new save in this slot
-                if (GUILayout.Button(newGameContent, _miniButtonStyle))
-                {
-                    //// Set the save data id to -1
-                    //selectedSaveSlot = -1;
-
-                    //// Create a save in this slot
-                    //Save(selectedSaveSlot);
-
-                    // Repaint the window
-                    Repaint();
-
-                    // Scroll to the bottom of the save slots
-                    _slotsScrollPos.y = float.MaxValue;
-                }
-
-                // Draw a button to delete the last save
-                if (GUILayout.Button(deleteLastSaveContent, _miniButtonStyle))
-                {
-                    //// Set the save data id to -1
-                    //selectedSaveSlot = -1;
-
-                    //// Delete the save
-                    //Delete(selectedSaveSlot);
-
-                    // Repaint the window
-                    Repaint();
-                }
-
-                // Create Delete All Saves Content
-                GUIContent deleteAllSavesContent = EditorGUIUtility.IconContent("d_Grid.EraserTool");
-                deleteAllSavesContent.tooltip = "Delete All Save Files";
-
-                // Draw a button to delete all saves
-                if (GUILayout.Button(deleteAllSavesContent, _miniButtonStyle))
-                {
-                    // Confirm deletion
-                    if (EditorUtility.DisplayDialog("Delete All Saves", "Are you sure you want to delete all save files? This action cannot be undone.", "Yes", "No"))
-                    {
-                        // Delete all saves
-                        DeleteAll();
-                    }
-                }
-
-                // End the horizontal layout for the buttons
-                EditorGUILayout.EndHorizontal();
-
-                // Reset the colors to the default
-                GUI.backgroundColor = Color.white;
-                GUI.contentColor = Color.white;
+                // Scroll to the bottom of the save slots
+                _slotsScrollPos.y = float.MaxValue;
             }
+
+            // Create Delete All Saves Content
+            GUIContent deleteAllSavesContent = EditorGUIUtility.IconContent("d_Grid.EraserTool");
+            deleteAllSavesContent.tooltip = "Delete All Save Files";
+
+            // Draw a button to delete all saves
+            if (GUILayout.Button(deleteAllSavesContent, _miniButtonStyle))
+            {
+                // Confirm deletion
+                if (EditorUtility.DisplayDialog("Delete All Saves", "Are you sure you want to delete all save files? This action cannot be undone.", "Yes", "No"))
+                {
+                    // Delete all saves
+                    DeleteAll();
+                }
+            }
+
+            // End the horizontal layout for the buttons
+            EditorGUILayout.EndHorizontal();
+
+            // Reset the colors to the default
+            GUI.backgroundColor = Color.white;
+            GUI.contentColor = Color.white;
 
             // Re-enable GUI
             GUI.enabled = true;
@@ -765,11 +735,11 @@ namespace Sanctuary.Editor
 
         #region Save Helper Methods
 
-        public async void Save(int index) => await saveControllers[index].Save();
+        public async void Save(ISaveController controller, string id) => await controller.Save(id);
 
-        public async void Load(int index) => await saveControllers[index].Load();
+        public async void Load(ISaveController controller, string id) => await controller.Load(id);
 
-        public async void Delete(int index) => await saveControllers[index].Delete();
+        public async void Delete(ISaveController controller, string id) => await controller.Delete(id);
 
         public async void DeleteAll()
         {
@@ -806,10 +776,10 @@ namespace Sanctuary.Editor
             }
         }
 
-        private List<SaveSlotInfo> GetAllAvailableSlots()
+        private Dictionary<ISaveController, List<SaveSlotInfo>> GetAllAvailableSlots()
         {
-            // Initialize a list to hold the save slot information
-            var slots = new List<SaveSlotInfo>();
+            // Initialize a dictionary to hold the save slot information
+            var slots = new Dictionary<ISaveController, List<SaveSlotInfo>>();
 
             // Iterate through each save controller to gather save slot information
             foreach (var save in saveControllers)
@@ -817,8 +787,8 @@ namespace Sanctuary.Editor
                 // Get the save slot information for the current save controller
                 var slotInfo = save.GetAvailableSlots();
 
-                // Add the save slot information to the list
-                slots.AddRange(slotInfo);
+                // Add the save slot information to the dictionary
+                slots[save] = slotInfo.ToList();
             }
 
             // Return the list of save slot information
@@ -1434,29 +1404,6 @@ namespace Sanctuary.Editor
         #endregion
 
         #region GUI Helper Methods
-
-        private static GUIStyle HeaderStyle(Color textColor)
-        {
-            // Create a new GUIStyle for the header
-            return new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 16,
-                alignment = TextAnchor.MiddleCenter,
-                padding = new RectOffset(-5, -5, -5, -5),
-                normal = { textColor = textColor }
-            };
-        }
-
-        private static GUIStyle CenteredMiniLabelStyle(Color textColor)
-        {
-            // Create a new GUIStyle for the header
-            return new GUIStyle(EditorStyles.centeredGreyMiniLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                padding = new RectOffset(-5, -5, -5, -5),
-                normal = { textColor = textColor }
-            };
-        }
 
         private void Header(string label) => GUILayout.Box(label, _headerStyle);
 
