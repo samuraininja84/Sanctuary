@@ -15,7 +15,7 @@ namespace Sanctuary.Attributes
         private static IEnumerable<Assembly> assemblies = null;
         private static IEnumerable<MethodInfo> methods = null;
 
-        private static BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        private static readonly BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static readonly HashSet<string> internalAssemblyPrefixes = new()
         {
@@ -73,15 +73,15 @@ namespace Sanctuary.Attributes
         public static IEnumerable<MethodInfo> GetEvaluatedMethods(this Assembly assembly)
         {
             // Helper method to check if a method has the CompletionEvaluationAttribute
-            bool HasAttribute(MethodInfo methodInfo) => methodInfo.GetCustomAttributes(typeof(CompletionEvaluationAttribute), false).Length > 0;
+            static bool HasAttribute(MethodInfo methodInfo) => methodInfo.GetCustomAttributes(typeof(CompletionEvaluationAttribute), false).Length > 0;
 
             // Get all methods with the CompletionEvaluationAttribute in the assembly
-            return assembly.GetTypes().SelectMany(type => type.GetMethods(flags)).Where(HasAttribute);;
+            return assembly.GetTypes().SelectMany(type => type.GetMethods(flags)).Where(HasAttribute);
         }
 
         public static IEnumerable<Assembly> GetEvaluatedAssemblies() => AppDomain.CurrentDomain.GetUserCreatedAssemblies().Where(assembly => assembly.GetEvaluatedMethods().Any());
 
-        private static void CollectMethods()
+        public static float GetCompletionEvaluation()
         {
             // Get all user-created assemblies
             if (assemblies == null)
@@ -103,12 +103,6 @@ namespace Sanctuary.Attributes
                     else methods = methods.Concat(assemblyMethods);
                 }
             }
-        }
-
-        public static float GetCompletionEvaluation()
-        {
-            // Collect methods with CompletionEvaluationAttribute if not already collected
-            CollectMethods();
 
             // If no methods found, return default completion value of 0
             if (methods == null || !methods.Any()) return 0f;
